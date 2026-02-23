@@ -1,0 +1,50 @@
+.categoria-box {
+  width: 60%;
+  margin: 2% auto;
+  padding: 3%;
+
+  background: #f4efe6;
+  border-radius: 1.5%;
+  box-shadow: 0 0.5% 1.5% rgba(0, 0, 0, 0.1);
+
+  text-align: center;
+}
+
+.categoria-title {
+  font-size: 1.6rem;
+  margin-bottom: 2%;
+  color: #5c4b3b;
+}
+
+.categoria-input {
+  width: 70%;
+  padding: 1.2%;
+  border-radius: 0.8%;
+  border: 1px solid #d8cfc2;
+  font-size: 1rem;
+}
+
+.categoria-checkbox {
+  margin-left: 2%;
+  font-size: 0.95rem;
+  color: #5c4b3b;
+}
+
+.categoria-button {
+  margin-top: 3%;
+  padding: 1.2% 3%;
+  border: none;
+  border-radius: 0.8%;
+
+  background: #d8c3a5;
+  color: #3e3428;
+  font-size: 1rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.categoria-button:hover {
+  background: #cbb394;
+}
