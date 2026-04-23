@@ -1,7 +1,7 @@
 import { useState, useEffect, Suspense, lazy } from "react";
 import { auth, db } from "./firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, query, where, getDocs, addDoc, doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, addDoc, doc, getDoc, setDoc } from "firebase/firestore";
 
 import Login from "./components/Login";
 import Navbar from "./components/Navbar";
@@ -72,12 +72,12 @@ export default function App() {
       return;
     }
 
-    // Buscar en usuariosPendientes
-    const q = query(collection(db, "usuariosPendientes"), where("email", "==", user.email));
-    const snap = await getDocs(q);
+    // Buscar en usuariosPendientes usando el email como ID (más eficiente y seguro para reglas)
+    const docRef = doc(db, "usuariosPendientes", user.email);
+    const docSnap = await getDoc(docRef);
 
-    if (!snap.empty) {
-      const estado = snap.docs[0].data().estado;
+    if (docSnap.exists()) {
+      const estado = docSnap.data().estado;
       setEstadoUsuario(estado);
       if (estado === "aprobado") {
         restaurarCategorias(user);
@@ -95,7 +95,8 @@ export default function App() {
 
     if (!snapPerm.empty) {
       // Usuario existente: auto-aprobar
-      await addDoc(collection(db, "usuariosPendientes"), {
+      await setDoc(doc(db, "usuariosPendientes", user.email), {
+        uid: user.uid,
         email: user.email,
         displayName: user.displayName || "",
         photoURL: user.photoURL || "",
@@ -109,7 +110,8 @@ export default function App() {
     }
 
     // Usuario totalmente nuevo → pendiente
-    await addDoc(collection(db, "usuariosPendientes"), {
+    await setDoc(doc(db, "usuariosPendientes", user.email), {
+      uid: user.uid,
       email: user.email,
       displayName: user.displayName || "",
       photoURL: user.photoURL || "",
