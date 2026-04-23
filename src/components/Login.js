@@ -1,54 +1,49 @@
 import { auth } from "../firebase";
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import "../css/Login.css";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import Swal from "sweetalert2";
 
 export default function Login() {
 
-  const allowedEmails = [
-    "mosquerafran265@gmail.com",
-    "rravenna59@gmail.com",
-    "pedrozaffino@gmail.com",
-    "jgonzalezgalceran@gmail.com"
-  ];
-
   const loginGoogle = async () => {
     const provider = new GoogleAuthProvider();
-
     try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-
-      // ✅ Validar email permitido
-      if (!allowedEmails.includes(user.email)) {
-        alert("❌ No estás autorizado a entrar en esta app");
-        await signOut(auth); // cerrar sesión inmediatamente
-        return;
-      }
-
-      console.log("✅ Usuario autorizado:", user.email);
-
-      // Aquí podés redirigir a la app, etc.
-
+      await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Error login Google:", error);
-      alert("Error iniciando sesión");
+      Swal.fire({
+        title: "Error",
+        text: "Hubo un problema iniciando sesión.",
+        icon: "error",
+        background: 'var(--color-surface)',
+        color: 'var(--color-text-main)'
+      });
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <div className="login-title">
-          Gym Tracker 💪
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent/20 rounded-full blur-[120px] pointer-events-none" />
+      
+      <div className="glass-panel p-8 md:p-12 max-w-md w-full text-center animate-slide-up relative z-10">
+        <div className="mb-8">
+          <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(59,130,246,0.3)]">
+            <span className="text-4xl">💪</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-textMain mb-2 tracking-tight">Gym Tracker</h1>
+          <p className="text-textMuted text-sm md:text-base">Registra tu progreso y mantén la consistencia</p>
         </div>
 
-        <button className="google-button" onClick={loginGoogle}>
+        <button 
+          className="btn-secondary w-full py-4 text-lg"
+          onClick={loginGoogle}
+        >
           <img
-            className="google-icon"
+            className="w-6 h-6"
             src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
             alt="Google"
           />
-          Iniciar sesión con Google
+          Continuar con Google
         </button>
       </div>
     </div>

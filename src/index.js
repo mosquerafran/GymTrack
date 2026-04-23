@@ -4,9 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-import { MantineProvider } from '@mantine/core';
-import '@mantine/core/styles.css';
-
+// Mantine removed
 import { initAuth } from './firebase';
 import { BrowserRouter } from "react-router-dom";
 
@@ -20,11 +18,9 @@ async function start() {
 
   root.render(
     <React.StrictMode>
-      <MantineProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </MantineProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </React.StrictMode>
   );
 }

@@ -1,9 +1,8 @@
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import "../css/Calendar.css";
 import Swal from "sweetalert2";
 
-export default function CalendarView({ fecha, setFecha, entrenos, categoriasMap, onMonthChange }) {
+export default function CalendarView({ fecha, setFecha, entrenos, categoriasMap, onMonthChange, abrirDetalle }) {
 
   const formatDate = (date)=>{
     const y = date.getFullYear();
@@ -12,23 +11,56 @@ export default function CalendarView({ fecha, setFecha, entrenos, categoriasMap,
     return `${y}-${m}-${d}`;
   };
 
-  const mostrarEntrenos = (tiene)=>{
-    Swal.fire({
-      title: tiene ? "Entrenaste 💪" : "Descanso 😴",
-      text: tiene
-        ? tiene.map(id => categoriasMap?.[id] || "…").join(", ")
-        : "No entrenaste ese día",
-      icon: tiene ? "success" : "info",
-      confirmButtonText: "OK"
-    });
+  const tileContent = ({ date, view }) => {
+    if (view === "month") {
+      const dateStr = formatDate(date);
+      const diaEntrenos = entrenos[dateStr];
+      if (diaEntrenos && diaEntrenos.length > 0) {
+        return (
+          <div className="flex justify-center mt-1">
+            <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
+          </div>
+        );
+      }
+    }
+    return null;
+  };
+
+  const tileClassName = ({ date, view }) => {
+    if (view === "month") {
+      const dateStr = formatDate(date);
+      if (entrenos[dateStr] && entrenos[dateStr].length > 0) {
+        return "bg-primary/10 text-primary font-bold rounded-lg border border-primary/20";
+      }
+    }
+    return "rounded-lg hover:bg-surfaceHighlight transition-colors";
+  };
+
+  const handleClickDay = (value) => {
+    setFecha(value);
+    if(abrirDetalle) abrirDetalle(value);
   };
 
   return (
-    <div className="calendar-wrapper">
-      <Calendar
-        onChange={setFecha}
-        value={fecha}
-      />
+    <div className="glass-panel p-6 animate-slide-up">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <span className="text-primary">📅</span> Mi Calendario
+        </h2>
+      </div>
+      
+      <div className="custom-calendar-container">
+        <Calendar
+          onChange={setFecha}
+          value={fecha}
+          onClickDay={handleClickDay}
+          onActiveStartDateChange={({ activeStartDate }) => {
+            if(onMonthChange) onMonthChange(activeStartDate);
+          }}
+          tileContent={tileContent}
+          tileClassName={tileClassName}
+        />
+      </div>
     </div>
   );
 }
