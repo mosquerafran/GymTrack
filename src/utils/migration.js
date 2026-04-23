@@ -11,13 +11,10 @@ const DATA = {
 export async function restaurarCategoriasPersonales() {
   console.log("🚀 Iniciando restauración de categorías personales...");
 
-  // 1. Obtener todos los usuarios de usuariosPendientes para tener sus UIDs
-  const usersSnap = await getDocs(collection(db, "usuariosPendientes"));
+  // 1. Obtener todos los usuarios de la colección nueva para tener sus UIDs
+  const usersSnap = await getDocs(collection(db, "usuarios"));
   const emailToUid = {};
   usersSnap.forEach(d => {
-    emailToUid[d.data().email] = d.id; // Asumimos que el ID del documento es el UID o el email? 
-    // En App.js: await addDoc(collection(db, "usuariosPendientes"), { email: user.email, ... })
-    // Ah, el ID es autogenerado. El email está adentro.
     emailToUid[d.data().email] = d.data().uid || d.id; 
   });
   

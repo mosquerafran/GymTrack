@@ -26,6 +26,7 @@ export default function Feed({ user, grupoId }) {
 
       const q = query(
         collection(db, "asistencias"),
+        where("grupoId", "==", grupoId),
         where("fecha", ">=", hace14.toISOString().split("T")[0])
       );
 

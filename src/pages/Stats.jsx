@@ -35,8 +35,15 @@ export default function Stats({ user, grupoId }) {
       // Para MI gráfica, solo las mías
       const misCategorias = allCategorias.filter(c => c.userId === user.uid);
 
-      let qMisAsis = query(collection(db, "asistencias"), where("userId", "==", user.uid));
-      let qGlobalAsis = collection(db, "asistencias");
+      let qMisAsis = query(
+        collection(db, "asistencias"), 
+        where("userId", "==", user.uid),
+        where("grupoId", "==", grupoId)
+      );
+      let qGlobalAsis = query(
+        collection(db, "asistencias"),
+        where("grupoId", "==", grupoId)
+      );
 
       const [snapMisAsis, snapGlobalAsis] = await Promise.all([
         getDocs(qMisAsis),

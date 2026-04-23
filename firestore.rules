@@ -2,60 +2,17 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Función para saber si el usuario está aprobado
-    function isAprobado() {
-      return request.auth != null && 
-        (get(/databases/$(database)/documents/usuariosPendientes/$(request.auth.token.email)).data.estado == 'aprobado' || 
-         request.auth.token.email == 'mosquerafran265@gmail.com');
+    // Permitir todo a cualquier usuario autenticado
+    // (Ideal para desarrollo entre amigos)
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
-
-    // Función para saber si el usuario es Francisco (Admin Maestro)
-    function isMasterAdmin() {
-      return request.auth != null && request.auth.token.email == 'mosquerafran265@gmail.com';
-    }
-
-    // REGLAS DE USUARIOS
-    match /usuariosPendientes/{email} {
-      // Cualquier logueado puede ver su propia solicitud y crearla
-      // Francisco puede ver y editar todas
-      allow read: if request.auth != null && (request.auth.token.email == email || isMasterAdmin());
-      allow create: if request.auth != null && request.auth.token.email == email;
-      allow update: if isMasterAdmin();
-    }
-
-    // REGLAS DE GRUPOS
-    match /grupos/{grupoId} {
-      // Solo miembros del grupo pueden leerlo
-      allow read: if request.auth != null && (request.auth.token.email in resource.data.miembros || isMasterAdmin());
-      
-      // Cualquier aprobado puede crear un grupo
-      allow create: if isAprobado();
-      
-      // Solo el admin del grupo puede editar nombre o configuración
-      // O cualquier aprobado puede unirse si tiene el código (simplificado: permitimos update de miembros)
-      allow update: if isAprobado() && (request.auth.token.email == resource.data.adminEmail || isMasterAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['miembros']));
-    }
-
-    // REGLAS DE ENTRENAMIENTOS (ASISTENCIAS)
-    match /asistencias/{docId} {
-      // Solo podés leer si pertenecés al grupo de ese entrenamiento
-      allow read: if request.auth != null && (
-        get(/databases/$(database)/documents/grupos/$(resource.data.grupoId)).data.miembros.includes(request.auth.token.email) ||
-        isMasterAdmin()
-      );
-      
-      // Solo podés escribir si estás aprobado y pertenecés al grupo
-      allow create: if isAprobado() && 
-        get(/databases/$(database)/documents/grupos/$(request.resource.data.grupoId)).data.miembros.includes(request.auth.token.email);
-      
-      // Solo podés borrar/editar lo tuyo
-      allow update, delete: if isAprobado() && (request.auth.token.email == resource.data.userName || isMasterAdmin());
-    }
-
-    // REGLAS DE CATEGORÍAS
-    match /categorias/{docId} {
+    
+    // REGLAS ESPECÍFICAS (Opcional, pero para mantener orden)
+    // Usuarios (Consolidado de usuariosPendientes y usuariosPermitidos)
+    match /usuarios/{email} {
       allow read: if request.auth != null;
-      allow write: if isMasterAdmin();
+      allow write: if request.auth != null;
     }
   }
 }

@@ -29,6 +29,7 @@ export default function App() {
   const [estadoUsuario, setEstadoUsuario] = useState(null);
   // Grupo activo
   const [grupoActivo, setGrupoActivo] = useState(null);
+  const [errorAuth, setErrorAuth] = useState(null);
 
   // Tema
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
@@ -60,65 +61,102 @@ export default function App() {
   // Verificar estado del usuario cuando se loguea
   useEffect(() => {
     if (!user) return;
+    setErrorAuth(null);
     verificarEstado();
   }, [user]);
 
   const verificarEstado = async () => {
-    // Admin maestro: siempre aprobado
-    if (user.email === ADMIN_EMAIL) {
-      setEstadoUsuario("aprobado");
-      restaurarCategorias(user);
-      cargarGrupoGuardado();
-      return;
-    }
-
-    // Buscar en usuariosPendientes usando el email como ID (más eficiente y seguro para reglas)
-    const docRef = doc(db, "usuariosPendientes", user.email);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      const estado = docSnap.data().estado;
-      setEstadoUsuario(estado);
-      if (estado === "aprobado") {
+    try {
+      // Admin maestro: siempre aprobado
+      if (user.email === ADMIN_EMAIL) {
+        setEstadoUsuario("aprobado");
         restaurarCategorias(user);
         cargarGrupoGuardado();
+        // Francisco también se asegura de existir en la colección nueva
+        await setDoc(doc(db, "usuarios", user.email), {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || "",
+          photoURL: user.photoURL || "",
+          estado: "aprobado",
+          creadoEn: new Date().toISOString()
+        }, { merge: true });
+        return;
       }
-      if (estado === "rechazado") {
-        await signOut(auth);
+
+      // 1. Buscar en la colección nueva 'usuarios' por email
+      const docRef = doc(db, "usuarios", user.email);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const estado = docSnap.data().estado;
+        setEstadoUsuario(estado);
+        if (estado === "aprobado") {
+          restaurarCategorias(user);
+          cargarGrupoGuardado();
+        }
+        if (estado === "rechazado") await signOut(auth);
+        return;
       }
-      return;
-    }
 
-    // Si no existe, verificar si estaba en usuariosPermitidos (migración)
-    const qPerm = query(collection(db, "usuariosPermitidos"), where("email", "==", user.email));
-    const snapPerm = await getDocs(qPerm);
+      // 2. MIGRACIÓN: Buscar en la colección vieja 'usuariosPendientes' (por email o por query)
+      const oldDocRef = doc(db, "usuariosPendientes", user.email);
+      const oldDocSnap = await getDoc(oldDocRef);
+      let userData = null;
 
-    if (!snapPerm.empty) {
-      // Usuario existente: auto-aprobar
-      await setDoc(doc(db, "usuariosPendientes", user.email), {
+      if (oldDocSnap.exists()) {
+        userData = oldDocSnap.data();
+      } else {
+        // Buscar por query en caso de que el ID fuera autogenerado
+        const qOld = query(collection(db, "usuariosPendientes"), where("email", "==", user.email));
+        const snapOld = await getDocs(qOld);
+        if (!snapOld.empty) userData = snapOld.docs[0].data();
+      }
+
+      // 3. MIGRACIÓN: Buscar en 'usuariosPermitidos' (muy vieja)
+      if (!userData) {
+        const qPerm = query(collection(db, "usuariosPermitidos"), where("email", "==", user.email));
+        const snapPerm = await getDocs(qPerm);
+        if (!snapPerm.empty) userData = { ...snapPerm.docs[0].data(), estado: "aprobado" };
+      }
+
+      // Si encontramos datos en colecciones viejas, migramos a 'usuarios'
+      if (userData) {
+        const finalData = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || userData.displayName || "",
+          photoURL: user.photoURL || userData.photoURL || "",
+          estado: userData.estado || "aprobado",
+          creadoEn: userData.creadoEn || new Date().toISOString(),
+          migrado: true
+        };
+        await setDoc(doc(db, "usuarios", user.email), finalData);
+        setEstadoUsuario(finalData.estado);
+        if (finalData.estado === "aprobado") {
+          restaurarCategorias(user);
+          cargarGrupoGuardado();
+        }
+        return;
+      }
+
+      // 4. Usuario totalmente nuevo → auto-aprobar para amigos
+      const newUser = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || "",
         photoURL: user.photoURL || "",
         estado: "aprobado",
         creadoEn: new Date().toISOString()
-      });
+      };
+      await setDoc(doc(db, "usuarios", user.email), newUser);
       setEstadoUsuario("aprobado");
       restaurarCategorias(user);
       cargarGrupoGuardado();
-      return;
+    } catch (e) {
+      console.error("Error verificando estado:", e);
+      setErrorAuth(e.message || "Error de conexión con el servidor");
     }
-
-    // Usuario totalmente nuevo → pendiente
-    await setDoc(doc(db, "usuariosPendientes", user.email), {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName || "",
-      photoURL: user.photoURL || "",
-      estado: "pendiente",
-      creadoEn: new Date().toISOString()
-    });
-    setEstadoUsuario("pendiente");
   };
 
   const restaurarCategorias = async (u) => {
@@ -193,10 +231,40 @@ export default function App() {
   // No logueado
   if (!user) return <Login />;
 
-  // Esperando verificación
+  // Esperando verificación o Error
   if (estadoUsuario === null) return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+      {errorAuth ? (
+        <div className="glass-panel p-8 max-w-sm w-full text-center animate-slide-up border-red-500/30">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl">⚠️</span>
+          </div>
+          <h2 className="text-xl font-bold text-textMain mb-2">Error de Conexión</h2>
+          <p className="text-textMuted mb-6 text-sm">{errorAuth}</p>
+          <div className="space-y-3">
+            <button 
+              className="btn-primary w-full py-2"
+              onClick={() => {
+                setErrorAuth(null);
+                verificarEstado();
+              }}
+            >
+              Reintentar
+            </button>
+            <button 
+              className="btn-secondary w-full py-2"
+              onClick={() => signOut(auth)}
+            >
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary mb-4"></div>
+          <p className="text-textMuted animate-pulse">Verificando acceso...</p>
+        </>
+      )}
     </div>
   );
 

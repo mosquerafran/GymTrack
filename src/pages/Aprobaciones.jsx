@@ -17,7 +17,7 @@ export default function Aprobaciones({ user }) {
 
   const cargar = async () => {
     setLoading(true);
-    const snap = await getDocs(collection(db, "usuariosPendientes"));
+    const snap = await getDocs(collection(db, "usuarios"));
     const pend = [];
     const apr = [];
     snap.forEach(d => {
@@ -43,7 +43,7 @@ export default function Aprobaciones({ user }) {
     });
 
     if (res.isConfirmed) {
-      await updateDoc(doc(db, "usuariosPendientes", id), { estado: nuevoEstado });
+      await updateDoc(doc(db, "usuarios", id), { estado: nuevoEstado });
       cargar();
     }
   };

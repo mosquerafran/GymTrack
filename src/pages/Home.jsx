@@ -40,6 +40,7 @@ export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId }) {
     // Traemos todas las del usuario y filtramos por grupo en memoria
     const q = query(
       collection(db,"asistencias"),
+      where("grupoId", "==", grupoId),
       where("userName","==",user.displayName),
       where("fecha",">=",inicioStr),
       where("fecha","<=",finStr)
@@ -66,15 +67,16 @@ export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId }) {
 };
 
 const cargarCategorias = async () => {
-  const snap = await getDocs(collection(db,"categorias"));
-
-  const mapa = {};
-
-  snap.forEach(doc=>{
-    mapa[doc.id] = doc.data().nombre;
-  });
-
-  setCategoriasMap(mapa);
+  try {
+    const snap = await getDocs(collection(db,"categorias"));
+    const mapa = {};
+    snap.forEach(doc=>{
+      mapa[doc.id] = doc.data().nombre;
+    });
+    setCategoriasMap(mapa);
+  } catch (err) {
+    console.error("❌ Error cargando categorías:", err);
+  }
 };
 
   return (
