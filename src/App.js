@@ -17,6 +17,12 @@ const Aprobaciones = lazy(() => import("./pages/Aprobaciones"));
 const GrupoSelector = lazy(() => import("./pages/GrupoSelector"));
 
 const ADMIN_EMAIL = "mosquerafran265@gmail.com";
+const MIEMBROS_MILLER = [
+  "mosquerafran265@gmail.com",
+  "rravenna59@gmail.com",
+  "pedrozaffino@gmail.com",
+  "jgonzalezgalceran@gmail.com"
+];
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -67,12 +73,15 @@ export default function App() {
 
   const verificarEstado = async () => {
     try {
-      // Admin maestro: siempre aprobado
-      if (user.email === ADMIN_EMAIL) {
+      const isVip = MIEMBROS_MILLER.includes(user.email);
+
+      // Admin maestro o amigos VIP: siempre aprobados
+      if (user.email === ADMIN_EMAIL || isVip) {
         setEstadoUsuario("aprobado");
         restaurarCategorias(user);
         cargarGrupoGuardado();
-        // Francisco también se asegura de existir en la colección nueva
+        
+        // Asegurar que existan en la colección 'usuarios'
         await setDoc(doc(db, "usuarios", user.email), {
           uid: user.uid,
           email: user.email,

@@ -34,11 +34,12 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
   const cargarGrupos = async () => {
     setLoading(true);
     try {
-      // Solo el Admin Maestro puede verificar/migrar todos los grupos
-      if (user.email === ADMIN_EMAIL) {
+      // Solo el Admin Maestro o los Miembros Miller pueden verificar/reparar el grupo
+      const isVip = MIEMBROS_MILLER.includes(user.email);
+      if (user.email === ADMIN_EMAIL || isVip) {
         const allGruposSnap = await getDocs(collection(db, "grupos"));
         
-        if (allGruposSnap.empty) {
+        if (allGruposSnap.empty && user.email === ADMIN_EMAIL) {
           await migrarDatos();
           return cargarGrupos();
         }
