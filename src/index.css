@@ -4,27 +4,29 @@
 
 @layer base {
   :root {
-    --color-background: 248 250 252; /* Slate 50 */
-    --color-surface: 255 255 255; /* White */
-    --color-surface-highlight: 241 245 249; /* Slate 100 */
-    --color-primary: 37 99 235; /* Blue 600 */
-    --color-primary-hover: 29 78 216; /* Blue 700 */
-    --color-accent: 245 158 11; /* Amber 500 */
-    --color-text-main: 15 23 42; /* Slate 900 */
-    --color-text-muted: 100 116 139; /* Slate 500 */
+    --color-background: 248 250 252;
+    --color-surface: 255 255 255;
+    --color-surface-highlight: 241 245 249;
+    --color-primary: 37 99 235;
+    --color-primary-hover: 29 78 216;
+    --color-accent: 245 158 11;
+    --color-text-main: 15 23 42;
+    --color-text-muted: 100 116 139;
     --color-border: rgba(0, 0, 0, 0.05);
+    --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   }
 
   .dark {
-    --color-background: 15 23 42; /* Slate 900 */
-    --color-surface: 30 41 59; /* Slate 800 */
-    --color-surface-highlight: 51 65 85; /* Slate 700 */
-    --color-primary: 59 130 246; /* Blue 500 */
-    --color-primary-hover: 37 99 235; /* Blue 600 */
-    --color-accent: 245 158 11; /* Amber 500 */
-    --color-text-main: 248 250 252; /* Slate 50 */
-    --color-text-muted: 148 163 184; /* Slate 400 */
-    --color-border: rgba(255, 255, 255, 0.1);
+    --color-background: 2 6 23; /* Darker slate */
+    --color-surface: 15 23 42;
+    --color-surface-highlight: 30 41 59;
+    --color-primary: 59 130 246;
+    --color-primary-hover: 96 165 250;
+    --color-accent: 251 191 36;
+    --color-text-main: 248 250 252;
+    --color-text-muted: 148 163 184;
+    --color-border: rgba(255, 255, 255, 0.06);
+    --shadow-premium: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -12px rgba(0, 0, 0, 0.3);
   }
 
   body {
@@ -39,24 +41,43 @@
 
 @layer components {
   .glass-panel {
-    @apply bg-surface/80 backdrop-blur-md border border-borderBase shadow-xl rounded-2xl transition-colors duration-300;
+    @apply bg-surface/70 backdrop-blur-xl border border-borderBase shadow-premium rounded-3xl transition-all duration-500;
   }
   
   .btn-primary {
-    @apply bg-primary hover:bg-primaryHover text-white px-6 py-2 rounded-xl font-medium transition-all duration-300 shadow-lg shadow-primary/30 active:scale-95 flex items-center justify-center gap-2;
+    @apply bg-gradient-to-br from-primary to-blue-700 hover:from-primaryHover hover:to-blue-800 text-white px-6 py-3 rounded-2xl font-bold transition-all duration-300 shadow-lg shadow-primary/25 active:scale-[0.98] flex items-center justify-center gap-2;
   }
 
   .btn-accent {
-    @apply bg-accent hover:bg-amber-600 text-slate-900 px-6 py-2 rounded-xl font-medium transition-all duration-300 shadow-lg shadow-accent/30 active:scale-95 flex items-center justify-center gap-2;
+    @apply bg-gradient-to-br from-accent to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 px-6 py-3 rounded-2xl font-bold transition-all duration-300 shadow-lg shadow-accent/25 active:scale-[0.98] flex items-center justify-center gap-2;
   }
   
   .btn-secondary {
-    @apply bg-surfaceHighlight hover:bg-slate-400 dark:hover:bg-slate-600 text-textMain px-6 py-2 rounded-xl font-medium transition-all duration-300 active:scale-95 flex items-center justify-center gap-2;
+    @apply bg-surfaceHighlight/50 backdrop-blur-sm hover:bg-surfaceHighlight text-textMain px-6 py-3 rounded-2xl font-bold transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2 border border-borderBase;
   }
   
   .input-field {
-    @apply w-full bg-surfaceHighlight/50 border border-borderBase rounded-xl px-4 py-3 text-textMain placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all;
+    @apply w-full bg-surfaceHighlight/30 backdrop-blur-sm border border-borderBase rounded-2xl px-5 py-4 text-textMain placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-inner;
   }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0px); }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
 
   /* React Calendar Overrides */
   .custom-calendar-container .react-calendar {

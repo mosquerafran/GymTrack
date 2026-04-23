@@ -17,6 +17,9 @@ module.exports = {
         textMuted: 'rgb(var(--color-text-muted) / <alpha-value>)',
         borderBase: 'var(--color-border)',
       },
+      boxShadow: {
+        'premium': 'var(--shadow-premium)',
+      },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
       },

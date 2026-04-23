@@ -11,7 +11,6 @@ import Home from "./pages/Home";
 const Stats = lazy(() => import("./pages/Stats"));
 const Settings = lazy(() => import("./pages/Settings"));
 const DiaDetalle = lazy(() => import("./pages/DiaDetalle"));
-const Feed = lazy(() => import("./pages/Feed"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Aprobaciones = lazy(() => import("./pages/Aprobaciones"));
 const GrupoSelector = lazy(() => import("./pages/GrupoSelector"));
@@ -314,7 +313,7 @@ export default function App() {
 
   // App principal
   return (
-    <div className="min-h-screen pb-20 max-w-5xl mx-auto transition-colors duration-300">
+    <div className="min-h-screen pb-28 md:pb-20 max-w-5xl mx-auto transition-colors duration-300">
       <Navbar 
         view={view} setView={setView} user={user} 
         theme={theme} toggleTheme={toggleTheme} 
@@ -328,11 +327,10 @@ export default function App() {
           </div>
         }>
           {view === "home" && (
-            <Home user={user} fecha={fecha} setFecha={setFecha} abrirDetalle={abrirDetalle} grupoId={grupoActivo?.id} />
+            <Home user={user} fecha={fecha} setFecha={setFecha} abrirDetalle={abrirDetalle} grupoId={grupoActivo?.id} theme={theme} />
           )}
           {view === "stats" && <Stats user={user} grupoId={grupoActivo?.id} />}
           {view === "settings" && <Settings user={user} />}
-          {view === "feed" && <Feed user={user} grupoId={grupoActivo?.id} />}
           {view === "admin" && <Admin user={user} grupoActivo={grupoActivo} setView={setView} />}
           {view === "aprobaciones" && <Aprobaciones user={user} />}
           {view === "dayDetail" && <DiaDetalle fecha={fechaDetalle} user={user} grupoId={grupoActivo?.id} />}

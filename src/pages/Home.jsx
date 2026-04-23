@@ -5,79 +5,87 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import CalendarView from "../components/CalendarView";
 import TrainingSelector from "../components/TrainingSelector";
 
-export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId }) {
-  const [entrenos,setEntrenos]=useState({});
+export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId, theme }) {
+  const [entrenos, setEntrenos] = useState({});
   const [categoriasMap, setCategoriasMap] = useState({});
   const [frase, setFrase] = useState("");
 
   const chistes = [
     "Levantá más pesado, ese palo de escoba no va a hacer que dejes de dar lástima.",
-    "Si tuvieras la misma fuerza de voluntad para entrenar que para comer facturas, serías fisicoculturista.",
-    "Tus piernas parecen dos escarbadientes a punto de romperse. Andá a la prensa.",
-    "Transpirá ahora, capaz así disimulas un poco lo feo que sos cuando te sacás la remera.",
+    "Rafa… Na al pedo si no viene a entrar.",
+    "Tus piernas parecen dos escarbadientes. Andá a la prensa.",
+    "Metele pesado, que sino vas a terminar runner.",
     "Ese peso lo levanta mi abuela... y está muerta hace 5 años.",
-    "Anotá el entreno. Total nadie va a notar la diferencia en tu físico.",
-    "Hacer piernas es como pagar impuestos: a nadie le gusta pero sino terminás dando pena en shortcito.",
-    "Si tu técnica fuera buena no estarías tomando ibuprofeno como si fueran caramelos.",
-    "Estás a un asado de tirar por la borda todo lo que hiciste hoy. ¡Metéle garra!"
+    "Más vale que estés entrenando intenso porque cara no se puede entrenar.",
+    "Todos los números suben… Salvo el importante 🥵.",
+    "⁠Piernas se entrena aunque juegues al fútbol hijo de puta.",
+    "A meterle, hay que seguir siendo hermanos mayores.",
+    "Dale anota, que hay que llegar a los 200 días.",
+    "El que no entrena es gay.",
+    "¿⁠Ese peso levantas? Kjjj andá a crossfit que es más digno.",
+    "⁠¿¿¿¿Otra vez arriba???? Vas a terminar como un enchufe 🔌",
+    "¿Esa es tu serie de aproximación o ya estás pidiendo el alta en pilates?",
+    "⁠Metele un disco más que ese peso lo levanta mi abuela para cerrar la persiana.",
+    "Menos mal que el descanso es parte del entrenamiento, porque sos atleta olímpico pedazo de gitano.",
+    "⁠Que el talle XL de la remera sea de músculo y no de grasa gordo bondiola."
   ];
 
-  useEffect(()=>{
+  useEffect(() => {
     setFrase(chistes[Math.floor(Math.random() * chistes.length)]);
-    if(user) cargarEntrenosMes(fecha);
+    if (user) cargarEntrenosMes(fecha);
     cargarCategorias();
 
-  },[user]);
+  }, [user]);
 
   const cargarEntrenosMes = async (fechaActual) => {
-  const inicioMes = new Date(fechaActual.getFullYear(),fechaActual.getMonth(),1);
-  const finMes = new Date(fechaActual.getFullYear(),fechaActual.getMonth()+1,0);
+    const inicioMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
+    const finMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0);
 
-  const inicioStr = inicioMes.toISOString().split("T")[0];
-  const finStr = finMes.toISOString().split("T")[0];
+    const inicioStr = inicioMes.toISOString().split("T")[0];
+    const finStr = finMes.toISOString().split("T")[0];
 
-  try{
-    // Traemos todas las del usuario y filtramos por grupo en memoria
-    const q = query(
-      collection(db,"asistencias"),
-      where("grupoId", "==", grupoId),
-      where("userName","==",user.displayName),
-      where("fecha",">=",inicioStr),
-      where("fecha","<=",finStr)
-    );
+    try {
+      // Traemos todas las del usuario y filtramos por grupo en memoria
+      const q = query(
+        collection(db, "asistencias"),
+        where("grupoId", "==", grupoId),
+        where("userName", "==", user.displayName),
+        where("fecha", ">=", inicioStr),
+        where("fecha", "<=", finStr)
+      );
 
-    const snap = await getDocs(q);
-    const mapa = {};
+      const snap = await getDocs(q);
+      const mapa = {};
 
-    snap.forEach(doc=>{
-      const data = doc.data();
-      // Filtrar por grupo en memoria
-      if (grupoId && data.grupoId && data.grupoId !== grupoId) return;
-      const fecha = data.fecha;
+      snap.forEach(doc => {
+        const data = doc.data();
+        // Filtrar por grupo en memoria
+        if (grupoId && data.grupoId && data.grupoId !== grupoId) return;
+        const fecha = data.fecha;
 
-      if(!mapa[fecha]) mapa[fecha]=[];
-      mapa[fecha].push(data.categoriaId);
-    });
+        if (!mapa[fecha]) mapa[fecha] = [];
+        mapa[fecha].push(data.categoriaId);
+      });
 
-    setEntrenos(mapa);
+      setEntrenos(mapa);
 
-  }catch(err){
-    console.error("❌ Error cargando entrenos:",err);
-  }
-};
+    } catch (err) {
+      console.error("❌ Error cargando entrenos:", err);
+    }
+  };
 
-const cargarCategorias = async () => {
-  try {
-    const snap = await getDocs(collection(db,"categorias"));
-    const mapa = {};
-    snap.forEach(doc=>{
-      mapa[doc.id] = doc.data().nombre;
-    });
-    setCategoriasMap(mapa);
-  } catch (err) {
-    console.error("❌ Error cargando categorías:", err);
-  }
-};
+  const cargarCategorias = async () => {
+    try {
+      const snap = await getDocs(collection(db, "categorias"));
+      const mapa = {};
+      snap.forEach(doc => {
+        mapa[doc.id] = doc.data().nombre;
+      });
+      setCategoriasMap(mapa);
+    } catch (err) {
+      console.error("❌ Error cargando categorías:", err);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -99,7 +107,7 @@ const cargarCategorias = async () => {
 
         <div className="lg:col-span-5 relative">
           <div className="sticky top-24">
-            <TrainingSelector fecha={fecha} user={user} grupoId={grupoId} />
+            <TrainingSelector fecha={fecha} user={user} grupoId={grupoId} theme={theme} />
           </div>
         </div>
       </div>
