@@ -1,6 +1,6 @@
 import { auth } from "../config/firebase";
 import { signOut } from "firebase/auth";
-import { Home, BarChart2, Calendar, Settings, LogOut, Sun, Moon, ShieldCheck, ArrowLeftRight } from "lucide-react";
+import { Home, BarChart2, Calendar, Settings, LogOut, Sun, Moon, ShieldCheck, ArrowLeftRight, Flame } from "lucide-react";
 import { useStreak } from "../hooks/useStreak";
 import { ADMIN_EMAIL } from "../config/constants";
 
@@ -43,6 +43,7 @@ export default function Navbar({ view, setView, user, theme, toggleTheme, grupoA
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-2">
             <NavButton targetView="home" icon={Home} label="Inicio" />
+            <NavButton targetView="feed" icon={Flame} label="Muro" />
             <NavButton targetView="stats" icon={BarChart2} label="Ranking" />
             <NavButton targetView="dayDetail" icon={Calendar} label="Detalle" />
           </div>
@@ -94,6 +95,7 @@ export default function Navbar({ view, setView, user, theme, toggleTheme, grupoA
         <div className="glass-panel rounded-2xl flex items-center justify-around p-2 pointer-events-auto">
           {[
             { view: "home", icon: Home, label: "Inicio" },
+            { view: "feed", icon: Flame, label: "Muro" },
             { view: "stats", icon: BarChart2, label: "Ranking" },
             { view: "dayDetail", icon: Calendar, label: "Detalle" },
             { view: "settings", icon: Settings, label: "Ajustes" },

@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCvG9i8yOFWz3iKhmKXEfhR4Qx_uw5tI6w",
@@ -25,3 +26,5 @@ export const auth = getAuth(app);
 export const initAuth = async () => {
   await setPersistence(auth, browserLocalPersistence);
 };
+
+export const storage = getStorage(app);

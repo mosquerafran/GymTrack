@@ -17,6 +17,7 @@ const DiaDetalle = lazy(() => import("./pages/DiaDetalle"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Aprobaciones = lazy(() => import("./pages/Aprobaciones"));
 const GrupoSelector = lazy(() => import("./pages/GrupoSelector"));
+const Feed = lazy(() => import("./pages/Feed"));
 
 const Spinner = ({ size = "large" }) => (
   <div className={`animate-spin rounded-full border-t-4 border-b-4 border-primary ${size === "large" ? "h-16 w-16" : "h-12 w-12"}`} />
@@ -130,6 +131,7 @@ export default function App() {
               abrirDetalle={abrirDetalle} grupoId={grupoActivo?.id} theme={theme}
             />
           )}
+          {view === "feed" && <Feed user={user} grupoId={grupoActivo?.id} theme={theme} />}
           {view === "stats" && <Stats user={user} grupoId={grupoActivo?.id} />}
           {view === "settings" && <Settings user={user} />}
           {view === "admin" && <Admin user={user} grupoActivo={grupoActivo} setView={setView} />}

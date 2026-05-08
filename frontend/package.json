@@ -10,6 +10,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
+    "browser-image-compression": "^2.0.2",
     "firebase": "^12.9.0",
     "lucide-react": "^1.8.0",
     "react": "^19.2.4",
@@ -17,6 +18,7 @@
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.0",
     "react-scripts": "5.0.1",
+    "recharts": "^3.8.1",
     "sweetalert2": "^11.26.20",
     "web-vitals": "^2.1.4"
   },

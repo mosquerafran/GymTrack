@@ -7,12 +7,15 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove
 } from "firebase/firestore";
 
 /**
  * Guarda un entrenamiento en Firestore.
  */
-export const guardarAsistencia = async ({ userId, userName, fecha, categoriaId, notas, grupoId }) => {
+export const guardarAsistencia = async ({ userId, userName, fecha, categoriaId, notas, grupoId, imagenUrl = null, rutina = [] }) => {
   const y = fecha.getFullYear();
   const m = String(fecha.getMonth() + 1).padStart(2, "0");
   const d = String(fecha.getDate()).padStart(2, "0");
@@ -22,9 +25,13 @@ export const guardarAsistencia = async ({ userId, userName, fecha, categoriaId, 
     userId,
     userName,
     fecha: fechaStr,
+    timestamp: Date.now(), // Para ordenar el Feed y dar medallas de horario
     categoriaId,
     notas: notas?.trim() || "",
+    rutina,      // Array de ejercicios: [{nombre, series: [{reps, peso}]}]
+    imagenUrl,   // URL de la foto en Storage
     grupoId: grupoId || "",
+    likes: [],   // Array de userIds que dieron "Fuego 🔥"
   });
 };
 
@@ -127,4 +134,35 @@ export const cargarAsistenciasParaStats = async (grupoId, userId) => {
  */
 export const eliminarAsistencia = async (docId) => {
   await deleteDoc(doc(db, "asistencias", docId));
+};
+
+/**
+ * Carga el Muro de Actividad (Feed Global del grupo)
+ * Trae los últimos 20 entrenamientos ordenados por fecha/hora
+ */
+export const cargarFeedGlobal = async (grupoId) => {
+  const q = query(
+    collection(db, "asistencias"),
+    where("grupoId", "==", grupoId),
+    // En Firestore, sin índices compuestos complejos, podemos ordenar en el cliente 
+    // o requerir que el usuario cree un índice si falla.
+    // Para simplificar y evitar errores de índice en producción, traemos los recientes.
+  );
+
+  const snap = await getDocs(q);
+  const posts = [];
+  
+  snap.forEach((doc) => {
+    posts.push({ id: doc.id, ...doc.data() });
+  });
+
+  // Ordenar en el cliente (más reciente primero)
+  return posts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 50);
+};
+
+export const toggleLike = async (docId, userId, isLiked) => {
+  const docRef = doc(db, "asistencias", docId);
+  await updateDoc(docRef, {
+    likes: isLiked ? arrayRemove(userId) : arrayUnion(userId)
+  });
 };

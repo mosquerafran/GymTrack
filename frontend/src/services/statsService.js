@@ -7,7 +7,7 @@ import { cargarMapaCategorias } from "./categoriasService";
  * @param {string} userId - UID del usuario actual
  * @param {string} grupoId - ID del grupo activo
  * @param {string} periodo - "mes" | "global"
- * @returns {Promise<{ stats: Array, totalDias: number, ranking: Array }>}
+ * @returns {Promise<{ stats: Array, totalDias: number, ranking: Array, misAsistencias: Array }>}
  */
 export const calcularStats = async (userId, grupoId, periodo) => {
   const [{ misAsistencias, todasAsistencias }, mapaCategorias] = await Promise.all([
@@ -83,5 +83,5 @@ export const calcularStats = async (userId, grupoId, periodo) => {
     .map((u) => ({ nombre: u.nombre, dias: u.dias.size, categorias: u.categorias }))
     .sort((a, b) => b.dias - a.dias);
 
-  return { stats, totalDias: diasQueCuentan.size, ranking };
+  return { stats, totalDias: diasQueCuentan.size, ranking, misAsistencias: misAsisDocs };
 };

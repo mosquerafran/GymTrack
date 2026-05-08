@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { calcularStats } from "../services/statsService";
-import { BarChart, Users, Award, Calendar } from "lucide-react";
+import { calcularMedallas } from "../services/gamificationService";
+import { BarChart as BarChartIcon, Users, Award, Calendar, Flame } from "lucide-react";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+
+const COLORS = ['#f97316', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f43f5e', '#eab308'];
 
 export default function Stats({ user, grupoId }) {
   const [stats, setStats] = useState([]);
   const [totalDias, setTotalDias] = useState(0);
   const [ranking, setRanking] = useState([]);
+  const [medallas, setMedallas] = useState([]);
   const [periodo, setPeriodo] = useState("mes"); // "mes" | "global"
   const [loading, setLoading] = useState(true);
 
@@ -20,11 +25,23 @@ export default function Stats({ user, grupoId }) {
       setStats(resultado.stats);
       setTotalDias(resultado.totalDias);
       setRanking(resultado.ranking);
+      // Las medallas siempre las calculamos con el histórico global para no perderlas
+      if (tipoPeriodo === "global") {
+        setMedallas(calcularMedallas(resultado.misAsistencias));
+      } else {
+        const hist = await calcularStats(user.uid, grupoId, "global");
+        setMedallas(calcularMedallas(hist.misAsistencias));
+      }
     } catch (e) {
       console.error("Error cargando stats:", e);
     }
     setLoading(false);
   };
+
+  const dataPie = stats.filter(s => s.valor > 0).map(s => ({
+    name: s.nombre,
+    value: s.valor
+  }));
 
   if (loading) return (
     <div className="flex justify-center py-20">
@@ -33,7 +50,7 @@ export default function Stats({ user, grupoId }) {
   );
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in pb-20">
       <div className="flex justify-center md:justify-end mb-4">
         <div className="flex bg-surfaceHighlight p-1 rounded-xl shadow-inner border border-borderBase">
           {[
@@ -51,22 +68,84 @@ export default function Stats({ user, grupoId }) {
         </div>
       </div>
 
-      {/* Mis estadísticas */}
+      {/* Perfil & Medallas */}
+      <div className="glass-panel p-6 md:p-8">
+        <h2 className="text-xl font-bold text-textMain mb-4 flex items-center gap-2">
+          <Award className="text-yellow-500" /> Tus Logros
+        </h2>
+        {medallas.length === 0 ? (
+          <p className="text-textMuted text-sm">Entrená para desbloquear medallas.</p>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            {medallas.map(m => (
+              <div key={m.id} title={m.descripcion} className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${m.color} animate-scale-up cursor-help`}>
+                <span className="text-2xl">{m.icono}</span>
+                <div className="flex flex-col">
+                  <span className="font-bold text-sm leading-none">{m.nombre}</span>
+                  <span className="text-[10px] opacity-80">{m.descripcion}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Mis estadísticas Visuales */}
       <div className="glass-panel p-6 md:p-8">
         <h2 className="text-2xl font-bold text-textMain mb-6 flex items-center gap-2 border-b border-borderBase pb-4">
-          <BarChart className="text-primary" /> Tus estadísticas 💪
+          <BarChartIcon className="text-primary" /> Tus estadísticas 💪
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 text-center shadow-inner">
-            <div className="text-4xl font-black text-primary mb-1">{totalDias}</div>
-            <div className="text-textMuted text-sm font-medium uppercase tracking-wider">Días Entrenados</div>
-          </div>
-          {stats.map((s) => (
-            <div className="bg-surfaceHighlight/50 border border-borderBase rounded-xl p-4 text-center transition-all hover:bg-surfaceHighlight" key={s.nombre}>
-              <div className="text-3xl font-bold text-textMain mb-1">{s.valor}</div>
-              <div className="text-textMuted text-sm font-medium uppercase tracking-wider truncate">{s.nombre}</div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Números */}
+          <div className="grid grid-cols-2 gap-4 h-fit">
+            <div className="col-span-2 bg-primary/10 border border-primary/20 rounded-xl p-4 text-center shadow-inner">
+              <div className="text-4xl font-black text-primary mb-1">{totalDias}</div>
+              <div className="text-textMuted text-sm font-medium uppercase tracking-wider">Días Entrenados</div>
             </div>
-          ))}
+            {stats.filter(s => s.valor > 0).map((s) => (
+              <div className="bg-surfaceHighlight/50 border border-borderBase rounded-xl p-4 text-center transition-all hover:bg-surfaceHighlight" key={s.nombre}>
+                <div className="text-3xl font-bold text-textMain mb-1">{s.valor}</div>
+                <div className="text-textMuted text-xs font-medium uppercase tracking-wider truncate">{s.nombre}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Gráfico */}
+          {dataPie.length > 0 && (
+            <div className="bg-surfaceHighlight/20 border border-borderBase rounded-xl p-4 flex flex-col items-center justify-center min-h-[300px]">
+              <h3 className="text-sm font-bold text-textMuted mb-2">Distribución de Entrenamiento</h3>
+              <ResponsiveContainer w="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={dataPie}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {dataPie.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '8px' }}
+                    itemStyle={{ color: 'var(--color-text-main)' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap justify-center gap-2 mt-2">
+                {dataPie.map((entry, index) => (
+                  <div key={entry.name} className="flex items-center gap-1 text-xs text-textMuted">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                    {entry.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
