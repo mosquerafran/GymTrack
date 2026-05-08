@@ -1,14 +1,24 @@
 import { useEffect, useState } from "react";
 import { cargarFeedGlobal, toggleLike } from "../services/asistenciasService";
+import { cargarMapaCategorias } from "../services/categoriasService";
 import { Flame, Clock, Dumbbell, MessageSquare } from "lucide-react";
 
 export default function Feed({ grupoId, user }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [mapaCat, setMapaCat] = useState({});
 
   useEffect(() => {
-    if (grupoId) cargarMuro();
+    if (grupoId) {
+      cargarMuro();
+      cargarNombres();
+    }
   }, [grupoId]);
+
+  const cargarNombres = async () => {
+    const mapa = await cargarMapaCategorias();
+    setMapaCat(mapa);
+  };
 
   const cargarMuro = async () => {
     setLoading(true);
@@ -87,8 +97,8 @@ export default function Feed({ grupoId, user }) {
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-surfaceHighlight text-textMain border border-borderBase">
-                    {post.categoriaId} {/* Idealmente acá diría el nombre de la cat, pero usamos el ID por simpleza visual */}
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    {mapaCat[post.categoriaId]?.nombre || "Entrenamiento"}
                   </span>
                 </div>
 
