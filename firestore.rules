@@ -1,18 +1,62 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Permitir todo a cualquier usuario autenticado
-    // (Ideal para desarrollo entre amigos)
-    match /{document=**} {
-      allow read, write: if request.auth != null;
-    }
-    
-    // REGLAS ESPECÍFICAS (Opcional, pero para mantener orden)
-    // Usuarios (Consolidado de usuariosPendientes y usuariosPermitidos)
+
+    // ── Usuarios ─────────────────────────────────────────────────────────────
+    // Cualquier usuario autenticado puede leer.
+    // Solo puede escribir su propio documento (identificado por email).
     match /usuarios/{email} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null
+                   && request.auth.token.email == email;
+    }
+
+    // ── Categorías ────────────────────────────────────────────────────────────
+    // Puede leer y escribir solo sus propias categorías.
+    // Al leer, todos los autenticados pueden leer (necesario para stats grupales).
+    match /categorias/{catId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth != null
+                            && request.auth.uid == resource.data.userId;
+    }
+
+    // ── Asistencias ────────────────────────────────────────────────────────────
+    // Cualquier autenticado puede leer (necesario para el ranking grupal).
+    // Solo puede crear sus propios registros.
+    // Solo puede borrar sus propios registros.
+    match /asistencias/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.auth.uid == request.resource.data.userId;
+      allow delete: if request.auth != null
+                    && request.auth.uid == resource.data.userId;
+      allow update: if false; // No se editan asistencias, solo se crean o borran
+    }
+
+    // ── Grupos ────────────────────────────────────────────────────────────────
+    // Cualquier autenticado puede leer y actualizar grupos.
+    // (Unirse a un grupo = updateDoc con el propio email)
+    // Solo puede crear grupos un usuario autenticado.
+    match /grupos/{grupoId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+                    && request.auth.token.email == request.resource.data.adminEmail;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null
+                    && request.auth.token.email == resource.data.adminEmail;
+    }
+
+    // ── Colecciones legacy (solo lectura para migración) ──────────────────────
+    match /usuariosPendientes/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /usuariosPermitidos/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
     }
   }
 }
