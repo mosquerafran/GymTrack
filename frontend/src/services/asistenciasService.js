@@ -7,10 +7,13 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  getDoc,
   updateDoc,
   arrayUnion,
   arrayRemove
 } from "firebase/firestore";
+import { storage } from "../config/firebase";
+import { ref, deleteObject } from "firebase/storage";
 
 /**
  * Guarda un entrenamiento en Firestore.
@@ -133,7 +136,25 @@ export const cargarAsistenciasParaStats = async (grupoId, userId) => {
  * Elimina un documento de asistencia.
  */
 export const eliminarAsistencia = async (docId) => {
-  await deleteDoc(doc(db, "asistencias", docId));
+  const docRef = doc(db, "asistencias", docId);
+  
+  // 1. Intentamos obtener la URL de la imagen antes de borrar el documento
+  try {
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.imagenUrl) {
+        // 2. Si hay foto, la borramos del Storage
+        const fotoRef = ref(storage, data.imagenUrl);
+        await deleteObject(fotoRef).catch(e => console.warn("La foto ya no existía en Storage o hubo un error:", e));
+      }
+    }
+  } catch (e) {
+    console.error("Error al obtener datos para borrar foto:", e);
+  }
+
+  // 3. Borramos el documento de Firestore
+  await deleteDoc(docRef);
 };
 
 /**
