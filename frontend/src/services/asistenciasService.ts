@@ -85,9 +85,10 @@ export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): 
     if (!mapa[fechaKey][usr]) mapa[fechaKey][usr] = [];
 
     mapa[fechaKey][usr].push({
+      ...data,
       docId: document.id,
-      catId: data.categoriaId,
-      notas: data.notas || "",
+      id: document.id, // Para compatibilidad
+      catId: data.categoriaId, // Para compatibilidad con el código existente en DiaDetalle
     });
   });
 
