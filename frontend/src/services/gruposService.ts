@@ -42,7 +42,7 @@ export const cargarGruposDeUsuario = async (user: FirebaseUser): Promise<Grupo[]
       const missing = MIEMBROS_MILLER.filter((m) => !currentMiembros.includes(m));
       if (missing.length > 0) {
         await updateDoc(doc(db, "grupos", millerDoc.id), {
-          miembros: [...new Set([...currentMiembros, ...MIEMBROS_MILLER])],
+          miembros: Array.from(new Set([...currentMiembros, ...MIEMBROS_MILLER])),
         });
       }
     }
