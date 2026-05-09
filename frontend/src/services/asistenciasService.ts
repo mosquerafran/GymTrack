@@ -18,6 +18,8 @@ import { storage } from "../config/firebase";
 import { ref, deleteObject } from "firebase/storage";
 import { Asistencia, EjercicioRutina } from "../types";
 
+export type AsistenciasMapa = Record<string, Record<string, any[]>>;
+
 interface GuardarAsistenciaParams {
   userId: string;
   userName: string;
@@ -54,9 +56,9 @@ export const guardarAsistencia = async ({ userId, userName, fecha, categoriaId, 
 
 /**
  * Carga todas las asistencias de un mes para un grupo.
- * @returns {Promise<object>} Mapa { "YYYY-MM-DD": { userName: [{ docId, catId, notas }] } }
+ * @returns {Promise<AsistenciasMapa>} Mapa { "YYYY-MM-DD": { userName: [{ docId, catId, notas }] } }
  */
-export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): Promise<Record<string, Record<string, any[]>>> => {
+export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): Promise<AsistenciasMapa> => {
   const inicioMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
   const finMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0);
 
