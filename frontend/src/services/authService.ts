@@ -109,7 +109,7 @@ export const obtenerUsuarios = async (): Promise<{pendientes: Usuario[], aprobad
   const pendientes: Usuario[] = [];
   const aprobados: Usuario[] = [];
   snap.forEach((d) => {
-    const data = { id: d.id, ...d.data() } as any;
+    const data = { ...d.data(), id: d.id } as any;
     if (data.estado === "pendiente") pendientes.push(data as Usuario);
     else if (data.estado === "aprobado") aprobados.push(data as Usuario);
   });

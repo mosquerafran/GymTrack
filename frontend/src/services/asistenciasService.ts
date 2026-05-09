@@ -190,7 +190,7 @@ export const cargarFeedGlobal = async (grupoId: string): Promise<Asistencia[]> =
   const posts: Asistencia[] = [];
   
   snap.forEach((document) => {
-    posts.push({ id: document.id, ...document.data() } as Asistencia);
+    posts.push({ ...document.data(), id: document.id } as Asistencia);
   });
 
   // Ordenar en el cliente (más reciente primero)

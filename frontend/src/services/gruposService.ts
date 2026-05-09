@@ -90,7 +90,7 @@ export const unirseConCodigo = async (codigo: string, userEmail: string): Promis
     miembros: nuevosMiembros,
   });
 
-  return { id: grupoDoc.id, ...data, miembros: nuevosMiembros };
+  return { ...data, id: grupoDoc.id, miembros: nuevosMiembros } as Grupo;
 };
 
 /**
