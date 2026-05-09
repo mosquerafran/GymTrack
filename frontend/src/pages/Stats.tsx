@@ -2,14 +2,12 @@ import React, { useEffect, useState } from "react";
 import { User } from "firebase/auth";
 import { calcularStats, RankingUser, StatsData } from "../services/statsService";
 import { calcularMedallas } from "../services/gamificationService";
-import { BarChart as BarChartIcon, Award, TrendingUp, Zap } from "lucide-react";
+import { Award, TrendingUp, Crown } from "lucide-react";
 import { 
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, 
-  BarChart, Bar, XAxis, YAxis
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer 
 } from "recharts";
 import { StatItem, Medalla } from "../types";
 
-const PRIMARY_COLOR = 'var(--color-primary)';
 const SECONDARY_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 
 interface StatsProps {
@@ -54,16 +52,10 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
     value: s.valor
   }));
 
-  const dataRanking = ranking.slice(0, 5).map(usr => ({
-    name: usr.nombre.split(' ')[0],
-    dias: usr.dias,
-    fullName: usr.nombre
-  }));
-
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-40 gap-4">
-      <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      <p className="text-textMuted text-sm font-medium">Cargando estadísticas...</p>
+      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <p className="text-textMuted text-xs font-medium">Cargando...</p>
     </div>
   );
 
@@ -73,7 +65,7 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-borderBase pb-6">
         <div>
           <h1 className="text-3xl font-bold text-textMain tracking-tight">Estadísticas</h1>
-          <p className="text-textMuted text-sm">Resumen de tu actividad y progreso.</p>
+          <p className="text-textMuted text-sm">Tu progreso {periodo === "mes" ? "de este mes" : "histórico"}.</p>
         </div>
         <div className="flex bg-surfaceHighlight p-1 rounded-lg border border-borderBase">
           {(["mes", "global"] as const).map((id) => (
@@ -88,24 +80,22 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
         </div>
       </div>
 
-      {/* Main Stats Grid */}
+      {/* Main Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Days Count Card */}
-        <div className="md:col-span-1 glass-panel p-8 flex flex-col items-center justify-center border-none bg-primary/5">
-          <span className="text-5xl font-black text-primary mb-2">{totalDias}</span>
-          <span className="text-xs font-bold text-textMuted uppercase tracking-widest text-center">Días de Entrenamiento</span>
+        <div className="md:col-span-1 glass-panel p-8 flex flex-col items-center justify-center border-none bg-primary/5 rounded-2xl">
+          <span className="text-6xl font-black text-primary mb-1 tracking-tighter">{totalDias}</span>
+          <span className="text-[10px] font-black text-textMuted uppercase tracking-[0.2em] text-center">Días Totales</span>
         </div>
 
-        {/* Charts Summary */}
-        <div className="md:col-span-2 glass-panel p-6 flex flex-col md:flex-row items-center gap-8 border-none bg-surfaceHighlight/30">
-          <div className="w-40 h-40 shrink-0">
+        <div className="md:col-span-2 glass-panel p-6 flex flex-col md:flex-row items-center gap-10 border-none bg-surfaceHighlight/30 rounded-2xl">
+          <div className="w-36 h-36 shrink-0 relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={dataPie}
-                  innerRadius={50}
-                  outerRadius={70}
-                  paddingAngle={4}
+                  innerRadius={45}
+                  outerRadius={65}
+                  paddingAngle={5}
                   dataKey="value"
                   stroke="none"
                 >
@@ -114,103 +104,85 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
                   ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--color-surface)', border: 'none', borderRadius: '12px', boxShadow: 'var(--shadow-premium)', fontSize: '12px' }}
+                  contentStyle={{ backgroundColor: 'var(--color-surface)', border: 'none', borderRadius: '12px', boxShadow: 'var(--shadow-premium)', fontSize: '11px' }}
                 />
               </PieChart>
             </ResponsiveContainer>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <TrendingUp size={20} className="text-textMuted opacity-20" />
+            </div>
           </div>
-          <div className="flex-1 grid grid-cols-2 gap-4 w-full">
+          <div className="flex-1 grid grid-cols-2 gap-x-8 gap-y-4 w-full">
             {stats.filter(s => s.valor > 0).slice(0, 4).map((s, idx) => (
-              <div key={s.nombre} className="space-y-1">
+              <div key={s.nombre} className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: SECONDARY_COLORS[idx % SECONDARY_COLORS.length] }} />
-                  <span className="text-xs font-medium text-textMuted uppercase">{s.nombre}</span>
+                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: SECONDARY_COLORS[idx % SECONDARY_COLORS.length] }} />
+                  <span className="text-[10px] font-bold text-textMuted uppercase tracking-wider">{s.nombre}</span>
                 </div>
-                <p className="text-lg font-bold text-textMain pl-4">{s.valor}</p>
+                <p className="text-xl font-black text-textMain pl-3.5">{s.valor}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Ranking & Medals Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        {/* Ranking List */}
-        <div className="space-y-6">
-          <h2 className="text-sm font-black text-textMuted uppercase tracking-widest flex items-center gap-2">
-            <TrendingUp size={16} className="text-primary" /> Top 5 Miembros
+      {/* Details Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+        {/* Simplified Ranking */}
+        <div className="space-y-8">
+          <h2 className="text-[10px] font-black text-textMuted uppercase tracking-[0.3em] flex items-center gap-2">
+            <TrendingUp size={14} className="text-primary" /> Ranking Miembros
           </h2>
-          <div className="space-y-4">
-            {ranking.slice(0, 5).map((usr, idx) => (
-              <div key={usr.nombre} className="flex items-center justify-between group">
+          <div className="space-y-3">
+            {ranking.slice(0, 8).map((usr, idx) => (
+              <div key={usr.nombre} className={`flex items-center justify-between p-3 rounded-2xl transition-all ${idx === 0 ? "bg-primary/10 border border-primary/20 shadow-sm" : "hover:bg-surfaceHighlight/50"}`}>
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-black text-textMuted w-4">{idx + 1}.</span>
-                  <div className="w-10 h-10 rounded-full bg-surfaceHighlight border border-borderBase flex items-center justify-center text-xs font-bold text-textMain group-hover:border-primary transition-colors">
-                    {usr.nombre.charAt(0).toUpperCase()}
+                  <div className="relative">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-black border transition-all ${idx === 0 ? "bg-primary text-white border-transparent" : "bg-surfaceHighlight border-borderBase text-textMain"}`}>
+                      {usr.nombre.charAt(0).toUpperCase()}
+                    </div>
+                    {idx === 0 && (
+                      <div className="absolute -top-2 -right-1 text-yellow-500 animate-bounce">
+                        <Crown size={14} fill="currentColor" />
+                      </div>
+                    )}
                   </div>
-                  <span className="text-sm font-bold text-textMain">{usr.nombre}</span>
+                  <div>
+                    <span className={`text-sm font-bold ${idx === 0 ? "text-textMain" : "text-textMuted"}`}>{usr.nombre}</span>
+                    {idx === 0 && <p className="text-[9px] font-black text-primary uppercase tracking-widest mt-0.5">Líder Actual</p>}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-primary">{usr.dias}</span>
-                  <span className="text-[10px] font-bold text-textMuted uppercase">Días</span>
+                <div className="flex items-baseline gap-1">
+                  <span className={`text-lg font-black ${idx === 0 ? "text-primary" : "text-textMain"}`}>{usr.dias}</span>
+                  <span className="text-[9px] font-bold text-textMuted uppercase tracking-tighter">Días</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Medals Grid */}
-        <div className="space-y-6">
-          <h2 className="text-sm font-black text-textMuted uppercase tracking-widest flex items-center gap-2">
-            <Award size={16} className="text-primary" /> Medallas
+        {/* Simplified Medals */}
+        <div className="space-y-8">
+          <h2 className="text-[10px] font-black text-textMuted uppercase tracking-[0.3em] flex items-center gap-2">
+            <Award size={14} className="text-primary" /> Logros Obtenidos
           </h2>
           {medallas.length === 0 ? (
-            <div className="p-8 border border-dashed border-borderBase rounded-2xl text-center">
-              <p className="text-xs text-textMuted italic italic">Entrená para ganar medallas.</p>
+            <div className="h-40 border border-dashed border-borderBase rounded-3xl flex items-center justify-center">
+              <p className="text-[10px] text-textMuted font-bold uppercase tracking-widest">Sin medallas aún</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4">
               {medallas.map(m => (
-                <div key={m.id} className="flex items-center gap-3 p-3 rounded-xl bg-surfaceHighlight/20 border border-borderBase/50 group hover:bg-surfaceHighlight/40 transition-all">
-                  <span className="text-2xl group-hover:scale-110 transition-transform">{m.icono}</span>
-                  <div className="overflow-hidden">
-                    <p className="text-xs font-bold text-textMain truncate">{m.nombre}</p>
-                    <p className="text-[9px] text-textMuted uppercase font-black tracking-tight">{m.descripcion}</p>
+                <div key={m.id} className="flex items-center gap-3 p-3 rounded-2xl bg-surfaceHighlight/30 border border-borderBase/40 group">
+                  <span className="text-2xl group-hover:scale-125 transition-transform duration-300">{m.icono}</span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-textMain truncate tracking-tight">{m.nombre}</p>
+                    <p className="text-[8px] text-textMuted uppercase font-black tracking-tighter opacity-70">{m.descripcion}</p>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Bar Chart Section */}
-      <div className="space-y-6 pt-6">
-        <h2 className="text-sm font-black text-textMuted uppercase tracking-widest flex items-center gap-2">
-          <Zap size={16} className="text-primary" /> Comparativa de Actividad
-        </h2>
-        <div className="h-[200px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dataRanking} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: 'var(--color-text-muted)', fontSize: 10, fontWeight: 'bold' }}
-              />
-              <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} />
-              <Tooltip 
-                cursor={{fill: 'var(--color-surface-highlight)', opacity: 0.4}}
-                contentStyle={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '12px' }}
-              />
-              <Bar 
-                dataKey="dias" 
-                fill={PRIMARY_COLOR} 
-                radius={[4, 4, 0, 0]} 
-                barSize={40}
-              />
-            </BarChart>
-          </ResponsiveContainer>
         </div>
       </div>
     </div>
