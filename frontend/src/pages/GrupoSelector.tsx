@@ -144,7 +144,7 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
           <div className="space-y-6">
             {/* Mode Selector Tabs */}
             <div className="flex bg-surface/50 backdrop-blur-md p-1.5 rounded-2xl border border-borderBase shadow-sm mb-2">
-              {[
+              {([
                 { id: "lista", icon: <Users size={18} />, label: "Mis Grupos" },
                 { id: "crear", icon: <Plus size={18} />, label: "Crear" },
                 { id: "unirse", icon: <KeyRound size={18} />, label: "Unirme" },
