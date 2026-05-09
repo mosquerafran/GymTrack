@@ -3,13 +3,10 @@ import { cargarFeedGlobal, toggleLike } from "../services/asistenciasService";
 import { cargarMapaCategorias } from "../services/categoriasService";
 import { Flame, Clock, Dumbbell, MessageSquare } from "lucide-react";
 
-const REACCIONES = ["🔥", "💪", "👏", "💯", "😮"];
-
 export default function Feed({ grupoId, user }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mapaCat, setMapaCat] = useState({});
-  const [showReactions, setShowReactions] = useState(null);
 
   useEffect(() => {
     if (grupoId) {
@@ -34,7 +31,7 @@ export default function Feed({ grupoId, user }) {
     setLoading(false);
   };
 
-  const handleReaccionar = async (postId) => {
+  const handleLike = async (postId) => {
     const post = posts.find(p => p.id === postId);
     const isLiked = post.likes?.includes(user.uid);
 
@@ -49,12 +46,10 @@ export default function Feed({ grupoId, user }) {
       return p;
     }));
 
-    setShowReactions(null);
-
     try {
       await toggleLike(postId, user.uid, isLiked);
     } catch (e) {
-      console.error("Error al reaccionar", e);
+      console.error("Error al dar like", e);
       cargarMuro();
     }
   };
@@ -92,7 +87,7 @@ export default function Feed({ grupoId, user }) {
 
             return (
               <div key={post.id} className="glass-panel border-none shadow-2xl overflow-hidden animate-slide-up bg-surface/40">
-                {/* Header: Avatar, Nombre y Cat */}
+                {/* Header */}
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-orange-600 p-0.5 shadow-lg">
@@ -112,10 +107,10 @@ export default function Feed({ grupoId, user }) {
                   </span>
                 </div>
 
-                {/* Foto o Placeholder */}
+                {/* Foto */}
                 {post.imagenUrl ? (
                   <div className="w-full bg-black aspect-square flex items-center justify-center overflow-hidden border-y border-borderBase/10">
-                    <img src={post.imagenUrl} alt="Entrenamiento" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                    <img src={post.imagenUrl} alt="Entrenamiento" className="w-full h-full object-cover" />
                   </div>
                 ) : (
                   <div className="h-24 bg-gradient-to-b from-surfaceHighlight/20 to-transparent flex items-center justify-center text-textMuted italic text-xs font-medium border-y border-borderBase/5">
@@ -123,9 +118,9 @@ export default function Feed({ grupoId, user }) {
                   </div>
                 )}
 
-                {/* Contenido Detallado */}
+                {/* Contenido */}
                 <div className="p-5 space-y-5">
-                  {/* Rutina Detallada */}
+                  {/* Rutina */}
                   {post.rutina && post.rutina.length > 0 && (
                     <div className="bg-surfaceHighlight/30 rounded-2xl p-4 border border-borderBase/30">
                       <div className="flex items-center gap-2 mb-3">
@@ -153,27 +148,15 @@ export default function Feed({ grupoId, user }) {
                     </div>
                   )}
 
-                  {/* Reacciones WhatsApp Style */}
-                  <div className="pt-2 flex items-center justify-between">
-                    <div className="relative">
-                      <button 
-                        onClick={() => handleReaccionar(post.id)}
-                        onMouseEnter={() => setShowReactions(post.id)}
-                        onMouseLeave={() => setShowReactions(null)}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all font-black text-sm tracking-wide ${hasLiked ? 'bg-orange-500 text-white shadow-xl shadow-orange-500/40 scale-105' : 'bg-surfaceHighlight text-textMain hover:bg-borderBase hover:scale-105'}`}
-                      >
-                        <Flame size={20} className={hasLiked ? 'fill-white' : ''} />
-                        {likesCount > 0 ? `${likesCount} Motivados` : "Motivar"}
-
-                        {showReactions === post.id && (
-                          <div className="absolute bottom-full left-0 mb-3 bg-surfaceHighlight/95 backdrop-blur-md border border-borderBase p-2 rounded-full shadow-2xl flex gap-3 animate-scale-up z-50">
-                            {REACCIONES.map(emoji => (
-                              <span key={emoji} className="text-2xl hover:scale-150 transition-transform cursor-pointer">{emoji}</span>
-                            ))}
-                          </div>
-                        )}
-                      </button>
-                    </div>
+                  {/* Like Simple */}
+                  <div className="pt-2">
+                    <button 
+                      onClick={() => handleLike(post.id)}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all font-black text-sm tracking-wide ${hasLiked ? 'bg-orange-500 text-white shadow-xl shadow-orange-500/40' : 'bg-surfaceHighlight text-textMain hover:bg-borderBase'}`}
+                    >
+                      <Flame size={20} className={hasLiked ? 'fill-white' : ''} />
+                      {likesCount > 0 ? `${likesCount} Motivados` : "Motivar"}
+                    </button>
                   </div>
                 </div>
               </div>
