@@ -1,4 +1,4 @@
-import { useState, Suspense, lazy } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "./config/firebase";
 
@@ -9,6 +9,7 @@ import { useTheme } from "./hooks/useTheme";
 import Login from "./components/Login";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
+import { Grupo } from "./types";
 
 // Lazy Loading
 const Stats = lazy(() => import("./pages/Stats"));
@@ -19,25 +20,25 @@ const Aprobaciones = lazy(() => import("./pages/Aprobaciones"));
 const GrupoSelector = lazy(() => import("./pages/GrupoSelector"));
 const Feed = lazy(() => import("./pages/Feed"));
 
-const Spinner = ({ size = "large" }) => (
+const Spinner = ({ size = "large" }: { size?: "small" | "large" }) => (
   <div className={`animate-spin rounded-full border-t-4 border-b-4 border-primary ${size === "large" ? "h-16 w-16" : "h-12 w-12"}`} />
 );
 
-export default function App() {
+export default function App(): React.ReactElement {
   const { user, estadoUsuario, loading, errorAuth, reintentar } = useAuth();
   const { grupoActivo, seleccionarGrupo, cambiarGrupo } = useGrupo(user, estadoUsuario);
   const { theme, toggleTheme } = useTheme();
 
-  const [view, setView] = useState("home");
-  const [fecha, setFecha] = useState(new Date());
-  const [fechaDetalle, setFechaDetalle] = useState(null);
+  const [view, setView] = useState<string>("home");
+  const [fecha, setFecha] = useState<Date>(new Date());
+  const [fechaDetalle, setFechaDetalle] = useState<Date | null>(null);
 
-  const abrirDetalle = (fecha) => {
-    setFechaDetalle(fecha);
+  const abrirDetalle = (f: Date) => {
+    setFechaDetalle(f);
     setView("dayDetail");
   };
 
-  const handleSeleccionarGrupo = (grupo) => {
+  const handleSeleccionarGrupo = (grupo: Grupo) => {
     seleccionarGrupo(grupo);
     setView("home");
   };
@@ -112,12 +113,12 @@ export default function App() {
   // ── App principal ──────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen pb-28 md:pb-20 max-w-5xl mx-auto transition-colors duration-300">
-      <Navbar
-        view={view} setView={setView}
-        user={user}
-        theme={theme} toggleTheme={toggleTheme}
-        grupoActivo={grupoActivo} onCambiarGrupo={cambiarGrupo}
-      />
+        <Navbar
+          view={view} setView={setView}
+          user={user}
+          theme={theme} toggleTheme={toggleTheme}
+          grupoActivo={grupoActivo!} onCambiarGrupo={cambiarGrupo}
+        />
 
       <main className="px-4 md:px-8 animate-fade-in relative min-h-[60vh]">
         <Suspense fallback={
@@ -128,15 +129,15 @@ export default function App() {
           {view === "home" && (
             <Home
               user={user} fecha={fecha} setFecha={setFecha}
-              abrirDetalle={abrirDetalle} grupoId={grupoActivo?.id} theme={theme}
+              abrirDetalle={abrirDetalle} grupoId={grupoActivo?.id || ""} theme={theme}
             />
           )}
-          {view === "feed" && <Feed user={user} grupoId={grupoActivo?.id} theme={theme} />}
-          {view === "stats" && <Stats user={user} grupoId={grupoActivo?.id} />}
+          {view === "feed" && <Feed grupoId={grupoActivo?.id || ""} />}
+          {view === "stats" && <Stats user={user} grupoId={grupoActivo?.id || ""} />}
           {view === "settings" && <Settings user={user} />}
-          {view === "admin" && <Admin user={user} grupoActivo={grupoActivo} setView={setView} />}
+          {view === "admin" && <Admin user={user} grupoActivo={grupoActivo!} setView={setView} />}
           {view === "aprobaciones" && <Aprobaciones user={user} />}
-          {view === "dayDetail" && <DiaDetalle fecha={fechaDetalle} user={user} grupoId={grupoActivo?.id} />}
+          {view === "dayDetail" && <DiaDetalle fecha={fechaDetalle as Date} user={user} grupoId={grupoActivo?.id || ""} />}
         </Suspense>
       </main>
     </div>

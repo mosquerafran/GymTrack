@@ -1,13 +1,21 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { User } from "firebase/auth";
 import { cargarMiembrosGrupo, agregarMiembro, eliminarMiembro } from "../services/gruposService";
 import { ShieldCheck, UserPlus, Trash2, Mail, UserCheck } from "lucide-react";
 import Swal from "sweetalert2";
 import { ADMIN_EMAIL } from "../config/constants";
+import { Grupo } from "../types";
 
-export default function Admin({ user, grupoActivo, setView }) {
-  const [miembros, setMiembros] = useState([]);
-  const [nuevoEmail, setNuevoEmail] = useState("");
-  const [loading, setLoading] = useState(true);
+interface AdminProps {
+  user: User;
+  grupoActivo: Grupo;
+  setView: (view: string) => void;
+}
+
+export default function Admin({ user, grupoActivo, setView }: AdminProps): React.ReactElement {
+  const [miembros, setMiembros] = useState<string[]>([]);
+  const [nuevoEmail, setNuevoEmail] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (grupoActivo) cargar();
@@ -16,7 +24,7 @@ export default function Admin({ user, grupoActivo, setView }) {
   const cargar = async () => {
     setLoading(true);
     try {
-      const lista = await cargarMiembrosGrupo(grupoActivo.id, grupoActivo.codigoInvitacion);
+      const lista = await cargarMiembrosGrupo(grupoActivo.id, grupoActivo.codigoInvitacion || "");
       setMiembros(lista);
     } catch (error) {
       console.error("Error al cargar miembros:", error);
@@ -24,7 +32,7 @@ export default function Admin({ user, grupoActivo, setView }) {
     setLoading(false);
   };
 
-  const handleAgregar = async (e) => {
+  const handleAgregar = async (e: React.FormEvent) => {
     e.preventDefault();
     const email = nuevoEmail.toLowerCase().trim();
     if (!email || !email.includes("@")) return;
@@ -44,7 +52,7 @@ export default function Admin({ user, grupoActivo, setView }) {
     }
   };
 
-  const handleEliminar = async (email) => {
+  const handleEliminar = async (email: string) => {
     if (email === ADMIN_EMAIL) return;
     const res = await Swal.fire({
       title: "¿Quitar del grupo?",
@@ -105,7 +113,7 @@ export default function Admin({ user, grupoActivo, setView }) {
         <div className="flex items-center justify-between mb-4 border-b border-borderBase pb-2">
           <h3 className="text-lg font-bold text-textMain">Miembros Actuales ({miembros.length})</h3>
           <div className="text-xs text-textMuted bg-surfaceHighlight px-2 py-1 rounded-lg font-mono">
-            Código: {grupoActivo?.codigoInvitacion}
+            Código: {grupoActivo.codigoInvitacion}
           </div>
         </div>
 

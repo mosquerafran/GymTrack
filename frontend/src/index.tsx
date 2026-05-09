@@ -2,6 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
+import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import reportWebVitals from "./reportWebVitals";
 import { initAuth } from "./config/firebase";
 import { BrowserRouter } from "react-router-dom";
@@ -23,4 +24,9 @@ async function start() {
 }
 
 start();
+
+// Registra el service worker para que la app funcione offline y cargue más rápido.
+// Cambia unregister() a register() a continuación.
+serviceWorkerRegistration.register();
+
 reportWebVitals();

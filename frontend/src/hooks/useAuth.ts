@@ -1,19 +1,18 @@
 import { useState, useEffect } from "react";
 import { auth } from "../config/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { verificarEstadoUsuario } from "../services/authService";
+import { EstadoUsuario } from "../types";
 
 /**
  * Hook que centraliza toda la lógica de autenticación.
  * Reemplaza la mayoría del código de App.js.
- *
- * @returns {{ user, estadoUsuario, loading, errorAuth, reintentar }}
  */
 export function useAuth() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [estadoUsuario, setEstadoUsuario] = useState(null); // null | "aprobado" | "pendiente" | "rechazado"
-  const [errorAuth, setErrorAuth] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [estadoUsuario, setEstadoUsuario] = useState<EstadoUsuario>(null);
+  const [errorAuth, setErrorAuth] = useState<string | null>(null);
 
   // Listener de Firebase Auth
   useEffect(() => {
@@ -33,13 +32,13 @@ export function useAuth() {
     _verificar(user);
   }, [user]);
 
-  const _verificar = async (u) => {
+  const _verificar = async (u: User) => {
     setErrorAuth(null);
     try {
       const estado = await verificarEstadoUsuario(u);
       setEstadoUsuario(estado);
       if (estado === "rechazado") await signOut(auth);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error verificando estado:", e);
       setErrorAuth(e.message || "Error de conexión con el servidor");
     }

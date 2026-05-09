@@ -1,16 +1,24 @@
+import React, { useEffect, useState } from "react";
 import { auth } from "../config/firebase";
-import { signOut } from "firebase/auth";
+import { signOut, User } from "firebase/auth";
 import { Users, Plus, KeyRound, LogOut, Sun, Moon, Copy, Check, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { cargarGruposDeUsuario, crearGrupo, unirseConCodigo } from "../services/gruposService";
+import { Grupo } from "../types";
 
-export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme }) {
-  const [grupos, setGrupos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modo, setModo] = useState("lista"); // lista | crear | unirse
-  const [nombreNuevo, setNombreNuevo] = useState("");
-  const [codigoInput, setCodigoInput] = useState("");
+interface GrupoSelectorProps {
+  user: User;
+  onSelectGrupo: (grupo: Grupo) => void;
+  theme: "dark" | "light";
+  toggleTheme: () => void;
+}
+
+export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme }: GrupoSelectorProps): React.ReactElement {
+  const [grupos, setGrupos] = useState<Grupo[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [modo, setModo] = useState<"lista" | "crear" | "unirse">("lista");
+  const [nombreNuevo, setNombreNuevo] = useState<string>("");
+  const [codigoInput, setCodigoInput] = useState<string>("");
 
   useEffect(() => {
     cargar();
@@ -27,9 +35,9 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
     setLoading(false);
   };
 
-  const handleCrearGrupo = async (e) => {
+  const handleCrearGrupo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombreNuevo.trim()) return;
+    if (!nombreNuevo.trim() || !user.email) return;
     try {
       await crearGrupo(nombreNuevo, user.email);
       Swal.fire({
@@ -50,9 +58,9 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
     }
   };
 
-  const handleUnirse = async (e) => {
+  const handleUnirse = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!codigoInput.trim()) return;
+    if (!codigoInput.trim() || !user.email) return;
     try {
       await unirseConCodigo(codigoInput, user.email);
       Swal.fire({
@@ -68,7 +76,7 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
       setCodigoInput("");
       setModo("lista");
       cargar();
-    } catch (e) {
+    } catch (e: any) {
       Swal.fire({
         title: e.message || "Error",
         icon: "error",
@@ -78,9 +86,9 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
     }
   };
 
-  const CodigoCopiable = ({ codigo }) => {
+  const CodigoCopiable = ({ codigo }: { codigo: string }) => {
     const [copiado, setCopiado] = useState(false);
-    const copiar = (e) => {
+    const copiar = (e: React.MouseEvent) => {
       e.stopPropagation();
       navigator.clipboard.writeText(codigo);
       setCopiado(true);
@@ -140,7 +148,7 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
                 { id: "lista", icon: <Users size={18} />, label: "Mis Grupos" },
                 { id: "crear", icon: <Plus size={18} />, label: "Crear" },
                 { id: "unirse", icon: <KeyRound size={18} />, label: "Unirme" },
-              ].map((tab) => (
+              ] as const.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setModo(tab.id)}

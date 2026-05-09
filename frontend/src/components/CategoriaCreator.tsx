@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { User } from "firebase/auth";
 import {
   cargarCategorias,
   crearCategoria,
@@ -8,14 +9,19 @@ import {
 } from "../services/categoriasService";
 import { Tag, Plus, CheckSquare, Trash2, Edit2, Check, X } from "lucide-react";
 import Swal from "sweetalert2";
+import { Categoria } from "../types";
 
-export default function CategoriaCreator({ user }) {
-  const [categorias, setCategorias] = useState([]);
-  const [nombre, setNombre] = useState("");
-  const [cuenta, setCuenta] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [editando, setEditando] = useState(null);
-  const [editNombre, setEditNombre] = useState("");
+interface CategoriaCreatorProps {
+  user: User;
+}
+
+export default function CategoriaCreator({ user }: CategoriaCreatorProps): React.ReactElement {
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [nombre, setNombre] = useState<string>("");
+  const [cuenta, setCuenta] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [editando, setEditando] = useState<string | null>(null);
+  const [editNombre, setEditNombre] = useState<string>("");
 
   useEffect(() => {
     if (user) cargar();
@@ -54,7 +60,7 @@ export default function CategoriaCreator({ user }) {
     }
   };
 
-  const handleEliminar = async (id, name) => {
+  const handleEliminar = async (id: string, name: string) => {
     const res = await Swal.fire({
       title: "¿Eliminar categoría?",
       text: `Se borrará "${name}". Esto no borrará tus entrenamientos pasados.`,
@@ -70,19 +76,19 @@ export default function CategoriaCreator({ user }) {
     }
   };
 
-  const iniciarEdicion = (cat) => {
-    setEditando(cat.id);
+  const iniciarEdicion = (cat: Categoria) => {
+    setEditando(cat.id || null);
     setEditNombre(cat.nombre);
   };
 
-  const guardarEdicion = async (id) => {
+  const guardarEdicion = async (id: string) => {
     if (!editNombre.trim()) return;
     await renombrarCategoria(id, editNombre);
     setEditando(null);
     cargar();
   };
 
-  const handleToggleCuenta = async (id, valor) => {
+  const handleToggleCuenta = async (id: string, valor: boolean) => {
     await toggleCuentaCategoria(id, valor);
     cargar();
   };
@@ -139,14 +145,14 @@ export default function CategoriaCreator({ user }) {
               <div key={cat.id} className="bg-surfaceHighlight/30 border border-borderBase rounded-xl p-4 flex items-center justify-between group">
                 <div className="flex-1 flex items-center gap-3">
                   <button
-                    onClick={() => handleToggleCuenta(cat.id, cat.cuenta)}
+                    onClick={() => handleToggleCuenta(cat.id!, cat.cuenta)}
                     className={`w-4 h-4 rounded-full border-2 transition-colors ${cat.cuenta ? "bg-primary border-primary" : "bg-transparent border-textMuted"}`}
                     title={cat.cuenta ? "Suma puntos" : "No suma puntos"}
                   />
                   {editando === cat.id ? (
                     <div className="flex-1 flex gap-2">
                       <input className="input-field py-1 text-sm flex-1" value={editNombre} onChange={(e) => setEditNombre(e.target.value)} autoFocus />
-                      <button onClick={() => guardarEdicion(cat.id)} className="text-green-500"><Check size={18} /></button>
+                      <button onClick={() => guardarEdicion(cat.id!)} className="text-green-500"><Check size={18} /></button>
                       <button onClick={() => setEditando(null)} className="text-red-500"><X size={18} /></button>
                     </div>
                   ) : (
@@ -158,7 +164,7 @@ export default function CategoriaCreator({ user }) {
                     <button onClick={() => iniciarEdicion(cat)} className="p-2 text-textMuted hover:text-primary transition-colors">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => handleEliminar(cat.id, cat.nombre)} className="p-2 text-textMuted hover:text-red-500 transition-colors">
+                    <button onClick={() => handleEliminar(cat.id!, cat.nombre)} className="p-2 text-textMuted hover:text-red-500 transition-colors">
                       <Trash2 size={16} />
                     </button>
                   </div>

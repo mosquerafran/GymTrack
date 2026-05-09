@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 
+type Theme = "dark" | "light";
+
 /**
  * Hook para gestionar el tema dark/light.
  * Persiste la preferencia en localStorage y aplica la clase al <html>.
- *
- * @returns {{ theme, toggleTheme }}
  */
 export function useTheme() {
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+  const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem("theme") as Theme) || "dark");
 
   useEffect(() => {
     if (theme === "dark") {

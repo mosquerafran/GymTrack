@@ -10,15 +10,29 @@ import {
   getDoc,
   updateDoc,
   arrayUnion,
-  arrayRemove
+  arrayRemove,
+  DocumentData,
+  QueryDocumentSnapshot
 } from "firebase/firestore";
 import { storage } from "../config/firebase";
 import { ref, deleteObject } from "firebase/storage";
+import { Asistencia, EjercicioRutina } from "../types";
+
+interface GuardarAsistenciaParams {
+  userId: string;
+  userName: string;
+  fecha: Date;
+  categoriaId: string;
+  notas?: string;
+  grupoId: string;
+  imagenUrl?: string | null;
+  rutina?: EjercicioRutina[];
+}
 
 /**
  * Guarda un entrenamiento en Firestore.
  */
-export const guardarAsistencia = async ({ userId, userName, fecha, categoriaId, notas, grupoId, imagenUrl = null, rutina = [] }) => {
+export const guardarAsistencia = async ({ userId, userName, fecha, categoriaId, notas, grupoId, imagenUrl = null, rutina = [] }: GuardarAsistenciaParams): Promise<void> => {
   const y = fecha.getFullYear();
   const m = String(fecha.getMonth() + 1).padStart(2, "0");
   const d = String(fecha.getDate()).padStart(2, "0");
@@ -42,7 +56,7 @@ export const guardarAsistencia = async ({ userId, userName, fecha, categoriaId, 
  * Carga todas las asistencias de un mes para un grupo.
  * @returns {Promise<object>} Mapa { "YYYY-MM-DD": { userName: [{ docId, catId, notas }] } }
  */
-export const cargarAsistenciasMes = async (grupoId, fechaActual) => {
+export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): Promise<Record<string, Record<string, any[]>>> => {
   const inicioMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
   const finMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0);
 
@@ -56,10 +70,10 @@ export const cargarAsistenciasMes = async (grupoId, fechaActual) => {
   );
 
   const snap = await getDocs(q);
-  const mapa = {};
+  const mapa: Record<string, Record<string, any[]>> = {};
 
   snap.forEach((document) => {
-    const data = document.data();
+    const data = document.data() as Asistencia;
     if (grupoId && data.grupoId && data.grupoId !== grupoId) return;
 
     const fechaKey = data.fecha;
@@ -82,7 +96,7 @@ export const cargarAsistenciasMes = async (grupoId, fechaActual) => {
  * Carga asistencias del mes solo del usuario (para el calendario personal).
  * @returns {Promise<object>} Mapa { "YYYY-MM-DD": [categoriaId] }
  */
-export const cargarAsistenciasMesUsuario = async (grupoId, userName, fechaActual) => {
+export const cargarAsistenciasMesUsuario = async (grupoId: string, userName: string, fechaActual: Date): Promise<Record<string, string[]>> => {
   const inicioMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
   const finMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0);
 
@@ -98,10 +112,10 @@ export const cargarAsistenciasMesUsuario = async (grupoId, userName, fechaActual
   );
 
   const snap = await getDocs(q);
-  const mapa = {};
+  const mapa: Record<string, string[]> = {};
 
   snap.forEach((document) => {
-    const data = document.data();
+    const data = document.data() as Asistencia;
     const fechaKey = data.fecha;
     if (!mapa[fechaKey]) mapa[fechaKey] = [];
     mapa[fechaKey].push(data.categoriaId);
@@ -113,7 +127,7 @@ export const cargarAsistenciasMesUsuario = async (grupoId, userName, fechaActual
 /**
  * Carga asistencias para estadísticas (con filtro de grupo y período).
  */
-export const cargarAsistenciasParaStats = async (grupoId, userId) => {
+export const cargarAsistenciasParaStats = async (grupoId: string, userId: string): Promise<{misAsistencias: QueryDocumentSnapshot<DocumentData>[], todasAsistencias: QueryDocumentSnapshot<DocumentData>[]}> => {
   const [snapMis, snapGlobal] = await Promise.all([
     getDocs(query(
       collection(db, "asistencias"),
@@ -135,14 +149,14 @@ export const cargarAsistenciasParaStats = async (grupoId, userId) => {
 /**
  * Elimina un documento de asistencia.
  */
-export const eliminarAsistencia = async (docId) => {
+export const eliminarAsistencia = async (docId: string): Promise<void> => {
   const docRef = doc(db, "asistencias", docId);
   
   // 1. Intentamos obtener la URL de la imagen antes de borrar el documento
   try {
     const snap = await getDoc(docRef);
     if (snap.exists()) {
-      const data = snap.data();
+      const data = snap.data() as Asistencia;
       if (data.imagenUrl) {
         // 2. Si hay foto, la borramos del Storage
         const fotoRef = ref(storage, data.imagenUrl);
@@ -161,7 +175,7 @@ export const eliminarAsistencia = async (docId) => {
  * Carga el Muro de Actividad (Feed Global del grupo)
  * Trae los últimos 20 entrenamientos ordenados por fecha/hora
  */
-export const cargarFeedGlobal = async (grupoId) => {
+export const cargarFeedGlobal = async (grupoId: string): Promise<Asistencia[]> => {
   const q = query(
     collection(db, "asistencias"),
     where("grupoId", "==", grupoId),
@@ -171,17 +185,17 @@ export const cargarFeedGlobal = async (grupoId) => {
   );
 
   const snap = await getDocs(q);
-  const posts = [];
+  const posts: Asistencia[] = [];
   
-  snap.forEach((doc) => {
-    posts.push({ id: doc.id, ...doc.data() });
+  snap.forEach((document) => {
+    posts.push({ id: document.id, ...document.data() } as Asistencia);
   });
 
   // Ordenar en el cliente (más reciente primero)
   return posts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 50);
 };
 
-export const toggleLike = async (docId, userId, isLiked) => {
+export const toggleLike = async (docId: string, userId: string, isLiked: boolean): Promise<void> => {
   const docRef = doc(db, "asistencias", docId);
   await updateDoc(docRef, {
     likes: isLiked ? arrayRemove(userId) : arrayUnion(userId)

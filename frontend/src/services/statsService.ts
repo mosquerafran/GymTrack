@@ -1,15 +1,25 @@
+import { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { cargarAsistenciasParaStats } from "./asistenciasService";
 import { cargarMapaCategorias } from "./categoriasService";
+import { StatItem, Asistencia } from "../types";
+
+export interface RankingUser {
+  nombre: string;
+  dias: number;
+  categorias: Record<string, number>;
+}
+
+export interface StatsData {
+  stats: StatItem[];
+  totalDias: number;
+  ranking: RankingUser[];
+  misAsistencias: QueryDocumentSnapshot<DocumentData>[];
+}
 
 /**
  * Calcula las estadísticas completas para la página Stats.
- *
- * @param {string} userId - UID del usuario actual
- * @param {string} grupoId - ID del grupo activo
- * @param {string} periodo - "mes" | "global"
- * @returns {Promise<{ stats: Array, totalDias: number, ranking: Array, misAsistencias: Array }>}
  */
-export const calcularStats = async (userId, grupoId, periodo) => {
+export const calcularStats = async (userId: string, grupoId: string, periodo: "mes" | "global"): Promise<StatsData> => {
   const [{ misAsistencias, todasAsistencias }, mapaCategorias] = await Promise.all([
     cargarAsistenciasParaStats(grupoId, userId),
     cargarMapaCategorias(),
@@ -25,17 +35,17 @@ export const calcularStats = async (userId, grupoId, periodo) => {
       .toISOString()
       .split("T")[0];
 
-    misAsisDocs = misAsisDocs.filter((d) => d.data().fecha >= inicioMes);
-    globalAsisDocs = globalAsisDocs.filter((d) => d.data().fecha >= inicioMes);
+    misAsisDocs = misAsisDocs.filter((d) => (d.data() as Asistencia).fecha >= inicioMes);
+    globalAsisDocs = globalAsisDocs.filter((d) => (d.data() as Asistencia).fecha >= inicioMes);
   }
 
   // Filtro adicional por grupo (documentos sin grupoId son legacy)
   if (grupoId) {
     misAsisDocs = misAsisDocs.filter(
-      (d) => !d.data().grupoId || d.data().grupoId === grupoId
+      (d) => !(d.data() as Asistencia).grupoId || (d.data() as Asistencia).grupoId === grupoId
     );
     globalAsisDocs = globalAsisDocs.filter(
-      (d) => !d.data().grupoId || d.data().grupoId === grupoId
+      (d) => !(d.data() as Asistencia).grupoId || (d.data() as Asistencia).grupoId === grupoId
     );
   }
 
@@ -44,27 +54,28 @@ export const calcularStats = async (userId, grupoId, periodo) => {
     (c) => c.userId === userId
   );
 
-  const conteo = {};
-  misCategorias.forEach((c) => (conteo[c.id] = 0));
-  const diasQueCuentan = new Set();
+  const conteo: Record<string, number> = {};
+  misCategorias.forEach((c) => (conteo[c.id!] = 0));
+  const diasQueCuentan = new Set<string>();
 
   misAsisDocs.forEach((document) => {
-    const data = document.data();
+    const data = document.data() as Asistencia;
     const cat = mapaCategorias[data.categoriaId];
     if (!cat) return;
-    if (conteo[cat.id] !== undefined) conteo[cat.id]++;
+    if (conteo[cat.id!] !== undefined) conteo[cat.id!]++;
     if (cat.cuenta) diasQueCuentan.add(data.fecha);
   });
 
-  const stats = misCategorias.map((c) => ({
+  const stats: StatItem[] = misCategorias.map((c) => ({
     nombre: c.nombre,
-    valor: conteo[c.id] || 0,
+    valor: conteo[c.id!] || 0,
   }));
 
   // ── Ranking global ─────────────────────────────────────────────────────────
-  const usuariosMap = {};
+  const usuariosMap: Record<string, { nombre: string; dias: Set<string>; categorias: Record<string, number> }> = {};
+  
   globalAsisDocs.forEach((document) => {
-    const data = document.data();
+    const data = document.data() as Asistencia;
     const cat = mapaCategorias[data.categoriaId];
     if (!cat) return;
 
@@ -79,7 +90,7 @@ export const calcularStats = async (userId, grupoId, periodo) => {
     if (cat.cuenta) usuariosMap[usr].dias.add(data.fecha);
   });
 
-  const ranking = Object.values(usuariosMap)
+  const ranking: RankingUser[] = Object.values(usuariosMap)
     .map((u) => ({ nombre: u.nombre, dias: u.dias.size, categorias: u.categorias }))
     .sort((a, b) => b.dias - a.dias);
 

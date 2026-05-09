@@ -1,15 +1,25 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { User } from "firebase/auth";
 import { db } from "../config/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { obtenerUsuarios } from "../services/authService";
 import { UserCheck, UserX, ShieldCheck, Clock } from "lucide-react";
 import Swal from "sweetalert2";
 import { ADMIN_EMAIL } from "../config/constants";
+import { Usuario } from "../types";
 
-export default function Aprobaciones({ user }) {
-  const [pendientes, setPendientes] = useState([]);
-  const [aprobados, setAprobados] = useState([]);
-  const [loading, setLoading] = useState(true);
+interface AprobacionesProps {
+  user: User;
+}
+
+interface UsuarioDoc extends Usuario {
+  id: string;
+}
+
+export default function Aprobaciones({ user }: AprobacionesProps): React.ReactElement {
+  const [pendientes, setPendientes] = useState<UsuarioDoc[]>([]);
+  const [aprobados, setAprobados] = useState<UsuarioDoc[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (user?.email === ADMIN_EMAIL) cargar();
@@ -19,15 +29,15 @@ export default function Aprobaciones({ user }) {
     setLoading(true);
     try {
       const { pendientes: pend, aprobados: apr } = await obtenerUsuarios();
-      setPendientes(pend);
-      setAprobados(apr);
+      setPendientes(pend as UsuarioDoc[]);
+      setAprobados(apr as UsuarioDoc[]);
     } catch (e) {
       console.error(e);
     }
     setLoading(false);
   };
 
-  const cambiarEstado = async (id, email, nuevoEstado) => {
+  const cambiarEstado = async (id: string, email: string, nuevoEstado: string) => {
     const accion = nuevoEstado === "aprobado" ? "aprobar" : "rechazar";
     const res = await Swal.fire({
       title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} a ${email}?`,

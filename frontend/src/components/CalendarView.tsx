@@ -1,15 +1,26 @@
-import Calendar from "react-calendar";
+import React from "react";
+import Calendar, { TileArgs } from "react-calendar";
 import "react-calendar/dist/Calendar.css";
+import { Categoria } from "../types";
 
-export default function CalendarView({ fecha, setFecha, entrenos, categoriasMap, onMonthChange, abrirDetalle }) {
-  const formatDate = (date) => {
+interface CalendarViewProps {
+  fecha: Date;
+  setFecha: (date: Date) => void;
+  entrenos: Record<string, string[]>;
+  categoriasMap: Record<string, Categoria>;
+  onMonthChange?: (date: Date) => void;
+  abrirDetalle?: (date: Date) => void;
+}
+
+export default function CalendarView({ fecha, setFecha, entrenos, categoriasMap, onMonthChange, abrirDetalle }: CalendarViewProps): React.ReactElement {
+  const formatDate = (date: Date): string => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
     const d = String(date.getDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
   };
 
-  const tileContent = ({ date, view }) => {
+  const tileContent = ({ date, view }: TileArgs) => {
     if (view === "month") {
       const dateStr = formatDate(date);
       const diaEntrenos = entrenos[dateStr];
@@ -24,7 +35,7 @@ export default function CalendarView({ fecha, setFecha, entrenos, categoriasMap,
     return null;
   };
 
-  const tileClassName = ({ date, view }) => {
+  const tileClassName = ({ date, view }: TileArgs) => {
     if (view === "month") {
       const dateStr = formatDate(date);
       if (entrenos[dateStr] && entrenos[dateStr].length > 0) {
@@ -34,7 +45,7 @@ export default function CalendarView({ fecha, setFecha, entrenos, categoriasMap,
     return "rounded-lg hover:bg-surfaceHighlight transition-colors";
   };
 
-  const handleClickDay = (value) => {
+  const handleClickDay = (value: Date) => {
     setFecha(value);
     if (abrirDetalle) abrirDetalle(value);
   };
@@ -48,11 +59,11 @@ export default function CalendarView({ fecha, setFecha, entrenos, categoriasMap,
       </div>
       <div className="custom-calendar-container">
         <Calendar
-          onChange={setFecha}
+          onChange={(val) => setFecha(val as Date)}
           value={fecha}
           onClickDay={handleClickDay}
           onActiveStartDateChange={({ activeStartDate }) => {
-            if (onMonthChange) onMonthChange(activeStartDate);
+            if (onMonthChange && activeStartDate) onMonthChange(activeStartDate);
           }}
           tileContent={tileContent}
           tileClassName={tileClassName}

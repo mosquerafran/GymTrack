@@ -1,25 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
+import { User } from "firebase/auth";
 import { cargarGrupoGuardado } from "../services/gruposService";
+import { Grupo, EstadoUsuario } from "../types";
 
 /**
  * Hook que centraliza la gestión del grupo activo.
- *
- * @param {object|null} user - Usuario de Firebase Auth
- * @param {string} estadoUsuario - Estado de acceso del usuario
- * @returns {{ grupoActivo, seleccionarGrupo, cambiarGrupo, cargandoGrupo }}
  */
-export function useGrupo(user, estadoUsuario) {
-  const [grupoActivo, setGrupoActivo] = useState(null);
-  const [cargandoGrupo, setCargandoGrupo] = useState(false);
+export function useGrupo(user: User | null, estadoUsuario: EstadoUsuario) {
+  const [grupoActivo, setGrupoActivo] = useState<Grupo | null>(null);
+  const [cargandoGrupo, setCargandoGrupo] = useState<boolean>(false);
 
   // Cargar grupo guardado cuando el usuario está aprobado
   useEffect(() => {
-    if (!user || estadoUsuario !== "aprobado") return;
+    if (!user || !user.email || estadoUsuario !== "aprobado") return;
 
     const cargar = async () => {
       setCargandoGrupo(true);
       try {
-        const grupo = await cargarGrupoGuardado(user.email);
+        const grupo = await cargarGrupoGuardado(user.email!);
         setGrupoActivo(grupo);
       } catch (e) {
         console.error("Error cargando grupo guardado:", e);
@@ -35,7 +33,7 @@ export function useGrupo(user, estadoUsuario) {
     if (!user) setGrupoActivo(null);
   }, [user]);
 
-  const seleccionarGrupo = useCallback((grupo) => {
+  const seleccionarGrupo = useCallback((grupo: Grupo) => {
     setGrupoActivo(grupo);
     localStorage.setItem("grupoActivo", grupo.id);
   }, []);

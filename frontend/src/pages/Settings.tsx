@@ -1,7 +1,13 @@
+import React from "react";
+import { User } from "firebase/auth";
 import CategoriaCreator from "../components/CategoriaCreator";
 import { Settings as SettingsIcon } from "lucide-react";
 
-export default function Settings({ user }) {
+interface SettingsProps {
+  user: User;
+}
+
+export default function Settings({ user }: SettingsProps): React.ReactElement {
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
       <div className="glass-panel p-6 border-b-4 border-b-accent">

@@ -1,15 +1,26 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { User } from "firebase/auth";
 import { chisteRandom } from "../config/constants";
 import { cargarAsistenciasMesUsuario } from "../services/asistenciasService";
 import { cargarMapaCategorias } from "../services/categoriasService";
+import { Categoria } from "../types";
 
 import CalendarView from "../components/CalendarView";
 import TrainingSelector from "../components/TrainingSelector";
 
-export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId, theme }) {
-  const [entrenos, setEntrenos] = useState({});
-  const [categoriasMap, setCategoriasMap] = useState({});
-  const [frase] = useState(() => chisteRandom());
+interface HomeProps {
+  fecha: Date;
+  setFecha: (date: Date) => void;
+  user: User;
+  abrirDetalle: (date: Date) => void;
+  grupoId: string;
+  theme: "dark" | "light";
+}
+
+export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId, theme }: HomeProps): React.ReactElement {
+  const [entrenos, setEntrenos] = useState<Record<string, string[]>>({});
+  const [categoriasMap, setCategoriasMap] = useState<Record<string, Categoria>>({});
+  const [frase] = useState<string>(() => chisteRandom());
 
   useEffect(() => {
     if (!user) return;
@@ -17,9 +28,9 @@ export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId, the
     cargarCategorias();
   }, [user]);
 
-  const cargarMes = async (fechaActual) => {
+  const cargarMes = async (fechaActual: Date) => {
     try {
-      const mapa = await cargarAsistenciasMesUsuario(grupoId, user.displayName, fechaActual);
+      const mapa = await cargarAsistenciasMesUsuario(grupoId, user.displayName || "Usuario", fechaActual);
       setEntrenos(mapa);
     } catch (err) {
       console.error("❌ Error cargando entrenos:", err);

@@ -1,13 +1,14 @@
+import React from "react";
 import { auth } from "../config/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import Swal from "sweetalert2";
 
-export default function Login() {
-  const loginGoogle = async () => {
+export default function Login(): React.ReactElement {
+  const loginGoogle = async (): Promise<void> => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error login Google:", error);
       Swal.fire({
         title: "Error",

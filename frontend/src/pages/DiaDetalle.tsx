@@ -1,23 +1,39 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { User } from "firebase/auth";
 import Calendar from "react-calendar";
 import Swal from "sweetalert2";
-import { cargarAsistenciasMes, eliminarAsistencia } from "../services/asistenciasService";
+import { cargarAsistenciasMes, eliminarAsistencia, AsistenciasMapa } from "../services/asistenciasService";
 import { cargarMapaCategorias } from "../services/categoriasService";
 import { Search, Calendar as CalendarIcon, X } from "lucide-react";
+import { Categoria } from "../types";
 
-const formatDate = (date) => {
+const formatDate = (date: Date): string => {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 };
 
-export default function DiaDetalle({ user, fecha: fechaProp, grupoId }) {
-  const [fecha, setFecha] = useState(fechaProp || new Date());
-  const [entrenos, setEntrenos] = useState({});
-  const [categoriasMap, setCategoriasMap] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [detalleDia, setDetalleDia] = useState({});
+interface DiaDetalleProps {
+  user: User;
+  fecha: Date;
+  grupoId: string;
+}
+
+interface DetalleItem {
+  docId: string;
+  nombre: string;
+  notas?: string;
+}
+
+type DetalleDia = Record<string, DetalleItem[]>;
+
+export default function DiaDetalle({ user, fecha: fechaProp, grupoId }: DiaDetalleProps): React.ReactElement {
+  const [fecha, setFecha] = useState<Date>(fechaProp || new Date());
+  const [entrenos, setEntrenos] = useState<AsistenciasMapa>({});
+  const [categoriasMap, setCategoriasMap] = useState<Record<string, Categoria>>({});
+  const [loading, setLoading] = useState<boolean>(true);
+  const [detalleDia, setDetalleDia] = useState<DetalleDia>({});
 
   useEffect(() => {
     const init = async () => {
@@ -35,12 +51,12 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId }) {
   useEffect(() => {
     const key = formatDate(fecha);
     const usuariosDia = entrenos[key] || {};
-    const detalle = {};
+    const detalle: DetalleDia = {};
 
     Object.entries(usuariosDia).forEach(([usr, items]) => {
       detalle[usr] = items.map((item) => ({
         docId: item.docId,
-        nombre: categoriasMap[item.catId]?.nombre || categoriasMap[item.catId] || "Sin categoría",
+        nombre: (categoriasMap[item.catId] as Categoria)?.nombre || "Sin categoría",
         notas: item.notas,
       }));
     });
@@ -48,14 +64,14 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId }) {
     setDetalleDia(detalle);
   }, [fecha, entrenos, categoriasMap]);
 
-  const mostrarEntrenos = (tiene) => {
+  const mostrarEntrenos = (tiene: any) => {
     let texto = "Nadie entrenó ese día";
     if (tiene) {
-      texto = Object.entries(tiene)
+      texto = Object.entries(tiene as Record<string, any[]>)
         .map(([usr, items]) => {
           const cats = items
             .map((item) => {
-              const catName = categoriasMap[item.catId]?.nombre || categoriasMap[item.catId] || "…";
+              const catName = (categoriasMap[item.catId] as Categoria)?.nombre || "…";
               return item.notas ? `${catName} (${item.notas})` : catName;
             })
             .join(", ");
@@ -73,7 +89,7 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId }) {
     });
   };
 
-  const handleEliminar = async (docId, nombreCategoria) => {
+  const handleEliminar = async (docId: string, nombreCategoria: string) => {
     const result = await Swal.fire({
       title: "¿Eliminar entrenamiento?",
       text: `Estás por borrar tu entrenamiento de ${nombreCategoria}. Esta acción no se puede deshacer.`,
@@ -108,11 +124,13 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId }) {
         </h2>
         <div className="custom-calendar-container">
           <Calendar
-            onChange={setFecha}
+            onChange={(val) => setFecha(val as Date)}
             value={fecha}
             onActiveStartDateChange={async ({ activeStartDate }) => {
-              const asistencias = await cargarAsistenciasMes(grupoId, activeStartDate);
-              setEntrenos(asistencias);
+              if (activeStartDate) {
+                const asistencias = await cargarAsistenciasMes(grupoId, activeStartDate);
+                setEntrenos(asistencias);
+              }
             }}
             tileContent={({ date, view }) => {
               if (view !== "month") return null;
@@ -121,7 +139,7 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId }) {
               hoy.setHours(0, 0, 0, 0);
               const esPasado = date < hoy;
               const tiene = entrenos[key];
-              let colorClass = null;
+              let colorClass = "";
               if (tiene && Object.keys(tiene).length > 0) colorClass = "bg-primary shadow-[0_0_8px_rgba(59,130,246,0.8)]";
               else if (esPasado) colorClass = "bg-red-500/50";
               else return null;

@@ -1,15 +1,26 @@
 import { auth } from "../config/firebase";
-import { signOut } from "firebase/auth";
-import { Home, BarChart2, Calendar, Settings, LogOut, Sun, Moon, ShieldCheck, ArrowLeftRight, Flame } from "lucide-react";
+import { signOut, User } from "firebase/auth";
+import { Home, BarChart2, Calendar, Settings, LogOut, Sun, Moon, ShieldCheck, ArrowLeftRight, Flame, LucideIcon } from "lucide-react";
 import { useStreak } from "../hooks/useStreak";
 import { ADMIN_EMAIL } from "../config/constants";
+import { Grupo } from "../types";
 
-export default function Navbar({ view, setView, user, theme, toggleTheme, grupoActivo, onCambiarGrupo }) {
+interface NavbarProps {
+  view: string;
+  setView: (view: string) => void;
+  user: User | null;
+  theme: "dark" | "light";
+  toggleTheme: () => void;
+  grupoActivo: Grupo | null;
+  onCambiarGrupo: () => void;
+}
+
+export default function Navbar({ view, setView, user, theme, toggleTheme, grupoActivo, onCambiarGrupo }: NavbarProps) {
   const streak = useStreak(user, grupoActivo);
 
   const logout = async () => { await signOut(auth); };
 
-  const NavButton = ({ targetView, icon: Icon, label }) => (
+  const NavButton = ({ targetView, icon: Icon, label }: { targetView: string, icon: LucideIcon, label: string }) => (
     <button
       onClick={() => setView(targetView)}
       className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl font-medium transition-all duration-300 ${

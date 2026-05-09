@@ -1,10 +1,11 @@
+import { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
+import { Medalla, Asistencia } from "../types";
+
 /**
  * Calcula las medallas (badges) de un usuario basándose en su historial de asistencias
- * @param {Array} asistencias Array de documentos de asistencia del usuario
- * @returns {Array} Array de objetos medalla { id, nombre, icono, descripcion, color }
  */
-export const calcularMedallas = (asistencias) => {
-  const medallas = [];
+export const calcularMedallas = (asistencias: QueryDocumentSnapshot<DocumentData>[]): Medalla[] => {
+  const medallas: Medalla[] = [];
   
   if (!asistencias || asistencias.length === 0) return medallas;
 
@@ -48,8 +49,9 @@ export const calcularMedallas = (asistencias) => {
   let nocturno = false;
 
   asistencias.forEach(a => {
-    if (a.data().timestamp) {
-      const hora = new Date(a.data().timestamp).getHours();
+    const data = a.data() as Asistencia;
+    if (data.timestamp) {
+      const hora = new Date(data.timestamp).getHours();
       if (hora < 8 && hora > 4) madrugador = true;
       if (hora >= 21 || hora <= 3) nocturno = true;
     }

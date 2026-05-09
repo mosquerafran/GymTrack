@@ -4,11 +4,8 @@ import imageCompression from "browser-image-compression";
 
 /**
  * Comprime y sube una imagen a Firebase Storage
- * @param {File} file Archivo de imagen
- * @param {string} userId ID del usuario
- * @returns {Promise<string>} URL de descarga de la imagen
  */
-export const subirFotoEntrenamiento = async (file, userId) => {
+export const subirFotoEntrenamiento = async (file: File, userId: string): Promise<string> => {
   try {
     // 1. Comprimir la imagen (Max 1MB, Max width/height 1024px)
     const options = {

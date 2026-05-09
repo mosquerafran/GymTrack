@@ -1,12 +1,17 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { cargarFeedGlobal } from "../services/asistenciasService";
 import { cargarMapaCategorias } from "../services/categoriasService";
 import { Clock, Dumbbell, MessageSquare, Calendar } from "lucide-react";
+import { Asistencia, Categoria } from "../types";
 
-export default function Feed({ grupoId }) {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [mapaCat, setMapaCat] = useState({});
+interface FeedProps {
+  grupoId: string;
+}
+
+export default function Feed({ grupoId }: FeedProps): React.ReactElement {
+  const [posts, setPosts] = useState<Asistencia[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [mapaCat, setMapaCat] = useState<Record<string, Categoria>>({});
 
   useEffect(() => {
     if (grupoId) {
@@ -24,14 +29,14 @@ export default function Feed({ grupoId }) {
     setLoading(true);
     try {
       const data = await cargarFeedGlobal(grupoId);
-      setPosts(data);
+      setPosts(data as Asistencia[]);
     } catch (e) {
       console.error(e);
     }
     setLoading(false);
   };
 
-  const formatTiempo = (timestamp, fechaStr) => {
+  const formatTiempo = (timestamp: number | undefined, fechaStr: string) => {
     // Si no hay timestamp, usamos la fecha guardada como string
     if (!timestamp) return fechaStr ? fechaStr.split('-').reverse().join('/') : "Sin fecha";
     
@@ -65,13 +70,13 @@ export default function Feed({ grupoId }) {
         <div className="space-y-6">
           {posts.map((post) => {
             return (
-              <div key={post.id} className="glass-panel border-none shadow-2xl overflow-hidden animate-slide-up bg-surface/40">
+              <div key={post.id || post.docId} className="glass-panel border-none shadow-2xl overflow-hidden animate-slide-up bg-surface/40">
                 {/* Header: Usuario, Fecha y Cat */}
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary/50 to-orange-600/50 p-0.5 shadow-lg">
                       <div className="w-full h-full rounded-full bg-surface flex items-center justify-center font-black text-textMain border-2 border-surface text-base">
-                        {post.userName.charAt(0).toUpperCase()}
+                        {post.userName?.charAt(0).toUpperCase()}
                       </div>
                     </div>
                     <div>
@@ -107,11 +112,14 @@ export default function Feed({ grupoId }) {
                         <span className="text-[11px] font-black uppercase text-textMuted tracking-widest">Detalle del Entrenamiento</span>
                       </div>
                       <div className="space-y-3">
-                        {post.rutina.map((ej, i) => (
+                        {post.rutina.map((ej: any, i) => (
                           <div key={i} className="flex justify-between items-center text-sm border-b border-borderBase/5 pb-2 last:border-0 last:pb-0">
                             <span className="font-bold text-textMain">{ej.nombre}</span>
                             <span className="text-primary font-black bg-primary/5 px-2 py-1 rounded text-xs">
-                              {ej.series}x{ej.reps} <span className="text-textMuted font-normal">@</span> {ej.peso}kg
+                              {/* Soporte para formato nuevo y legacy */}
+                              {ej.series && Array.isArray(ej.series) 
+                                ? `${ej.series.length} series` 
+                                : `${ej.series || 0}x${ej.reps || 0} @ ${ej.peso || 0}kg`}
                             </span>
                           </div>
                         ))}

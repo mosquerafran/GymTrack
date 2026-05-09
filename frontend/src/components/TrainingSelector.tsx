@@ -1,39 +1,48 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { User } from "firebase/auth";
 import { cargarCategoriasActivas } from "../services/categoriasService";
 import { guardarAsistencia } from "../services/asistenciasService";
 import { subirFotoEntrenamiento } from "../services/storageService";
 import { chisteRandom } from "../config/constants";
 import { PlusCircle, Calendar as CalendarIcon, Camera, Loader, Dumbbell, Trash2, ImagePlus } from "lucide-react";
 import Swal from "sweetalert2";
+import { Categoria, EjercicioRutina } from "../types";
 
-export default function TrainingSelector({ fecha, user, grupoId, theme }) {
-  const [categorias, setCategorias] = useState([]);
-  const [categoria, setCategoria] = useState("");
-  const [notas, setNotas] = useState("");
+interface TrainingSelectorProps {
+  fecha: Date;
+  user: User;
+  grupoId: string;
+  theme: "dark" | "light";
+}
+
+export default function TrainingSelector({ fecha, user, grupoId, theme }: TrainingSelectorProps): React.ReactElement {
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [categoria, setCategoria] = useState<string>("");
+  const [notas, setNotas] = useState<string>("");
   
   // Nuevos estados
-  const [foto, setFoto] = useState(null);
-  const [fotoPreview, setFotoPreview] = useState(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [rutina, setRutina] = useState([]);
-  const fileInputRef = useRef(null);
+  const [foto, setFoto] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [rutina, setRutina] = useState<EjercicioRutina[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (user) cargarCategorias();
+    if (user) loadCategorias();
   }, [user]);
 
-  const cargarCategorias = async () => {
+  const loadCategorias = async () => {
     try {
       const datos = await cargarCategoriasActivas(user.uid);
       setCategorias(datos);
-      if (datos.length) setCategoria(datos[0].id);
+      if (datos.length) setCategoria(datos[0].id || "");
     } catch (err) {
       console.error("Error cargando categorías:", err);
     }
   };
 
-  const handleFotoChange = (e) => {
-    const file = e.target.files[0];
+  const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       setFoto(file);
       setFotoPreview(URL.createObjectURL(file));
@@ -41,16 +50,21 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }) {
   };
 
   const agregarEjercicio = () => {
-    setRutina([...rutina, { nombre: "", series: 3, reps: 10, peso: 0 }]);
+    setRutina([...rutina, { nombre: "", series: [{ reps: 10, peso: 0 }] }]);
   };
 
-  const eliminarEjercicio = (index) => {
+  const eliminarEjercicio = (index: number) => {
     setRutina(rutina.filter((_, i) => i !== index));
   };
 
-  const actualizarEjercicio = (index, campo, valor) => {
+  const actualizarEjercicio = (index: number, campo: keyof EjercicioRutina | 'reps' | 'peso', valor: any) => {
     const nuevaRutina = [...rutina];
-    nuevaRutina[index][campo] = valor;
+    if (campo === 'reps' || campo === 'peso') {
+      // Simplificación para este MVP de tipos: asumimos una sola serie en el selector rápido
+      nuevaRutina[index].series[0] = { ...nuevaRutina[index].series[0], [campo]: valor };
+    } else if (campo === 'nombre') {
+      nuevaRutina[index].nombre = valor;
+    }
     setRutina(nuevaRutina);
   };
 
@@ -77,7 +91,7 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }) {
       // 3. Guardar en Firestore
       await guardarAsistencia({
         userId: user.uid,
-        userName: user.displayName,
+        userName: user.displayName || "Usuario",
         fecha,
         categoriaId: categoria,
         notas,
@@ -191,27 +205,20 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }) {
                 />
                 <input 
                   type="number" 
-                  placeholder="Series" 
+                  placeholder="Kg" 
                   className="bg-surface border border-borderBase rounded text-textMain w-16 text-center text-sm p-1"
-                  value={ej.series}
-                  onChange={(e) => actualizarEjercicio(index, "series", Number(e.target.value))}
+                  value={ej.series[0]?.peso || 0}
+                  onChange={(e) => actualizarEjercicio(index, "peso", Number(e.target.value))}
                 />
-                <span className="text-textMuted text-xs">x</span>
+                <span className="text-textMuted text-xs">Kg</span>
                 <input 
                   type="number" 
                   placeholder="Reps" 
                   className="bg-surface border border-borderBase rounded text-textMain w-16 text-center text-sm p-1"
-                  value={ej.reps}
+                  value={ej.series[0]?.reps || 0}
                   onChange={(e) => actualizarEjercicio(index, "reps", Number(e.target.value))}
                 />
-                <span className="text-textMuted text-xs">@</span>
-                <input 
-                  type="number" 
-                  placeholder="Kg" 
-                  className="bg-surface border border-borderBase rounded text-textMain w-16 text-center text-sm p-1"
-                  value={ej.peso}
-                  onChange={(e) => actualizarEjercicio(index, "peso", Number(e.target.value))}
-                />
+                <span className="text-textMuted text-xs">Reps</span>
                 <button onClick={() => eliminarEjercicio(index)} className="text-red-500 hover:text-red-400 p-1">
                   <Trash2 size={16} />
                 </button>

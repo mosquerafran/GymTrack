@@ -1,18 +1,15 @@
 import { useState, useEffect } from "react";
+import { User } from "firebase/auth";
 import { db } from "../config/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { Grupo, Asistencia } from "../types";
 
 /**
  * Hook que calcula la racha de días consecutivos de entrenamiento.
  * Usa onSnapshot para reactividad en tiempo real.
- * Extraído de Navbar.jsx donde estaba mezclado con la UI.
- *
- * @param {object|null} user - Usuario de Firebase Auth
- * @param {object|null} grupoActivo - Grupo activo del usuario
- * @returns {number} streak - Días consecutivos entrenados
  */
-export function useStreak(user, grupoActivo) {
-  const [streak, setStreak] = useState(0);
+export function useStreak(user: User | null, grupoActivo: Grupo | null) {
+  const [streak, setStreak] = useState<number>(0);
 
   useEffect(() => {
     if (!user || !grupoActivo) {
@@ -28,18 +25,19 @@ export function useStreak(user, grupoActivo) {
 
     const unsubscribe = onSnapshot(q, (snap) => {
       try {
-        const fechasSet = new Set();
-        snap.forEach((doc) => {
-          if (doc.data().fecha) fechasSet.add(doc.data().fecha);
+        const fechasSet = new Set<string>();
+        snap.forEach((document) => {
+          const data = document.data() as Asistencia;
+          if (data.fecha) fechasSet.add(data.fecha);
         });
 
-        const fechas = Array.from(fechasSet).sort((a, b) => b.localeCompare(a));
+        const fechas = Array.from(fechasSet).sort((a: string, b: string) => b.localeCompare(a));
         if (fechas.length === 0) {
           setStreak(0);
           return;
         }
 
-        const formatDate = (date) => {
+        const formatDate = (date: Date): string => {
           const y = date.getFullYear();
           const m = String(date.getMonth() + 1).padStart(2, "0");
           const d = String(date.getDate()).padStart(2, "0");
