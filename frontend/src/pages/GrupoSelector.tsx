@@ -148,7 +148,7 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
                 { id: "lista", icon: <Users size={18} />, label: "Mis Grupos" },
                 { id: "crear", icon: <Plus size={18} />, label: "Crear" },
                 { id: "unirse", icon: <KeyRound size={18} />, label: "Unirme" },
-              ] as const.map((tab) => (
+              ] as const).map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setModo(tab.id)}
