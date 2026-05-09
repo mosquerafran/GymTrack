@@ -197,6 +197,14 @@ export const cargarFeedGlobal = async (grupoId: string): Promise<Asistencia[]> =
   return posts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 50);
 };
 
+export const actualizarAsistencia = async (docId: string, data: Partial<Asistencia>): Promise<void> => {
+  const docRef = doc(db, "asistencias", docId);
+  await updateDoc(docRef, {
+    ...data,
+    timestampActualizacion: Date.now()
+  });
+};
+
 export const toggleLike = async (docId: string, userId: string, isLiked: boolean): Promise<void> => {
   const docRef = doc(db, "asistencias", docId);
   await updateDoc(docRef, {

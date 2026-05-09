@@ -103,35 +103,34 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
                 )}
 
                 {/* Contenido Detallado */}
-                <div className="p-5 space-y-5">
-                  {/* Rutina */}
+                <div className="p-5 space-y-4">
+                  {/* Notas / Mensaje Primero */}
+                  {post.notas && (
+                    <div className="flex gap-3 items-start bg-primary/5 p-4 rounded-2xl border border-primary/10 shadow-sm relative overflow-hidden group">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover:bg-primary transition-colors" />
+                      <MessageSquare size={18} className="text-primary mt-1 shrink-0" />
+                      <p className="text-sm text-textMain italic leading-relaxed font-medium">"{post.notas}"</p>
+                    </div>
+                  )}
+
+                  {/* Rutina / PRs después */}
                   {post.rutina && post.rutina.length > 0 && (
-                    <div className="bg-surfaceHighlight/30 rounded-2xl p-4 border border-borderBase/30 shadow-inner">
+                    <div className="bg-surfaceHighlight/20 rounded-2xl p-4 border border-borderBase/20">
                       <div className="flex items-center gap-2 mb-3">
-                        <Dumbbell size={16} className="text-primary" />
-                        <span className="text-[11px] font-black uppercase text-textMuted tracking-widest">Detalle del Entrenamiento</span>
+                        <Dumbbell size={14} className="text-textMuted" />
+                        <span className="text-[10px] font-black uppercase text-textMuted tracking-widest">PRs LOGRADOS</span>
                       </div>
-                      <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
                         {post.rutina.map((ej: any, i) => (
-                          <div key={i} className="flex justify-between items-center text-sm border-b border-borderBase/5 pb-2 last:border-0 last:pb-0">
+                          <div key={i} className="flex items-center gap-2 bg-surface p-2 rounded-xl border border-borderBase/40 text-xs shadow-sm">
                             <span className="font-bold text-textMain">{ej.nombre}</span>
-                            <span className="text-primary font-black bg-primary/5 px-2 py-1 rounded text-xs">
-                              {/* Soporte para formato nuevo y legacy */}
-                              {ej.series && Array.isArray(ej.series) 
-                                ? `${ej.series.length} series` 
-                                : `${ej.series || 0}x${ej.reps || 0} @ ${ej.peso || 0}kg`}
+                            <span className="text-primary font-black bg-primary/5 px-1.5 py-0.5 rounded">
+                              {ej.peso ? `${ej.peso}kg` : ""} {ej.reps ? `x ${ej.reps}` : ""}
+                              {ej.series && !ej.peso && !ej.reps ? `${ej.series.length} series` : ""}
                             </span>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Notas */}
-                  {post.notas && (
-                    <div className="flex gap-3 items-start bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10 shadow-sm">
-                      <MessageSquare size={18} className="text-blue-500 mt-1 shrink-0" />
-                      <p className="text-sm text-textMain italic leading-relaxed font-medium">"{post.notas}"</p>
                     </div>
                   )}
                 </div>

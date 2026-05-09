@@ -21,7 +21,9 @@ export interface Grupo {
 
 export interface EjercicioRutina {
   nombre: string;
-  series: { reps: string | number; peso: string | number }[];
+  peso?: number; // PR Peso
+  reps?: number; // PR Repeticiones
+  series?: { reps: string | number; peso: string | number }[];
 }
 
 export interface Asistencia {

@@ -137,7 +137,7 @@ export default function App(): React.ReactElement {
           {view === "settings" && <Settings user={user} />}
           {view === "admin" && <Admin user={user} grupoActivo={grupoActivo!} setView={setView} />}
           {view === "aprobaciones" && <Aprobaciones user={user} />}
-          {view === "dayDetail" && <DiaDetalle fecha={fechaDetalle as Date} user={user} grupoId={grupoActivo?.id || ""} />}
+          {view === "dayDetail" && <DiaDetalle fecha={fechaDetalle as Date} user={user} grupoId={grupoActivo?.id || ""} theme={theme} />}
         </Suspense>
       </main>
     </div>

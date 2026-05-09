@@ -1,26 +1,28 @@
 import React, { useState, useEffect, useRef } from "react";
 import { User } from "firebase/auth";
 import { cargarCategoriasActivas } from "../services/categoriasService";
-import { guardarAsistencia } from "../services/asistenciasService";
+import { guardarAsistencia, actualizarAsistencia } from "../services/asistenciasService";
 import { subirFotoEntrenamiento } from "../services/storageService";
 import { chisteRandom } from "../config/constants";
-import { PlusCircle, Calendar as CalendarIcon, Camera, Loader, Dumbbell, Trash2, ImagePlus } from "lucide-react";
+import { PlusCircle, Calendar as CalendarIcon, Camera, Loader, Dumbbell, Trash2, ImagePlus, Save } from "lucide-react";
 import Swal from "sweetalert2";
-import { Categoria, EjercicioRutina } from "../types";
+import { Categoria, EjercicioRutina, Asistencia } from "../types";
 
 interface TrainingSelectorProps {
   fecha: Date;
   user: User;
   grupoId: string;
   theme: "dark" | "light";
+  asistenciaAEditar?: Asistencia | null;
+  onCompletado?: () => void;
+  onCancelar?: () => void;
 }
 
-export default function TrainingSelector({ fecha, user, grupoId, theme }: TrainingSelectorProps): React.ReactElement {
+export default function TrainingSelector({ fecha, user, grupoId, theme, asistenciaAEditar, onCompletado, onCancelar }: TrainingSelectorProps): React.ReactElement {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [categoria, setCategoria] = useState<string>("");
   const [notas, setNotas] = useState<string>("");
   
-  // Nuevos estados
   const [foto, setFoto] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -29,13 +31,20 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
 
   useEffect(() => {
     if (user) loadCategorias();
-  }, [user]);
+    
+    if (asistenciaAEditar) {
+      setCategoria(asistenciaAEditar.categoriaId);
+      setNotas(asistenciaAEditar.notas || "");
+      setRutina(asistenciaAEditar.rutina || []);
+      if (asistenciaAEditar.imagenUrl) setFotoPreview(asistenciaAEditar.imagenUrl);
+    }
+  }, [user, asistenciaAEditar]);
 
   const loadCategorias = async () => {
     try {
       const datos = await cargarCategoriasActivas(user.uid);
       setCategorias(datos);
-      if (datos.length) setCategoria(datos[0].id || "");
+      if (datos.length && !asistenciaAEditar) setCategoria(datos[0].id || "");
     } catch (err) {
       console.error("Error cargando categorías:", err);
     }
@@ -50,21 +59,16 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
   };
 
   const agregarEjercicio = () => {
-    setRutina([...rutina, { nombre: "", series: [{ reps: 10, peso: 0 }] }]);
+    setRutina([...rutina, { nombre: "", peso: 0, reps: 0 }]);
   };
 
   const eliminarEjercicio = (index: number) => {
     setRutina(rutina.filter((_, i) => i !== index));
   };
 
-  const actualizarEjercicio = (index: number, campo: keyof EjercicioRutina | 'reps' | 'peso', valor: any) => {
+  const actualizarEjercicio = (index: number, campo: keyof EjercicioRutina, valor: any) => {
     const nuevaRutina = [...rutina];
-    if (campo === 'reps' || campo === 'peso') {
-      // Simplificación para este MVP de tipos: asumimos una sola serie en el selector rápido
-      nuevaRutina[index].series[0] = { ...nuevaRutina[index].series[0], [campo]: valor };
-    } else if (campo === 'nombre') {
-      nuevaRutina[index].nombre = valor;
-    }
+    nuevaRutina[index] = { ...nuevaRutina[index], [campo]: valor };
     setRutina(nuevaRutina);
   };
 
@@ -74,7 +78,7 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
       return;
     }
     
-    if (!foto) {
+    if (!foto && !asistenciaAEditar?.imagenUrl) {
       Swal.fire("¡Falta la foto!", "No hay foto, no hay gains. Subí una foto para registrar el entrenamiento.", "warning");
       return;
     }
@@ -82,40 +86,59 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
     setIsUploading(true);
 
     try {
-      // 1. Subir foto
-      const imagenUrl = await subirFotoEntrenamiento(foto, user.uid);
+      let imagenUrl = asistenciaAEditar?.imagenUrl || null;
+      
+      // 1. Subir foto si hay una nueva
+      if (foto) {
+        imagenUrl = await subirFotoEntrenamiento(foto, user.uid);
+      }
 
-      // 2. Filtrar ejercicios vacíos de la rutina
+      // 2. Filtrar ejercicios vacíos
       const rutinaLimpia = rutina.filter(ej => ej.nombre.trim() !== "");
 
-      // 3. Guardar en Firestore
-      await guardarAsistencia({
-        userId: user.uid,
-        userName: user.displayName || "Usuario",
-        fecha,
+      // 3. Guardar o Actualizar
+      const data: Partial<Asistencia> = {
         categoriaId: categoria,
         notas,
         rutina: rutinaLimpia,
         imagenUrl,
-        grupoId: grupoId || "",
-      });
+      };
 
-      // Limpiar formulario
-      setNotas("");
-      setFoto(null);
-      setFotoPreview(null);
-      setRutina([]);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (asistenciaAEditar?.id || asistenciaAEditar?.docId) {
+        const id = (asistenciaAEditar.id || asistenciaAEditar.docId)!;
+        await actualizarAsistencia(id, data);
+        Swal.fire({ title: "¡Actualizado! ✨", icon: "success", timer: 1500, showConfirmButton: false });
+      } else {
+        await guardarAsistencia({
+          userId: user.uid,
+          userName: user.displayName || "Usuario",
+          fecha,
+          categoriaId: categoria,
+          notas,
+          rutina: rutinaLimpia,
+          imagenUrl,
+          grupoId: grupoId || "",
+        });
+        
+        // Limpiar solo si es nuevo
+        setNotas("");
+        setFoto(null);
+        setFotoPreview(null);
+        setRutina([]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
 
-      Swal.fire({
-        title: "¡Épico! 💪",
-        text: chisteRandom(),
-        icon: "success",
-        background: theme === "dark" ? "#1e293b" : "#ffffff",
-        color: theme === "dark" ? "#f8fafc" : "#0f172a",
-        confirmButtonColor: "#3b82f6",
-        confirmButtonText: "Seguir rompiéndola",
-      });
+        Swal.fire({
+          title: "¡Épico! 💪",
+          text: chisteRandom(),
+          icon: "success",
+          background: theme === "dark" ? "#1e293b" : "#ffffff",
+          color: theme === "dark" ? "#f8fafc" : "#0f172a",
+          confirmButtonColor: "#3b82f6",
+          confirmButtonText: "Seguir rompiéndola",
+        });
+      }
+
+      if (onCompletado) onCompletado();
     } catch (err) {
       console.error("Error guardando entrenamiento:", err);
       Swal.fire("Error", "Hubo un problema al guardar. Intenta de nuevo.", "error");
@@ -125,10 +148,18 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
   };
 
   return (
-    <div className="glass-panel p-6 animate-slide-up">
-      <h2 className="text-xl font-bold text-textMain mb-6 flex items-center gap-2">
-        <CalendarIcon className="text-primary" /> Registrar Día
-      </h2>
+    <div className={`glass-panel p-6 ${asistenciaAEditar ? "border-primary/30" : "animate-slide-up"}`}>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-textMain flex items-center gap-2">
+          {asistenciaAEditar ? <Save className="text-primary" /> : <CalendarIcon className="text-primary" />}
+          {asistenciaAEditar ? "Editar Registro" : "Registrar Día"}
+        </h2>
+        {asistenciaAEditar && (
+          <button onClick={onCancelar} className="text-textMuted hover:text-textMain">
+            Cancelar
+          </button>
+        )}
+      </div>
 
       <div className="bg-surfaceHighlight/50 rounded-xl p-4 mb-6 border border-borderBase flex justify-between items-center">
         <span className="text-textMuted text-sm">Fecha:</span>
@@ -138,10 +169,10 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
       </div>
 
       <div className="space-y-6 mb-6">
-        {/* Foto Obligatoria */}
+        {/* Foto */}
         <div>
           <label className="block text-sm font-bold text-textMain mb-2 flex items-center gap-2">
-            <Camera size={16} className="text-pink-500" /> Foto Obligatoria
+            <Camera size={16} className="text-pink-500" /> Foto de Evidencia
           </label>
           <div 
             className="border-2 border-dashed border-borderBase rounded-xl p-4 text-center cursor-pointer hover:border-primary transition-colors bg-surfaceHighlight/30 flex flex-col items-center justify-center relative overflow-hidden"
@@ -153,7 +184,7 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
             ) : (
               <div className="text-textMuted flex flex-col items-center gap-2">
                 <ImagePlus size={32} />
-                <span className="text-sm">Toca para sacar/subir foto</span>
+                <span className="text-sm">Toca para subir foto</span>
               </div>
             )}
             <input 
@@ -169,7 +200,7 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
 
         {/* Categoría */}
         <div>
-          <label className="block text-sm font-medium text-textMuted mb-2">Categoría</label>
+          <label className="block text-sm font-medium text-textMuted mb-2">Tipo de Entrenamiento</label>
           <select
             className="input-field appearance-none cursor-pointer"
             value={categoria}
@@ -182,14 +213,14 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
           </select>
         </div>
 
-        {/* Rutina Detallada (Opcional) */}
+        {/* PRs del Día */}
         <div>
           <div className="flex justify-between items-center mb-2">
             <label className="text-sm font-medium text-textMuted flex items-center gap-2">
-              <Dumbbell size={16} /> Rutina (Opcional)
+              <Dumbbell size={16} /> PRs del Día (Opcional)
             </label>
             <button onClick={agregarEjercicio} className="text-xs text-primary font-bold hover:underline">
-              + Ejercicio
+              + PR
             </button>
           </div>
           
@@ -198,28 +229,32 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
               <div key={index} className="flex gap-2 items-center bg-surfaceHighlight/50 p-2 rounded-lg border border-borderBase animate-fade-in">
                 <input 
                   type="text" 
-                  placeholder="Ej: Press Banca" 
-                  className="bg-transparent border-b border-borderBase text-textMain w-1/3 outline-none focus:border-primary text-sm px-1 py-1"
+                  placeholder="Ejercicio" 
+                  className="bg-transparent border-b border-borderBase text-textMain flex-1 outline-none focus:border-primary text-sm px-1 py-1 min-w-0"
                   value={ej.nombre}
                   onChange={(e) => actualizarEjercicio(index, "nombre", e.target.value)}
                 />
-                <input 
-                  type="number" 
-                  placeholder="Kg" 
-                  className="bg-surface border border-borderBase rounded text-textMain w-16 text-center text-sm p-1"
-                  value={ej.series[0]?.peso || 0}
-                  onChange={(e) => actualizarEjercicio(index, "peso", Number(e.target.value))}
-                />
-                <span className="text-textMuted text-xs">Kg</span>
-                <input 
-                  type="number" 
-                  placeholder="Reps" 
-                  className="bg-surface border border-borderBase rounded text-textMain w-16 text-center text-sm p-1"
-                  value={ej.series[0]?.reps || 0}
-                  onChange={(e) => actualizarEjercicio(index, "reps", Number(e.target.value))}
-                />
-                <span className="text-textMuted text-xs">Reps</span>
-                <button onClick={() => eliminarEjercicio(index)} className="text-red-500 hover:text-red-400 p-1">
+                <div className="flex items-center gap-1 shrink-0">
+                  <input 
+                    type="number" 
+                    placeholder="Kg" 
+                    className="bg-surface border border-borderBase rounded text-textMain w-16 text-center text-sm p-1"
+                    value={ej.peso || 0}
+                    onChange={(e) => actualizarEjercicio(index, "peso", Number(e.target.value))}
+                  />
+                  <span className="text-textMuted text-[10px] font-bold">Kg</span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <input 
+                    type="number" 
+                    placeholder="Reps" 
+                    className="bg-surface border border-borderBase rounded text-textMain w-12 text-center text-sm p-1"
+                    value={ej.reps || 0}
+                    onChange={(e) => actualizarEjercicio(index, "reps", Number(e.target.value))}
+                  />
+                  <span className="text-textMuted text-[10px] font-bold">Reps</span>
+                </div>
+                <button onClick={() => eliminarEjercicio(index)} className="text-red-500 hover:text-red-400 p-1 shrink-0">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -229,10 +264,10 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
 
         {/* Notas generales */}
         <div>
-          <label className="block text-sm font-medium text-textMuted mb-2">Notas generales</label>
+          <label className="block text-sm font-medium text-textMuted mb-2">Mensaje del día</label>
           <input
             type="text"
-            placeholder="Ej: Fui con poca energía..."
+            placeholder="¿Cómo te sentiste hoy?"
             className="input-field"
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
@@ -245,8 +280,8 @@ export default function TrainingSelector({ fecha, user, grupoId, theme }: Traini
         onClick={guardar}
         disabled={isUploading}
       >
-        {isUploading ? <Loader className="animate-spin" size={20} /> : <PlusCircle size={20} />}
-        {isUploading ? "Subiendo la evidencia..." : "Guardar Entrenamiento"}
+        {isUploading ? <Loader className="animate-spin" size={20} /> : (asistenciaAEditar ? <Save size={20} /> : <PlusCircle size={20} />)}
+        {isUploading ? "Guardando..." : (asistenciaAEditar ? "Guardar Cambios" : "Guardar Entrenamiento")}
       </button>
     </div>
   );
