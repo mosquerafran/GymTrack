@@ -53,7 +53,7 @@ export default function CalendarView({ fecha, setFecha, entrenos, categoriasMap,
   return (
     <div className="glass-panel p-6 animate-slide-up">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+        <h2 className="text-2xl font-bold text-textMain flex items-center gap-2">
           <span className="text-primary">📅</span> Mi Calendario
         </h2>
       </div>

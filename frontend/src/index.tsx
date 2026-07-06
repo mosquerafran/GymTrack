@@ -27,6 +27,6 @@ start();
 
 // Registra el service worker para que la app funcione offline y cargue más rápido.
 // Cambia unregister() a register() a continuación.
-serviceWorkerRegistration.register();
+serviceWorkerRegistration.unregister();
 
 reportWebVitals();

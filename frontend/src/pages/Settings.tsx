@@ -1,6 +1,7 @@
 import React from "react";
 import { User } from "firebase/auth";
 import CategoriaCreator from "../components/CategoriaCreator";
+import MetaSemanalConfig from "../components/MetaSemanalConfig";
 import { Settings as SettingsIcon } from "lucide-react";
 
 interface SettingsProps {
@@ -14,8 +15,9 @@ export default function Settings({ user }: SettingsProps): React.ReactElement {
         <h2 className="text-2xl font-bold text-textMain flex items-center gap-2">
           <SettingsIcon className="text-accent" /> Configuración de Cuenta
         </h2>
-        <p className="text-textMuted mt-2 text-sm">Gestiona tus categorías y opciones de la aplicación.</p>
+        <p className="text-textMuted mt-2 text-sm">Gestioná tu meta, tus categorías y opciones de la app.</p>
       </div>
+      <MetaSemanalConfig user={user} />
       <CategoriaCreator user={user} />
     </div>
   );

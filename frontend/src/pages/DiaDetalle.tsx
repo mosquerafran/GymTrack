@@ -31,6 +31,7 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId, theme }: D
 
   useEffect(() => {
     cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupoId]);
 
   const cargar = async () => {
@@ -195,18 +196,20 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId, theme }: D
                         <div className="flex justify-between items-start mb-3">
                           <span className="text-[10px] font-black px-2 py-1 bg-primary/10 text-primary rounded-lg uppercase tracking-wider">{catName}</span>
                           {esMio && (
-                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button 
-                                onClick={() => setEditando({ ...item, id: item.docId })} 
-                                className="p-1.5 text-textMuted hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                            <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => setEditando({ ...item, id: item.docId })}
+                                className="btn-icon text-textMuted hover:text-primary hover:bg-primary/10"
+                                aria-label={`Editar ${catName}`}
                               >
-                                <Edit2 size={14} />
+                                <Edit2 size={18} />
                               </button>
-                              <button 
-                                onClick={() => handleEliminar(item.docId, catName)} 
-                                className="p-1.5 text-textMuted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                              <button
+                                onClick={() => handleEliminar(item.docId, catName)}
+                                className="btn-icon text-textMuted hover:text-red-500 hover:bg-red-500/10"
+                                aria-label={`Eliminar ${catName}`}
                               >
-                                <X size={14} />
+                                <X size={18} />
                               </button>
                             </div>
                           )}

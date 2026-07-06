@@ -26,6 +26,7 @@ export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId, the
     if (!user) return;
     cargarMes(fecha);
     cargarCategorias();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const cargarMes = async (fechaActual: Date) => {
@@ -66,7 +67,13 @@ export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId, the
 
         <div className="lg:col-span-5 relative">
           <div className="sticky top-24">
-            <TrainingSelector fecha={fecha} user={user} grupoId={grupoId} theme={theme} />
+            <TrainingSelector
+              fecha={fecha}
+              user={user}
+              grupoId={grupoId}
+              theme={theme}
+              onCompletado={() => cargarMes(fecha)}
+            />
           </div>
         </div>
       </div>

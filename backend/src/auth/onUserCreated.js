@@ -1,11 +1,11 @@
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
-const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
-const { getAuth } = require("firebase-admin/auth");
 
 const { ADMIN_EMAIL, MIEMBROS_MILLER, CATEGORIAS_POR_DEFECTO } = require("../constants");
 
-initializeApp();
+// NOTA: initializeApp() se llama UNA sola vez de forma centralizada en index.js.
+// Llamarlo aquí de nuevo lanzaría "The default Firebase app already exists" y
+// tumbaría el arranque (cold start) de TODAS las Cloud Functions.
 
 /**
  * Trigger: Se ejecuta automáticamente cuando se crea un nuevo usuario en Firebase Auth.

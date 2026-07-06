@@ -19,6 +19,7 @@ export default function Admin({ user, grupoActivo, setView }: AdminProps): React
 
   useEffect(() => {
     if (grupoActivo) cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupoActivo]);
 
   const cargar = async () => {

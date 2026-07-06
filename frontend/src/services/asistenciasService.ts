@@ -17,6 +17,7 @@ import {
 import { storage } from "../config/firebase";
 import { ref, deleteObject } from "firebase/storage";
 import { Asistencia, EjercicioRutina } from "../types";
+import { formatDateLocal, inicioMesLocal, finMesLocal } from "../utils/date";
 
 export type AsistenciasMapa = Record<string, Record<string, any[]>>;
 
@@ -35,10 +36,7 @@ interface GuardarAsistenciaParams {
  * Guarda un entrenamiento en Firestore.
  */
 export const guardarAsistencia = async ({ userId, userName, fecha, categoriaId, notas, grupoId, imagenUrl = null, rutina = [] }: GuardarAsistenciaParams): Promise<void> => {
-  const y = fecha.getFullYear();
-  const m = String(fecha.getMonth() + 1).padStart(2, "0");
-  const d = String(fecha.getDate()).padStart(2, "0");
-  const fechaStr = `${y}-${m}-${d}`;
+  const fechaStr = formatDateLocal(fecha);
 
   await addDoc(collection(db, "asistencias"), {
     userId,
@@ -59,11 +57,8 @@ export const guardarAsistencia = async ({ userId, userName, fecha, categoriaId, 
  * @returns {Promise<AsistenciasMapa>} Mapa { "YYYY-MM-DD": { userName: [{ docId, catId, notas }] } }
  */
 export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): Promise<AsistenciasMapa> => {
-  const inicioMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
-  const finMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0);
-
-  const inicioStr = inicioMes.toISOString().split("T")[0];
-  const finStr = finMes.toISOString().split("T")[0];
+  const inicioStr = inicioMesLocal(fechaActual);
+  const finStr = finMesLocal(fechaActual);
 
   const q = query(
     collection(db, "asistencias"),
@@ -84,11 +79,14 @@ export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): 
     if (!mapa[fechaKey]) mapa[fechaKey] = {};
     if (!mapa[fechaKey][usr]) mapa[fechaKey][usr] = [];
 
+    const catIdFinal = data.categoriaId || (data as any).catId || "";
+    
     mapa[fechaKey][usr].push({
       ...data,
       docId: document.id,
       id: document.id, // Para compatibilidad
-      catId: data.categoriaId, // Para compatibilidad con el código existente en DiaDetalle
+      catId: catIdFinal, 
+      categoriaId: catIdFinal, // Aseguramos que ambos existan
     });
   });
 
@@ -100,11 +98,8 @@ export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): 
  * @returns {Promise<object>} Mapa { "YYYY-MM-DD": [categoriaId] }
  */
 export const cargarAsistenciasMesUsuario = async (grupoId: string, userName: string, fechaActual: Date): Promise<Record<string, string[]>> => {
-  const inicioMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1);
-  const finMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0);
-
-  const inicioStr = inicioMes.toISOString().split("T")[0];
-  const finStr = finMes.toISOString().split("T")[0];
+  const inicioStr = inicioMesLocal(fechaActual);
+  const finStr = finMesLocal(fechaActual);
 
   const q = query(
     collection(db, "asistencias"),
@@ -200,10 +195,14 @@ export const cargarFeedGlobal = async (grupoId: string): Promise<Asistencia[]> =
 
 export const actualizarAsistencia = async (docId: string, data: Partial<Asistencia>): Promise<void> => {
   const docRef = doc(db, "asistencias", docId);
-  await updateDoc(docRef, {
-    ...data,
-    timestampActualizacion: Date.now()
+  
+  // Filtrar undefined para evitar errores de Firestore
+  const updateData: any = { ...data, timestampActualizacion: Date.now() };
+  Object.keys(updateData).forEach(key => {
+    if (updateData[key] === undefined) delete updateData[key];
   });
+
+  await updateDoc(docRef, updateData);
 };
 
 export const toggleLike = async (docId: string, userId: string, isLiked: boolean): Promise<void> => {

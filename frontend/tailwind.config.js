@@ -21,7 +21,18 @@ module.exports = {
         'premium': 'var(--shadow-premium)',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: ['Oswald', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      spacing: {
+        'safe-b': 'env(safe-area-inset-bottom)',
+        'safe-t': 'env(safe-area-inset-top)',
+      },
+      minHeight: {
+        'tap': '44px',
+      },
+      minWidth: {
+        'tap': '44px',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',

@@ -31,11 +31,42 @@
 
   body {
     @apply bg-background text-textMain font-sans antialiased m-0 transition-colors duration-300;
+    /* Sin scroll horizontal accidental y sin flash gris al tocar en mobile */
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Identidad "scoreboard": los títulos usan la display condensada (Oswald). */
+  h1, h2, h3 {
+    @apply font-display tracking-tight;
   }
 
   ::selection {
     background-color: var(--color-primary);
     color: white;
+  }
+
+  /* Accesibilidad: foco visible por teclado en cualquier elemento interactivo. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(var(--color-background)), 0 0 0 4px rgb(var(--color-primary));
+    border-radius: 0.75rem;
+  }
+
+  /* Respetar la preferencia de menos movimiento. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
@@ -45,19 +76,39 @@
   }
   
   .btn-primary {
-    @apply bg-gradient-to-br from-primary to-blue-700 hover:from-primaryHover hover:to-blue-800 text-white px-6 py-3 rounded-2xl font-bold transition-all duration-300 shadow-lg shadow-primary/25 active:scale-[0.98] flex items-center justify-center gap-2;
+    @apply bg-gradient-to-br from-primary to-blue-700 hover:from-primaryHover hover:to-blue-800 text-white px-6 py-3 min-h-tap rounded-2xl font-bold transition-all duration-300 shadow-lg shadow-primary/25 active:scale-[0.98] flex items-center justify-center gap-2;
   }
 
   .btn-accent {
-    @apply bg-gradient-to-br from-accent to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 px-6 py-3 rounded-2xl font-bold transition-all duration-300 shadow-lg shadow-accent/25 active:scale-[0.98] flex items-center justify-center gap-2;
+    @apply bg-gradient-to-br from-accent to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 px-6 py-3 min-h-tap rounded-2xl font-bold transition-all duration-300 shadow-lg shadow-accent/25 active:scale-[0.98] flex items-center justify-center gap-2;
   }
-  
+
   .btn-secondary {
-    @apply bg-surfaceHighlight/50 backdrop-blur-sm hover:bg-surfaceHighlight text-textMain px-6 py-3 rounded-2xl font-bold transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2 border border-borderBase;
+    @apply bg-surfaceHighlight/50 backdrop-blur-sm hover:bg-surfaceHighlight text-textMain px-6 py-3 min-h-tap rounded-2xl font-bold transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2 border border-borderBase;
   }
-  
+
+  /* Botón de ícono con área táctil mínima garantizada (mobile). */
+  .btn-icon {
+    @apply flex items-center justify-center min-h-tap min-w-tap rounded-xl transition-colors;
+  }
+
   .input-field {
-    @apply w-full bg-surfaceHighlight/30 backdrop-blur-sm border border-borderBase rounded-2xl px-5 py-4 text-textMain placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-inner;
+    /* text-base = 16px: evita el zoom automático de iOS al enfocar un input. */
+    @apply w-full bg-surfaceHighlight/30 backdrop-blur-sm border border-borderBase rounded-2xl px-5 py-3.5 text-base text-textMain placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-inner;
+  }
+
+  /* Números tipo marcador: display condensada + cifras tabulares alineadas. */
+  .scoreboard {
+    @apply font-display tabular-nums tracking-tight;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Padding inferior que respeta la barra de gestos / notch del teléfono. */
+  .pb-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
   }
 
   .hide-scrollbar::-webkit-scrollbar {

@@ -67,7 +67,7 @@ export default function Navbar({ view, setView, user, theme, toggleTheme, grupoA
               title={`¡Racha de ${streak} días seguidos!`}
             >
               <span className="text-xl leading-none">🔥</span>
-              <span className="inline">{streak}</span>
+              <span className="scoreboard text-lg font-bold leading-none">{streak}</span>
             </div>
           )}
 
@@ -102,8 +102,8 @@ export default function Navbar({ view, setView, user, theme, toggleTheme, grupoA
       </nav>
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-6 pt-2 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
-        <div className="glass-panel rounded-2xl flex items-center justify-around p-2 pointer-events-auto">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-safe pt-2 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
+        <div className="glass-panel rounded-2xl flex items-center justify-around p-1.5 pointer-events-auto">
           {[
             { view: "home", icon: Home, label: "Inicio" },
             { view: "feed", icon: Flame, label: "Muro" },
@@ -114,9 +114,11 @@ export default function Navbar({ view, setView, user, theme, toggleTheme, grupoA
             <button
               key={item.view}
               onClick={() => setView(item.view)}
-              className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${view === item.view ? "text-primary" : "text-textMuted"}`}
+              aria-label={item.label}
+              aria-current={view === item.view ? "page" : undefined}
+              className={`flex flex-col items-center gap-1 py-1.5 flex-1 min-h-tap rounded-xl transition-all ${view === item.view ? "text-primary bg-primary/5" : "text-textMuted active:bg-surfaceHighlight/50"}`}
             >
-              <item.icon size={24} fill={item.view === "home" && view === "home" ? "currentColor" : "none"} />
+              <item.icon size={24} fill={item.view === view ? "currentColor" : "none"} />
               <span className="text-[10px] font-bold">{item.label}</span>
             </button>
           ))}

@@ -32,7 +32,8 @@ service cloud.firestore {
                     && request.auth.uid == request.resource.data.userId;
       allow delete: if request.auth != null
                     && request.auth.uid == resource.data.userId;
-      allow update: if false; // No se editan asistencias, solo se crean o borran
+      allow update: if request.auth != null
+                    && request.auth.uid == resource.data.userId;
     }
 
     // ── Grupos ────────────────────────────────────────────────────────────────

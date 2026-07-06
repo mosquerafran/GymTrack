@@ -33,11 +33,17 @@ export default function TrainingSelector({ fecha, user, grupoId, theme, asistenc
     if (user) loadCategorias();
     
     if (asistenciaAEditar) {
-      setCategoria(asistenciaAEditar.categoriaId);
+      setCategoria(asistenciaAEditar.categoriaId || (asistenciaAEditar as any).catId || "");
       setNotas(asistenciaAEditar.notas || "");
       setRutina(asistenciaAEditar.rutina || []);
-      if (asistenciaAEditar.imagenUrl) setFotoPreview(asistenciaAEditar.imagenUrl);
+      setFotoPreview(asistenciaAEditar.imagenUrl || null);
+    } else {
+      // Limpiar si no estamos editando
+      setNotas("");
+      setRutina([]);
+      setFotoPreview(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, asistenciaAEditar]);
 
   const loadCategorias = async () => {
@@ -226,37 +232,47 @@ export default function TrainingSelector({ fecha, user, grupoId, theme, asistenc
           
           <div className="space-y-3">
             {rutina.map((ej, index) => (
-              <div key={index} className="flex gap-2 items-center bg-surfaceHighlight/50 p-2 rounded-lg border border-borderBase animate-fade-in">
-                <input 
-                  type="text" 
-                  placeholder="Ejercicio" 
-                  className="bg-transparent border-b border-borderBase text-textMain flex-1 outline-none focus:border-primary text-sm px-1 py-1 min-w-0"
-                  value={ej.nombre}
-                  onChange={(e) => actualizarEjercicio(index, "nombre", e.target.value)}
-                />
-                <div className="flex items-center gap-1 shrink-0">
-                  <input 
-                    type="number" 
-                    placeholder="Kg" 
-                    className="bg-surface border border-borderBase rounded text-textMain w-16 text-center text-sm p-1"
-                    value={ej.peso || 0}
-                    onChange={(e) => actualizarEjercicio(index, "peso", Number(e.target.value))}
+              <div key={index} className="bg-surfaceHighlight/50 p-3 rounded-xl border border-borderBase animate-fade-in space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="Ejercicio (ej: Press banca)"
+                    className="bg-transparent border-b border-borderBase text-textMain flex-1 outline-none focus:border-primary text-base px-1 py-1.5 min-w-0"
+                    value={ej.nombre}
+                    onChange={(e) => actualizarEjercicio(index, "nombre", e.target.value)}
                   />
-                  <span className="text-textMuted text-[10px] font-bold">Kg</span>
+                  <button
+                    onClick={() => eliminarEjercicio(index)}
+                    className="btn-icon text-red-500 hover:text-red-400 hover:bg-red-500/10 shrink-0"
+                    aria-label="Eliminar ejercicio"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <input 
-                    type="number" 
-                    placeholder="Reps" 
-                    className="bg-surface border border-borderBase rounded text-textMain w-12 text-center text-sm p-1"
-                    value={ej.reps || 0}
-                    onChange={(e) => actualizarEjercicio(index, "reps", Number(e.target.value))}
-                  />
-                  <span className="text-textMuted text-[10px] font-bold">Reps</span>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-1.5 bg-surface border border-borderBase rounded-lg px-2 py-1.5 flex-1">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="0"
+                      className="bg-transparent text-textMain w-full text-center text-base outline-none min-w-0"
+                      value={ej.peso || ""}
+                      onChange={(e) => actualizarEjercicio(index, "peso", Number(e.target.value))}
+                    />
+                    <span className="text-textMuted text-xs font-bold shrink-0">Kg</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 bg-surface border border-borderBase rounded-lg px-2 py-1.5 flex-1">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="0"
+                      className="bg-transparent text-textMain w-full text-center text-base outline-none min-w-0"
+                      value={ej.reps || ""}
+                      onChange={(e) => actualizarEjercicio(index, "reps", Number(e.target.value))}
+                    />
+                    <span className="text-textMuted text-xs font-bold shrink-0">Reps</span>
+                  </label>
                 </div>
-                <button onClick={() => eliminarEjercicio(index)} className="text-red-500 hover:text-red-400 p-1 shrink-0">
-                  <Trash2 size={16} />
-                </button>
               </div>
             ))}
           </div>

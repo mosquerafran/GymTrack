@@ -1,6 +1,5 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { getFirestore } = require("firebase-admin/firestore");
-const { getAuth } = require("firebase-admin/auth");
 
 const { ADMIN_EMAIL, MIEMBROS_MILLER, CATEGORIAS_POR_DEFECTO } = require("../constants");
 

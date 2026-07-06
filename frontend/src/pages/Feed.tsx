@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { cargarFeedGlobal } from "../services/asistenciasService";
 import { cargarMapaCategorias } from "../services/categoriasService";
-import { Clock, Dumbbell, MessageSquare, Calendar } from "lucide-react";
+import { Dumbbell, MessageSquare, Calendar } from "lucide-react";
 import { Asistencia, Categoria } from "../types";
 
 interface FeedProps {
@@ -18,6 +18,7 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
       cargarMuro();
       cargarNombres();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grupoId]);
 
   const cargarNombres = async () => {

@@ -8,7 +8,11 @@ export interface Usuario {
   estado: EstadoUsuario;
   creadoEn: string;
   migrado?: boolean;
+  metaSemanal?: number; // objetivo de días de entrenamiento por semana
 }
+
+/** Meta semanal por defecto si el usuario no la configuró. */
+export const META_SEMANAL_DEFAULT = 4;
 
 export interface Grupo {
   id: string;

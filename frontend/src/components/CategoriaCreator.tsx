@@ -25,6 +25,7 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
 
   useEffect(() => {
     if (user) cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const cargar = async () => {
@@ -143,12 +144,15 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
           <div className="grid gap-3">
             {categorias.map((cat) => (
               <div key={cat.id} className="bg-surfaceHighlight/30 border border-borderBase rounded-xl p-4 flex items-center justify-between group">
-                <div className="flex-1 flex items-center gap-3">
+                <div className="flex-1 flex items-center gap-1">
                   <button
                     onClick={() => handleToggleCuenta(cat.id!, cat.cuenta)}
-                    className={`w-4 h-4 rounded-full border-2 transition-colors ${cat.cuenta ? "bg-primary border-primary" : "bg-transparent border-textMuted"}`}
-                    title={cat.cuenta ? "Suma puntos" : "No suma puntos"}
-                  />
+                    className="btn-icon shrink-0"
+                    title={cat.cuenta ? "Cuenta para el ranking" : "No cuenta para el ranking"}
+                    aria-label={cat.cuenta ? `${cat.nombre} cuenta para el ranking` : `${cat.nombre} no cuenta para el ranking`}
+                  >
+                    <span className={`w-4 h-4 rounded-full border-2 transition-colors ${cat.cuenta ? "bg-primary border-primary" : "bg-transparent border-textMuted"}`} />
+                  </button>
                   {editando === cat.id ? (
                     <div className="flex-1 flex gap-2">
                       <input className="input-field py-1 text-sm flex-1" value={editNombre} onChange={(e) => setEditNombre(e.target.value)} autoFocus />
@@ -160,12 +164,12 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
                   )}
                 </div>
                 {editando !== cat.id && (
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => iniciarEdicion(cat)} className="p-2 text-textMuted hover:text-primary transition-colors">
-                      <Edit2 size={16} />
+                  <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => iniciarEdicion(cat)} className="btn-icon text-textMuted hover:text-primary" aria-label={`Renombrar ${cat.nombre}`}>
+                      <Edit2 size={18} />
                     </button>
-                    <button onClick={() => handleEliminar(cat.id!, cat.nombre)} className="p-2 text-textMuted hover:text-red-500 transition-colors">
-                      <Trash2 size={16} />
+                    <button onClick={() => handleEliminar(cat.id!, cat.nombre)} className="btn-icon text-textMuted hover:text-red-500" aria-label={`Eliminar ${cat.nombre}`}>
+                      <Trash2 size={18} />
                     </button>
                   </div>
                 )}

@@ -22,6 +22,7 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
 
   useEffect(() => {
     cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const cargar = async () => {
