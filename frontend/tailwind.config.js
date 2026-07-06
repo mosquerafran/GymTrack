@@ -22,7 +22,9 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
-        display: ['Oswald', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Anton', 'Oswald', 'Impact', 'sans-serif'], // póster / impacto
+        heading: ['Oswald', 'Inter', 'system-ui', 'sans-serif'], // títulos / números
+        mono: ['"Space Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'], // etiquetas
       },
       spacing: {
         'safe-b': 'env(safe-area-inset-bottom)',

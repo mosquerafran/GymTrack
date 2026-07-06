@@ -2,52 +2,71 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  ── Identidad "Hierro Forjado" (rústico + moderno) ─────────────────────────────
+  Paleta cálida: charcoal / concreto + naranja óxido (hierro al rojo) + bronce +
+  hueso/tiza. Tipografía de póster (Anton) + condensada (Oswald) + mono industrial
+  (Space Mono). Paneles mate (sin vidrio), bordes finos y un grano sutil.
+*/
+
 @layer base {
   :root {
-    --color-background: 248 250 252;
-    --color-surface: 255 255 255;
-    --color-surface-highlight: 241 245 249;
-    --color-primary: 37 99 235;
-    --color-primary-hover: 29 78 216;
-    --color-accent: 245 158 11;
-    --color-text-main: 15 23 42;
-    --color-text-muted: 100 116 139;
-    --color-border: rgba(0, 0, 0, 0.05);
-    --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    /* Modo claro — "papel / concreto" */
+    --color-background: 233 228 218;        /* concreto cálido */
+    --color-surface: 245 241 233;           /* papel */
+    --color-surface-highlight: 223 216 203;
+    --color-primary: 192 64 22;             /* óxido profundo */
+    --color-primary-hover: 168 54 18;
+    --color-accent: 169 129 47;             /* bronce */
+    --color-text-main: 36 30 24;            /* tinta */
+    --color-text-muted: 107 95 82;          /* piedra */
+    --color-border: rgba(36, 30, 24, 0.12);
+    --shadow-premium: 0 12px 30px -12px rgba(50, 35, 20, 0.25), 0 4px 10px -6px rgba(50, 35, 20, 0.15);
   }
 
   .dark {
-    --color-background: 2 6 23; /* Darker slate */
-    --color-surface: 15 23 42;
-    --color-surface-highlight: 30 41 59;
-    --color-primary: 59 130 246;
-    --color-primary-hover: 96 165 250;
-    --color-accent: 251 191 36;
-    --color-text-main: 248 250 252;
-    --color-text-muted: 148 163 184;
-    --color-border: rgba(255, 255, 255, 0.06);
-    --shadow-premium: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -12px rgba(0, 0, 0, 0.3);
+    /* Modo oscuro — "fragua / hierro" */
+    --color-background: 26 22 18;           /* charcoal cálido */
+    --color-surface: 36 30 25;              /* grafito cálido */
+    --color-surface-highlight: 50 42 34;
+    --color-primary: 230 92 42;             /* naranja molten */
+    --color-primary-hover: 242 130 84;
+    --color-accent: 201 160 74;             /* bronce claro */
+    --color-text-main: 237 230 216;         /* hueso / tiza */
+    --color-text-muted: 168 154 136;        /* piedra cálida */
+    --color-border: rgba(237, 230, 216, 0.10);
+    --shadow-premium: 0 18px 40px -16px rgba(0, 0, 0, 0.55), 0 6px 14px -8px rgba(0, 0, 0, 0.5);
   }
 
   body {
     @apply bg-background text-textMain font-sans antialiased m-0 transition-colors duration-300;
-    /* Sin scroll horizontal accidental y sin flash gris al tocar en mobile */
     overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
     text-rendering: optimizeLegibility;
   }
 
-  /* Identidad "scoreboard": los títulos usan la display condensada (Oswald). */
+  /* Grano sutil sobre toda la app: textura "rústica" sin pesar. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  /* Títulos condensados (póster de gimnasio). */
   h1, h2, h3 {
-    @apply font-display tracking-tight;
+    @apply font-heading tracking-tight;
   }
 
   ::selection {
-    background-color: var(--color-primary);
-    color: white;
+    background-color: rgb(var(--color-primary));
+    color: rgb(var(--color-text-main));
   }
 
-  /* Accesibilidad: foco visible por teclado en cualquier elemento interactivo. */
   a:focus-visible,
   button:focus-visible,
   input:focus-visible,
@@ -59,7 +78,6 @@
     border-radius: 0.75rem;
   }
 
-  /* Respetar la preferencia de menos movimiento. */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.001ms !important;
@@ -71,39 +89,44 @@
 }
 
 @layer components {
+  /* Panel mate (sin blur): superficie sólida, borde fino y una arista de luz arriba. */
   .glass-panel {
-    @apply bg-surface/70 backdrop-blur-xl border border-borderBase shadow-premium rounded-3xl transition-all duration-500;
+    @apply bg-surface border border-borderBase shadow-premium rounded-2xl transition-all duration-300;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--shadow-premium);
   }
-  
+
+  /* CTA principal: "botón estampado" con arista inferior (relieve). */
   .btn-primary {
-    @apply bg-gradient-to-br from-primary to-blue-700 hover:from-primaryHover hover:to-blue-800 text-white px-6 py-3 min-h-tap rounded-2xl font-bold transition-all duration-300 shadow-lg shadow-primary/25 active:scale-[0.98] flex items-center justify-center gap-2;
+    @apply bg-primary hover:bg-primaryHover text-white font-heading uppercase tracking-wide px-6 py-3 min-h-tap rounded-xl border-b-4 border-black/25 transition-all duration-200 active:translate-y-0.5 active:border-b-2 flex items-center justify-center gap-2;
   }
 
   .btn-accent {
-    @apply bg-gradient-to-br from-accent to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 px-6 py-3 min-h-tap rounded-2xl font-bold transition-all duration-300 shadow-lg shadow-accent/25 active:scale-[0.98] flex items-center justify-center gap-2;
+    @apply bg-accent hover:brightness-110 text-[rgb(36,30,24)] font-heading uppercase tracking-wide px-6 py-3 min-h-tap rounded-xl border-b-4 border-black/25 transition-all duration-200 active:translate-y-0.5 active:border-b-2 flex items-center justify-center gap-2;
   }
 
   .btn-secondary {
-    @apply bg-surfaceHighlight/50 backdrop-blur-sm hover:bg-surfaceHighlight text-textMain px-6 py-3 min-h-tap rounded-2xl font-bold transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2 border border-borderBase;
+    @apply bg-surfaceHighlight hover:brightness-105 text-textMain px-6 py-3 min-h-tap rounded-xl font-bold transition-all duration-200 active:translate-y-0.5 flex items-center justify-center gap-2 border border-borderBase;
   }
 
-  /* Botón de ícono con área táctil mínima garantizada (mobile). */
   .btn-icon {
     @apply flex items-center justify-center min-h-tap min-w-tap rounded-xl transition-colors;
   }
 
   .input-field {
-    /* text-base = 16px: evita el zoom automático de iOS al enfocar un input. */
-    @apply w-full bg-surfaceHighlight/30 backdrop-blur-sm border border-borderBase rounded-2xl px-5 py-3.5 text-base text-textMain placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-inner;
+    @apply w-full bg-surfaceHighlight/60 border border-borderBase rounded-xl px-4 py-3.5 text-base text-textMain placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/60 transition-all;
   }
 
-  /* Números tipo marcador: display condensada + cifras tabulares alineadas. */
+  /* Etiqueta técnica en monoespaciada (sello industrial). */
+  .eyebrow {
+    @apply font-mono uppercase text-[10px] tracking-[0.25em] text-textMuted;
+  }
+
+  /* Números tipo marcador: condensada tabular alineada. */
   .scoreboard {
-    @apply font-display tabular-nums tracking-tight;
+    @apply font-heading tabular-nums tracking-tight;
     font-feature-settings: "tnum" 1;
   }
 
-  /* Padding inferior que respeta la barra de gestos / notch del teléfono. */
   .pb-safe {
     padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
   }
@@ -129,7 +152,6 @@
     animation: float 3s ease-in-out infinite;
   }
 
-
   /* React Calendar Overrides */
   .custom-calendar-container .react-calendar {
     @apply bg-transparent border-none w-full font-sans text-textMain;
@@ -138,13 +160,13 @@
     @apply mb-4 flex justify-between items-center;
   }
   .custom-calendar-container .react-calendar__navigation button {
-    @apply text-textMain hover:bg-surfaceHighlight rounded-lg p-2 transition-colors min-w-[44px];
+    @apply text-textMain hover:bg-surfaceHighlight rounded-lg p-2 transition-colors min-w-[44px] font-heading uppercase;
   }
   .custom-calendar-container .react-calendar__navigation button:disabled {
     @apply bg-transparent text-textMuted;
   }
   .custom-calendar-container .react-calendar__month-view__weekdays {
-    @apply text-textMuted font-medium text-sm uppercase;
+    @apply text-textMuted font-mono text-[10px] uppercase tracking-widest;
   }
   .custom-calendar-container .react-calendar__month-view__weekdays__weekday {
     @apply py-2 flex justify-center no-underline;

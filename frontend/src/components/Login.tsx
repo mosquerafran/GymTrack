@@ -27,11 +27,13 @@ export default function Login(): React.ReactElement {
 
       <div className="glass-panel p-8 md:p-12 max-w-md w-full text-center animate-slide-up relative z-10">
         <div className="mb-8">
-          <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(59,130,246,0.3)]">
-            <span className="text-4xl">💪</span>
+          <div className="w-20 h-20 bg-primary/15 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-primary/30 rotate-3">
+            <span className="text-4xl">🏋️</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-textMain mb-2 tracking-tight">Gym Tracker</h1>
-          <p className="text-textMuted text-sm md:text-base">Registra tu progreso y mantén la consistencia</p>
+          <h1 className="font-display text-6xl md:text-7xl text-textMain leading-[0.9] tracking-tight">
+            GYM<span className="text-primary">TRACKER</span>
+          </h1>
+          <p className="eyebrow mt-4">Fierros · Constancia · Hermandad</p>
         </div>
 
         <button className="btn-secondary w-full py-4 text-lg" onClick={loginGoogle}>

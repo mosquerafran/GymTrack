@@ -53,3 +53,4 @@ Lo que quedó abierto o a tener en cuenta.
 - [06 — Rediseño mobile-first del frontend](2026-07-06/06-rediseno-frontend-mobile.md) — identidad scoreboard + fixes táctiles.
 - [07 — Métricas: constancia %, rachas, heatmap, meta semanal](2026-07-06/07-metricas-constancia-rachas-heatmap.md) — nuevas stats centradas en días.
 - [08 — Podio top-3, nudge de récord y comparativa semanal](2026-07-06/08-podio-nudge-record-comparativa-semanal.md) — gamificación del ranking.
+- [09 — Reskin "Hierro Forjado" + Node 22 + Actions](2026-07-06/09-reskin-rustico-node22-actions.md) — identidad rústica-moderna e infra.

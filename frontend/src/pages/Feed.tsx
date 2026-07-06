@@ -53,11 +53,11 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
 
   return (
     <div className="max-w-xl mx-auto space-y-6 animate-fade-in pb-24">
-      <div className="glass-panel p-6 border-b-4 border-b-primary bg-surface/60">
-        <h2 className="text-2xl font-black text-textMain flex items-center gap-2 tracking-tight">
-          COMUNIDAD <span className="text-primary font-black">GYM</span>
+      <div className="glass-panel p-6 border-b-4 border-b-primary">
+        <h2 className="font-display text-4xl text-textMain flex items-center gap-2 leading-none">
+          COMUNIDAD <span className="text-primary">GYM</span>
         </h2>
-        <p className="text-textMuted text-[10px] font-bold uppercase tracking-widest mt-1">Registros de Actividad</p>
+        <p className="eyebrow mt-2">Registros de Actividad</p>
       </div>
 
       {loading ? (

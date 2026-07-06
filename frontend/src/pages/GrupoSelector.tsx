@@ -128,8 +128,8 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
           <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-bold mb-4 border border-primary/20">
             <Users size={14} /> MULTI-TENANT SYSTEM
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-textMain mb-3 tracking-tight">
-            Elegí tu grupo <span className="text-primary italic">Fitness</span>
+          <h1 className="font-display text-5xl md:text-6xl text-textMain mb-3 leading-none tracking-tight">
+            ELEGÍ TU <span className="text-primary">GRUPO</span>
           </h1>
           <p className="text-textMuted text-lg">
             Hola <span className="text-textMain font-bold underline decoration-primary/40 underline-offset-4">{user.displayName}</span>, ¿qué equipo te acompaña hoy?

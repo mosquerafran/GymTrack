@@ -76,8 +76,8 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
       {/* Header & Filter */}
       <div className="flex flex-col gap-5 border-b border-borderBase pb-6">
         <div className="text-center sm:text-left">
-          <h1 className="text-4xl font-black text-textMain tracking-tighter">Tu Progreso</h1>
-          <p className="text-textMuted text-sm font-medium mt-1">Constancia, rachas y ranking del grupo.</p>
+          <h1 className="font-display text-5xl sm:text-6xl text-textMain tracking-tight leading-none">TU PROGRESO</h1>
+          <p className="eyebrow mt-2">Constancia · Rachas · Ranking</p>
         </div>
 
         <div className="flex bg-surfaceHighlight p-1 rounded-xl border border-borderBase self-stretch sm:self-start overflow-x-auto hide-scrollbar">
@@ -99,10 +99,10 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
         <div className="flex items-end justify-between gap-4">
           <div>
             <div className="flex items-baseline gap-1">
-              <span className="scoreboard text-7xl sm:text-8xl font-bold text-primary leading-none">{data.porcentaje}</span>
-              <span className="scoreboard text-3xl font-bold text-primary/60">%</span>
+              <span className="font-display text-7xl sm:text-8xl text-primary leading-none">{data.porcentaje}</span>
+              <span className="font-display text-3xl text-primary/60">%</span>
             </div>
-            <p className="text-xs font-bold text-textMuted uppercase tracking-[0.2em] mt-2">Constancia</p>
+            <p className="eyebrow mt-2">Constancia</p>
           </div>
           <div className="text-right shrink-0">
             <p className="scoreboard text-2xl font-bold text-textMain leading-none">
@@ -175,10 +175,10 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
         {/* Desglose por categoría */}
         <div className="space-y-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-[10px] font-black text-textMuted uppercase tracking-[0.3em] flex items-center gap-2">
+            <h2 className="eyebrow flex items-center gap-2">
               <List size={14} className="text-primary" /> Total por Categoría
             </h2>
-            <span className="text-[9px] font-bold text-textMuted/60 uppercase">Período</span>
+            <span className="font-mono text-[9px] text-textMuted/60 uppercase">Período</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -197,7 +197,7 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
         {/* Ranking del grupo con % de constancia */}
         <div className="space-y-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-[10px] font-black text-textMuted uppercase tracking-[0.3em] flex items-center gap-2">
+            <h2 className="eyebrow flex items-center gap-2">
               <Trophy size={14} className="text-primary" /> Ranking del Grupo
             </h2>
           </div>
