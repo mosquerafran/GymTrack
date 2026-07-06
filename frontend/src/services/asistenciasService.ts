@@ -11,6 +11,8 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
+  orderBy,
+  limit,
   DocumentData,
   QueryDocumentSnapshot
 } from "firebase/firestore";
@@ -174,23 +176,28 @@ export const eliminarAsistencia = async (docId: string): Promise<void> => {
  * Trae los últimos 20 entrenamientos ordenados por fecha/hora
  */
 export const cargarFeedGlobal = async (grupoId: string): Promise<Asistencia[]> => {
-  const q = query(
-    collection(db, "asistencias"),
-    where("grupoId", "==", grupoId),
-    // En Firestore, sin índices compuestos complejos, podemos ordenar en el cliente 
-    // o requerir que el usuario cree un índice si falla.
-    // Para simplificar y evitar errores de índice en producción, traemos los recientes.
-  );
-
-  const snap = await getDocs(q);
-  const posts: Asistencia[] = [];
-  
-  snap.forEach((document) => {
-    posts.push({ ...document.data(), id: document.id } as Asistencia);
-  });
-
-  // Ordenar en el cliente (más reciente primero)
-  return posts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 50);
+  // Camino óptimo: el índice compuesto (grupoId + timestamp desc) permite traer
+  // SOLO los 50 más recientes desde el servidor, en vez de leer todo el grupo.
+  try {
+    const q = query(
+      collection(db, "asistencias"),
+      where("grupoId", "==", grupoId),
+      orderBy("timestamp", "desc"),
+      limit(50)
+    );
+    const snap = await getDocs(q);
+    const posts: Asistencia[] = [];
+    snap.forEach((document) => posts.push({ ...document.data(), id: document.id } as Asistencia));
+    return posts;
+  } catch (e) {
+    // Fallback (p. ej. mientras el índice todavía se está construyendo):
+    // traemos el grupo y ordenamos/recortamos en el cliente.
+    console.warn("Feed: índice no disponible aún, usando fallback en cliente:", e);
+    const snap = await getDocs(query(collection(db, "asistencias"), where("grupoId", "==", grupoId)));
+    const posts: Asistencia[] = [];
+    snap.forEach((document) => posts.push({ ...document.data(), id: document.id } as Asistencia));
+    return posts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 50);
+  }
 };
 
 export const actualizarAsistencia = async (docId: string, data: Partial<Asistencia>): Promise<void> => {

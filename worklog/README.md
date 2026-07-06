@@ -54,3 +54,4 @@ Lo que quedó abierto o a tener en cuenta.
 - [07 — Métricas: constancia %, rachas, heatmap, meta semanal](2026-07-06/07-metricas-constancia-rachas-heatmap.md) — nuevas stats centradas en días.
 - [08 — Podio top-3, nudge de récord y comparativa semanal](2026-07-06/08-podio-nudge-record-comparativa-semanal.md) — gamificación del ranking.
 - [09 — Reskin "Hierro Forjado" + Node 22 + Actions](2026-07-06/09-reskin-rustico-node22-actions.md) — identidad rústica-moderna e infra.
+- [10 — Optimización de performance](2026-07-06/10-optimizacion-performance.md) — cache de categorías, login optimista, índice del Muro.
