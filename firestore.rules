@@ -2,61 +2,208 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Usuarios ─────────────────────────────────────────────────────────────
-    // Cualquier usuario autenticado puede leer.
-    // Solo puede escribir su propio documento (identificado por email).
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    // La app solo loguea con Google (email siempre verificado). Exigir
+    // email_verified evita que una cuenta con email no verificado se haga
+    // pasar por otra si algún día se habilita otro proveedor.
+    function logueado() {
+      return request.auth != null;
+    }
+
+    function emailVerificado() {
+      return logueado() && request.auth.token.email_verified == true;
+    }
+
+    // ESPEJO de ADMIN_EMAIL (frontend/src/config/constants.js y backend/src/constants.js).
+    function esAdminGlobal() {
+      return emailVerificado() && request.auth.token.email == "mosquerafran265@gmail.com";
+    }
+
+    function esMiembroDe(grupoId) {
+      return emailVerificado()
+        && grupoId is string && grupoId != ""
+        && request.auth.token.email in get(/databases/$(database)/documents/grupos/$(grupoId)).data.miembros;
+    }
+
+    function esTextoCorto(valor, max) {
+      return valor is string && valor.size() <= max;
+    }
+
+    // Campos que cambian en esta escritura. En create son todos; en update,
+    // solo los tocados: así un doc viejo con un campo "raro" que no se edita
+    // no queda bloqueado para siempre.
+    function camposTocados() {
+      return resource == null
+        ? request.resource.data.keys().toSet()
+        : request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // Si el campo se toca, tiene que cumplir el chequeo.
+    function textoOk(campo, max) {
+      return !(campo in camposTocados()) || esTextoCorto(request.resource.data[campo], max);
+    }
+
+    function listaOk(campo, max) {
+      return !(campo in camposTocados())
+        || (request.resource.data[campo] is list && request.resource.data[campo].size() <= max);
+    }
+
+    function metaSemanalOk() {
+      return !("metaSemanal" in camposTocados())
+        || (request.resource.data.metaSemanal is int
+            && request.resource.data.metaSemanal >= 1
+            && request.resource.data.metaSemanal <= 7);
+    }
+
+    // ── Usuarios (doc id = email) ─────────────────────────────────────────────
+    // Cualquiera logueado lee (ranking, admin). Cada uno escribe su propio doc,
+    // pero NUNCA su `estado`: al crearlo solo puede nacer aprobado/pendiente
+    // (política actual de auto-aprobación, context.md §9.1) y después no se
+    // toca. El admin global sí cambia el `estado` de otros (pantalla Aprobaciones).
     match /usuarios/{email} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.auth.token.email == email;
+      function esPropio() {
+        return emailVerificado() && request.auth.token.email == email;
+      }
+
+      allow read: if logueado();
+
+      // uid/email: si vienen, tienen que ser los tuyos (docs viejos pueden no tenerlos).
+      function identidadOk() {
+        return request.resource.data.get("uid", request.auth.uid) == request.auth.uid
+          && request.resource.data.get("email", email) == email;
+      }
+
+      allow create: if esPropio()
+        && request.resource.data.get("estado", "pendiente") in ["aprobado", "pendiente"]
+        && identidadOk()
+        && metaSemanalOk();
+
+      allow update: if (esPropio()
+          && !("estado" in camposTocados())
+          && identidadOk()
+          && metaSemanalOk())
+        || (esAdminGlobal()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["estado"])
+          && request.resource.data.estado in ["aprobado", "pendiente", "rechazado"]);
+
+      allow delete: if false;
     }
 
-    // ── Categorías ────────────────────────────────────────────────────────────
-    // Puede leer y escribir solo sus propias categorías.
-    // Al leer, todos los autenticados pueden leer (necesario para stats grupales).
+    // ── Categorías (pasan a ser "etiquetas" del entreno) ──────────────────────
     match /categorias/{catId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-                    && request.auth.uid == request.resource.data.userId;
-      allow update, delete: if request.auth != null
-                            && request.auth.uid == resource.data.userId;
+      function categoriaValida() {
+        return textoOk("nombre", 40)
+          && (!("cuenta" in camposTocados()) || request.resource.data.cuenta is bool)
+          && (!("activo" in camposTocados()) || request.resource.data.activo is bool);
+      }
+
+      allow read: if logueado();
+      allow create: if logueado()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.nombre is string
+        && categoriaValida();
+      allow update: if logueado()
+        && resource.data.userId == request.auth.uid
+        && !("userId" in camposTocados())
+        && categoriaValida();
+      allow delete: if logueado() && resource.data.userId == request.auth.uid;
     }
 
-    // ── Asistencias ────────────────────────────────────────────────────────────
-    // Cualquier autenticado puede leer (necesario para el ranking grupal).
-    // Solo puede crear sus propios registros.
-    // Solo puede borrar sus propios registros.
+    // ── Asistencias ───────────────────────────────────────────────────────────
+    // Lectura abierta a logueados por ahora (fase 2: aislar por grupo, ver ESTADO.md).
+    // Se crean solo en un grupo del que sos miembro y con tu userId. Al editar,
+    // dueño, grupo, usuario y fecha quedan fijos.
     match /asistencias/{docId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-                    && request.auth.uid == request.resource.data.userId;
-      allow delete: if request.auth != null
-                    && request.auth.uid == resource.data.userId;
-      allow update: if request.auth != null
-                    && request.auth.uid == resource.data.userId;
+      // Campos del contenido del entreno, comunes a create y update.
+      // tipo / musculos / etiqueta: selector de cuerpo (próxima feature).
+      function contenidoValido() {
+        return textoOk("notas", 1000)
+          && listaOk("rutina", 30)
+          && textoOk("categoriaId", 100)
+          && textoOk("catId", 100)
+          && (!("imagenUrl" in camposTocados())
+              || request.resource.data.imagenUrl == null
+              || esTextoCorto(request.resource.data.imagenUrl, 2000))
+          && textoOk("tipo", 30)
+          && listaOk("musculos", 20)
+          && textoOk("etiqueta", 60);
+      }
+
+      allow read: if logueado();
+
+      allow create: if logueado()
+        && request.resource.data.userId == request.auth.uid
+        && esMiembroDe(request.resource.data.grupoId)
+        && esTextoCorto(request.resource.data.userName, 80)
+        && request.resource.data.fecha is string
+        && request.resource.data.fecha.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$")
+        && request.resource.data.timestamp is number
+        && request.resource.data.get("likes", []) == []
+        && contenidoValido();
+
+      allow update: if logueado()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+             "categoriaId", "notas", "rutina", "imagenUrl", "timestampActualizacion",
+             "tipo", "musculos", "etiqueta"
+           ])
+        && contenidoValido();
+
+      allow delete: if logueado() && resource.data.userId == request.auth.uid;
     }
 
     // ── Grupos ────────────────────────────────────────────────────────────────
-    // Cualquier autenticado puede leer y actualizar grupos.
-    // (Unirse a un grupo = updateDoc con el propio email)
-    // Solo puede crear grupos un usuario autenticado.
+    // El admin del grupo (o el admin global) edita todo. Cualquier otro solo
+    // puede agregarse o sacarse A SÍ MISMO de `miembros` (unirse / salir).
+    // Fase 2: unirse vía Cloud Function y cerrar la lectura (ESTADO.md).
     match /grupos/{grupoId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
-                    && request.auth.token.email == request.resource.data.adminEmail;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null
-                    && request.auth.token.email == resource.data.adminEmail;
+      function esAdminDelGrupo() {
+        return emailVerificado() && request.auth.token.email == resource.data.adminEmail;
+      }
+
+      function soloCambiaSuMembresia() {
+        let yo = request.auth.token.email;
+        let antes = resource.data.miembros.toSet();
+        let despues = request.resource.data.miembros.toSet();
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["miembros"])
+          && request.resource.data.miembros is list
+          && (
+            // unirse: despues = antes + yo
+            (!(yo in antes) && despues.difference(antes) == [yo].toSet() && antes.difference(despues).size() == 0)
+            // salir: despues = antes - yo
+            || ((yo in antes) && antes.difference(despues) == [yo].toSet() && despues.difference(antes).size() == 0)
+          );
+      }
+
+      allow read: if logueado();
+
+      allow create: if emailVerificado()
+        && request.resource.data.adminEmail == request.auth.token.email
+        && request.resource.data.miembros == [request.auth.token.email]
+        && esTextoCorto(request.resource.data.nombre, 60)
+        && request.resource.data.nombre.size() > 0
+        && request.resource.data.codigoInvitacion is string
+        && request.resource.data.codigoInvitacion.matches("^GYM-[A-Z0-9]{4,8}$");
+
+      allow update: if emailVerificado() && (
+        ((esAdminDelGrupo() || esAdminGlobal())
+          && request.resource.data.miembros is list
+          && request.resource.data.miembros.size() <= 100
+          && esTextoCorto(request.resource.data.nombre, 60))
+        || soloCambiaSuMembresia()
+      );
+
+      allow delete: if esAdminDelGrupo() || esAdminGlobal();
     }
 
-    // ── Colecciones legacy (solo lectura para migración) ──────────────────────
+    // ── Colecciones legacy (solo lectura para la migración del fallback) ──────
     match /usuariosPendientes/{docId} {
-      allow read: if request.auth != null;
+      allow read: if logueado();
       allow write: if false;
     }
 
     match /usuariosPermitidos/{docId} {
-      allow read: if request.auth != null;
+      allow read: if logueado();
       allow write: if false;
     }
   }

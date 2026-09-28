@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { User } from "firebase/auth";
-import { db } from "../config/firebase";
-import { doc, updateDoc } from "firebase/firestore";
-import { obtenerUsuarios } from "../services/authService";
+import { obtenerUsuarios, cambiarEstadoUsuario } from "../services/authService";
 import { UserCheck, UserX, ShieldCheck, Clock } from "lucide-react";
 import Swal from "sweetalert2";
 import { ADMIN_EMAIL } from "../config/constants";
-import { Usuario } from "../types";
+import { Usuario, EstadoUsuario } from "../types";
 
 interface AprobacionesProps {
   user: User;
@@ -37,10 +35,13 @@ export default function Aprobaciones({ user }: AprobacionesProps): React.ReactEl
     setLoading(false);
   };
 
-  const cambiarEstado = async (id: string, email: string, nuevoEstado: string) => {
+  // `id` es el email (doc id de `usuarios`). Se usa el id y no el campo `email`
+  // porque este último lo escribe el propio usuario. `titleText` (no `title`)
+  // para que SweetAlert lo muestre como texto y no interprete HTML.
+  const cambiarEstado = async (id: string, nuevoEstado: EstadoUsuario) => {
     const accion = nuevoEstado === "aprobado" ? "aprobar" : "rechazar";
     const res = await Swal.fire({
-      title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} a ${email}?`,
+      titleText: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} a ${id}?`,
       icon: "question",
       showCancelButton: true,
       confirmButtonText: `Sí, ${accion}`,
@@ -50,7 +51,12 @@ export default function Aprobaciones({ user }: AprobacionesProps): React.ReactEl
     });
 
     if (res.isConfirmed) {
-      await updateDoc(doc(db, "usuarios", id), { estado: nuevoEstado });
+      try {
+        await cambiarEstadoUsuario(id, nuevoEstado);
+      } catch (e) {
+        console.error(e);
+        Swal.fire("Error", "No se pudo cambiar el estado del usuario.", "error");
+      }
       cargar();
     }
   };
@@ -96,10 +102,10 @@ export default function Aprobaciones({ user }: AprobacionesProps): React.ReactEl
                 </div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => cambiarEstado(u.id, u.email, "aprobado")} className="flex items-center gap-1 px-3 py-2 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all font-medium text-sm">
+                <button onClick={() => cambiarEstado(u.id, "aprobado")} className="flex items-center gap-1 px-3 py-2 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all font-medium text-sm">
                   <UserCheck size={16} /> Aprobar
                 </button>
-                <button onClick={() => cambiarEstado(u.id, u.email, "rechazado")} className="flex items-center gap-1 px-3 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all font-medium text-sm">
+                <button onClick={() => cambiarEstado(u.id, "rechazado")} className="flex items-center gap-1 px-3 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all font-medium text-sm">
                   <UserX size={16} /> Rechazar
                 </button>
               </div>

@@ -1,5 +1,5 @@
 import { db, auth } from "../config/firebase";
-import { doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { signOut, User as FirebaseUser } from "firebase/auth";
 import { ADMIN_EMAIL, MIEMBROS_MILLER } from "../config/constants";
@@ -114,4 +114,12 @@ export const obtenerUsuarios = async (): Promise<{pendientes: Usuario[], aprobad
     else if (data.estado === "aprobado") aprobados.push(data as Usuario);
   });
   return { pendientes, aprobados };
+};
+
+/**
+ * Cambia el estado de un usuario (aprobar / rechazar). Solo el admin global:
+ * lo hace cumplir firestore.rules, no este chequeo del cliente.
+ */
+export const cambiarEstadoUsuario = async (email: string, estado: EstadoUsuario): Promise<void> => {
+  await updateDoc(doc(db, "usuarios", email), { estado });
 };

@@ -12,7 +12,7 @@ paths:
 - **`services/` es la única capa que habla con Firestore/Storage.** Sin JSX ni hooks, devuelve
   datos tipados (`types/index.ts`). `hooks/` puede suscribirse (`onSnapshot`, como `useStreak`).
   `pages/` y `components/` **no** importan `firebase/firestore`: `verify.ps1` lo controla
-  (excepción legacy: `Aprobaciones.tsx`).
+  (sin excepciones).
 
 ## Fechas — el bug que ya pasó
 - **La clave de un día es `"YYYY-MM-DD"` en HORA LOCAL**: `formatDateLocal()`, `inicioMesLocal()`,

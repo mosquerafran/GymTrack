@@ -10,6 +10,7 @@
        - Nadie arma la clave del día con toISOString() (bug de UTC-3).
        - pages/ y components/ no importan Firestore/Storage directo (salvo legacy).
     3. El backend carga (require de index.js).
+    3b. Tests de firestore.rules y storage.rules en el emulador (tests/rules, necesita Java).
     4. Typecheck del frontend (tsc --noEmit).
     5. Tests del frontend (incluye la sincronía de los dos constants.js).
     6. Build de producción del frontend (se saltea con -Rapido).
@@ -31,13 +32,14 @@ $ErrorActionPreference = 'Continue'
 $raiz = $PSScriptRoot
 $frontend = Join-Path $raiz 'frontend'
 $backend = Join-Path $raiz 'backend'
+$testsRules = Join-Path $raiz 'tests\rules'
 $fallas = New-Object System.Collections.Generic.List[string]
 
 # Presupuesto de CLAUDE.md: entra entero en cada sesión; más largo = menos adherencia.
 $PRESUPUESTO_CLAUDE_MD = 200
 
 # Archivos que pueden importar Firestore directo por ser legacy. No agregues sin motivo.
-$LEGACY_FIRESTORE_DIRECTO = @('Aprobaciones.tsx')
+$LEGACY_FIRESTORE_DIRECTO = @()
 
 # Corre un paso. Convención: la acción emite "!mensaje" por cada problema que
 # encuentra; cualquier otra salida (la de tsc, jest, etc.) se muestra tal cual.
@@ -73,7 +75,7 @@ function Buscar-EnCodigo([string[]]$carpetas, [string]$patron, [string[]]$extens
 function Relativa([string]$ruta) { $ruta.Substring($raiz.Length + 1) }
 
 # ── 0. Dependencias instaladas ───────────────────────────────────────────────
-foreach ($d in @($frontend, $backend)) {
+foreach ($d in @($frontend, $backend, $testsRules)) {
   if (-not (Test-Path (Join-Path $d 'node_modules'))) {
     Write-Host "Falta $(Relativa $d)\node_modules. Corré 'npm install' ahí y volvé a intentar." -ForegroundColor Red
     exit 1
@@ -121,6 +123,36 @@ Paso 'pages/ y components/ no importan Firestore/Storage directo' {
 Paso 'El backend carga (require de index.js)' {
   Push-Location $backend
   try { node -e "require('./src/index.js')" } finally { Pop-Location }
+}
+
+# ── 3b. Rules en el emulador ─────────────────────────────────────────────────
+# El emulador de Firestore necesita Java. Si no está en el PATH, se busca el JDK
+# de Microsoft (winget install Microsoft.OpenJDK.21). Proyecto demo-*: nunca
+# toca producción.
+Paso 'Tests de rules (emulador de Firestore + Storage)' {
+  if (-not (Get-Command java -ErrorAction SilentlyContinue)) {
+    $jdk = Get-ChildItem 'C:\Program Files\Microsoft' -Directory -Filter 'jdk-*' -ErrorAction SilentlyContinue |
+      Sort-Object Name -Descending | Select-Object -First 1
+    if (-not $jdk) {
+      '!falta Java para el emulador: winget install Microsoft.OpenJDK.21'
+      return
+    }
+    $env:JAVA_HOME = $jdk.FullName
+    $env:Path = "$($jdk.FullName)\bin;$env:Path"
+  }
+  Push-Location $testsRules
+  try {
+    # Solo el resumen: el emulador loguea cada PERMISSION_DENIED esperado.
+    $salida = npm test 2>&1 | ForEach-Object { "$_" }
+    $codigo = $LASTEXITCODE
+    $salida | Where-Object { $_ -match '^\s*(✖|ℹ (tests|pass|fail))' }
+    if ($codigo -ne 0) {
+      # Indentado: Firebase imprime líneas que empiezan con "!" y Paso las tomaría como fallas.
+      $salida | Select-Object -Last 40 | ForEach-Object { "    $_" }
+      "!los tests de rules fallaron (arriba, el final de la salida)"
+    }
+    $global:LASTEXITCODE = 0
+  } finally { Pop-Location }
 }
 
 # ── 4-6. Frontend ────────────────────────────────────────────────────────────

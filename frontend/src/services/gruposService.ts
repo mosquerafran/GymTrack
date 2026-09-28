@@ -10,7 +10,6 @@ import {
   getDoc,
 } from "firebase/firestore";
 import { User as FirebaseUser } from "firebase/auth";
-import { ADMIN_EMAIL, MIEMBROS_MILLER } from "../config/constants";
 import { Grupo } from "../types";
 
 /**
@@ -29,25 +28,10 @@ const generarCodigo = (): string => {
  */
 export const cargarGruposDeUsuario = async (user: FirebaseUser): Promise<Grupo[]> => {
   if (!user.email) return [];
-  const isVip = MIEMBROS_MILLER.includes(user.email);
 
-  // Solo VIP/Admin verifican el grupo Miller en el cliente
-  // (la función backend también lo hace diariamente, esto es un seguro extra)
-  if (user.email === ADMIN_EMAIL || isVip) {
-    const allSnap = await getDocs(collection(db, "grupos"));
-    const millerDoc = allSnap.docs.find((d) => (d.data() as Grupo).nombre === "Gym ave Miller 2026");
-
-    if (millerDoc) {
-      const currentMiembros = (millerDoc.data() as Grupo).miembros || [];
-      const missing = MIEMBROS_MILLER.filter((m) => !currentMiembros.includes(m));
-      if (missing.length > 0) {
-        await updateDoc(doc(db, "grupos", millerDoc.id), {
-          miembros: Array.from(new Set([...currentMiembros, ...MIEMBROS_MILLER])),
-        });
-      }
-    }
-  }
-
+  // Los VIP del grupo Miller los repara la función programada `repararMiembrosVip`
+  // (backend). El cliente ya no lo hace: las rules solo dejan que cada uno se
+  // agregue a sí mismo, y además leía todos los grupos en cada carga.
   const q = query(collection(db, "grupos"), where("miembros", "array-contains", user.email));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Grupo, 'id'>) }));

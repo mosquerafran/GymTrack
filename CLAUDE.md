@@ -55,7 +55,7 @@ gym-tracker/
   hooks. Devuelve datos tipados. **Toda** lectura/escritura nueva va acá.
 - **`hooks/`** = estado + suscripciones (ej. `useStreak` usa `onSnapshot`).
 - **`pages/` y `components/`** = presentación. Llaman a services/hooks; no importan
-  `firebase/firestore` directamente (salvo casos legacy como `Aprobaciones.tsx`).
+  `firebase/firestore` directamente (`verify.ps1` lo controla, sin excepciones).
 
 ### El backend "verifica", el cliente "cae en fallback"
 `authService.verificarEstadoUsuario` llama primero a la Cloud Function
@@ -134,7 +134,7 @@ Al borrar una asistencia se borra también su foto (`eliminarAsistencia`).
 ### 4.6 Multi-grupo (multi-tenant)
 Cada `asistencia` y `categoria` pertenece a un grupo vía `grupoId`. El grupo
 activo se guarda en `localStorage` (`grupoActivo`). El grupo "Gym ave Miller 2026"
-tiene miembros VIP que se auto-reparan (cliente + función `repararMiembrosVip`).
+tiene miembros VIP que repara la función programada `repararMiembrosVip` (no el cliente).
 
 ---
 
@@ -156,14 +156,16 @@ entrenados". Ver el detalle completo en `context.md`.
 
 ## 6. Seguridad (Firestore rules) — lo que hay que saber
 
-- Todo requiere `request.auth != null`.
-- `asistencias`: cualquiera lee (necesario para ranking/muro grupal); creás/editás/
-  borrás **solo las tuyas** (`request.auth.uid == resource.data.userId`).
-- `categorias`: leés todas; escribís solo las tuyas.
-- `grupos`: **`allow update: if request.auth != null`** — cualquier autenticado
-  puede actualizar cualquier grupo. Es intencional (unirse = `updateDoc` de
-  `miembros[]`), pero es una superficie amplia. ⚠️ Si vas a endurecer reglas,
-  este es el punto principal a revisar (ver `context.md` → Riesgos conocidos).
+- Todo requiere estar logueado; lo que depende del email exige `email_verified`.
+- `usuarios`: nadie cambia su propio `estado`; solo el admin global (espejo de
+  `ADMIN_EMAIL` **dentro de `firestore.rules`**: si cambia, cambialo ahí también).
+- `asistencias`: se crean solo en un grupo del que sos miembro; al editar, dueño,
+  grupo, usuario y fecha quedan fijos. Tipos y tamaños validados.
+- `grupos`: el admin del grupo edita todo; los demás solo se agregan o se sacan
+  **a sí mismos** de `miembros[]`.
+- ⚠️ La **lectura** sigue abierta a cualquier logueado (fase 2 en `ESTADO.md`).
+- **Tests:** `tests/rules` (emulador, necesita Java) corre en `verify.ps1`. Todo
+  cambio de rules lleva su caso de abuso y su caso de flujo real.
 
 ---
 

@@ -139,10 +139,11 @@ La historia de cada cambio, en `worklog/`.
 1. **Auto-aprobación de usuarios nuevos.** `verificarAcceso` aprueba a cualquiera
    que se loguee. Si se quiere cerrar el registro, cambiar el paso 6 de
    `verificarAcceso.js` (y el fallback en `authService.ts`) a `estado: "pendiente"`.
-2. **`grupos` editable por cualquier autenticado** (regla `allow update`). Permite
-   que alguien modifique/vacíe grupos ajenos. Endurecer requiere reglas más finas
-   (p. ej. permitir solo agregarse a sí mismo a `miembros`, o mover joins a una
-   Cloud Function).
+2. **Lectura abierta entre grupos.** Desde 2026-09-28 (fase 1) nadie puede editar un
+   grupo ajeno (solo agregarse o sacarse a sí mismo), pero cualquier logueado
+   **lee** todos los grupos, asistencias y fotos. Cerrarlo requiere unirse vía Cloud
+   Function (la búsqueda por código hoy lee todos los grupos) y filtrar por
+   `grupoId` en `cargarAsistenciasMes`. Plan en `ESTADO.md` (fase 2).
 3. **Config de Firebase embebida en el cliente** (`firebase.js`). Es normal en apps
    web de Firebase (no es secreto), pero la seguridad recae 100% en las rules.
 4. **`userName` como clave de agrupación**: si alguien cambia su displayName de

@@ -13,14 +13,19 @@
 |---|---|---|
 | **Hosting** | ✅ `d82760f` (optimización de performance), deployado el 2026-07-06 | GitHub Actions, run `28817104172`, *success* |
 | **Functions** | ⚠️ **sin registro** | Se deployan a mano y el repo no guarda el resultado |
-| **Firestore rules** | ⚠️ **sin registro** | Ídem |
+| **Firestore rules** | ⚠️ **sin registro**. En el repo hay rules nuevas (fase 1) **sin deployar** | Ídem |
 | **Índice `asistencias(grupoId, timestamp desc)`** | ⚠️ **sin registro** | Ídem. El muro tiene fallback, así que **funciona igual aunque falte** |
-| **Storage rules** | ⚠️ **sin registro** | Ídem |
+| **Storage rules** | ⚠️ **sin registro**. Ídem: nuevas sin deployar | Ídem |
 
-Desde `d82760f` no hubo cambios de código de la app: lo posterior es el harness de Claude Code
-(2026-09-28), que no se deploya.
+El 2026-09-28 se endurecieron las rules (worklog `2026-09-28/02`). El frontend que las acompaña se
+deploya con el push; **las rules no**: van por `/deploy rules`, y siempre **después** del push.
 
 ## 2. 🔴 Requiere acción
+
+0. **Deployar las rules de la fase 1, en este orden:** (a) push a `main` → esperar que Actions
+   termine en verde; (b) `/deploy rules` (firestore + storage). Al revés, a los VIP/admin se les
+   rompe la carga de grupos. Después: probar en el celu unirse a un grupo, registrar y editar un
+   entreno, y aprobar a alguien desde Aprobaciones (que **antes estaba rota**).
 
 1. **Confirmar que las Cloud Functions corren en Node 22 — antes del 30/10/2026.** Ese día Google
    decomisiona Node 20. `backend/package.json` pide Node 22 desde el 2026-07-06 (worklog `09`), pero
@@ -34,6 +39,17 @@ Desde `d82760f` no hubo cambios de código de la app: lo posterior es el harness
 
 ## 3. Pendientes (sin fecha)
 
+- ⬜ **Seguridad fase 2** (necesita `/deploy functions`): unirse a un grupo vía callable con
+  códigos únicos → recién ahí cerrar la **lectura** de `grupos`, `asistencias` y fotos por grupo;
+  filtro `grupoId` + índice `(grupoId, fecha)` en `cargarAsistenciasMes`; App Check; headers de
+  seguridad en hosting; `permissions:` y pin por SHA en `firebase-hosting-merge.yml`.
+- ⬜ **Selector de cuerpo** (propuesta del dueño, aprobada 2026-09-28): tipo de entreno (gym /
+  fútbol / running / otro) + músculos en un SVG frente/espalda; **todo entreno suma** al ranking;
+  las categorías pasan a ser **etiqueta** opcional. Las rules ya aceptan `tipo`, `musculos[]`,
+  `etiqueta`. Arrancar por un prototipo visual.
+- ⬜ Lista completa de mejoras de rendimiento y orden del repo: auditoría del 2026-09-28 (ver
+  worklog `2026-09-28/02` → pendientes, y el chat de esa fecha).
+
 - ⬜ `minInstances: 1` en `verificarAcceso` para eliminar el cold start (tiene costo mensual; hoy lo
   mitiga el login optimista). — worklog `10`
 - ⬜ Índice `(grupoId, fecha)` para `cargarAsistenciasMes` si el detalle de día se pone lento. — worklog `10`
@@ -43,8 +59,9 @@ Desde `d82760f` no hubo cambios de código de la app: lo posterior es el harness
 
 ## 4. Riesgos abiertos (decisiones del dueño)
 
-Detalle en `context.md` §9. Resumen: auto-aprobación de usuarios nuevos · `grupos` editable por
-cualquier autenticado · `userName` como clave del ranking · cruft legacy en la raíz del repo.
+Detalle en `context.md` §9. Resumen: auto-aprobación de usuarios nuevos · **lectura abierta entre
+grupos** (la escritura se cerró en la fase 1) · `userName` como clave del ranking · cruft legacy en
+la raíz del repo.
 
 ## 5. Registro de deploys
 

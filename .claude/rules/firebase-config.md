@@ -15,10 +15,17 @@ paths:
 - **Cambiar `firestore.rules` o `storage.rules` es sensible** (`protocol.md` §0): antes de proponer
   el deploy, verificá que los usuarios actuales sigan pudiendo leer y escribir lo que ya usan. Con el
   emulador, no contra producción.
-- **Punto débil conocido:** `grupos` tiene `allow update: if request.auth != null` (cualquier
-  autenticado edita cualquier grupo). Es intencional porque unirse es un `updateDoc` de `miembros[]`.
-  Endurecerlo requiere cambiar el flujo de unirse (`context.md` §9.2). No lo "arregles" suelto:
-  rompe el unirse a grupos.
+- **Tests de rules:** `tests/rules/rules.test.js` (emulador, proyecto `demo-*`, necesita Java).
+  Corren en `verify.ps1` y en el CI de PR. Cada cambio de rules lleva un caso de abuso **y** un
+  caso del flujo real que usa el service del frontend (si no, se rompe la app sin que nadie lo vea).
+- **Deploy de rules y frontend juntos:** si una regla nueva prohíbe algo que el cliente hace hoy,
+  primero se deploya el frontend (push) y **después** las rules.
+- **Punto débil que queda (fase 2):** la **lectura** está abierta a cualquier logueado. No se puede
+  cerrar suelta: unirse busca el código entre *todos* los grupos y `cargarAsistenciasMes` no filtra
+  por `grupoId` (Firestore rechaza la query entera si puede traer un doc prohibido). Requiere unirse
+  vía Cloud Function primero (`context.md` §9.2).
+- **`ADMIN_EMAIL` también vive en `firestore.rules`** (`esAdminGlobal()`). Si cambia el admin, se
+  cambia en los dos `constants.js` **y** en las rules.
 - **Índices:** una query con `where` + `orderBy` en campos distintos necesita índice compuesto. Se
   declara en `firestore.indexes.json` y se deploya **antes** que el código que lo usa.
 - **Qué deploya qué:**
