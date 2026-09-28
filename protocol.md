@@ -38,7 +38,7 @@ Si una tarea parece requerir tocar datos, **frená y preguntá** antes de hacerl
 | Calendario | **react-calendar** | 6 |
 | Imágenes | **browser-image-compression** | compresión en cliente (máx 1MB / 1024px) |
 | Datos | **Firebase Web SDK** | v12 — Firestore (persistencia offline multi-tab), Auth (Google), Storage |
-| Backend | **Cloud Functions** | Node 20, `firebase-functions` v2, `firebase-admin` |
+| Backend | **Cloud Functions** | Node 22, `firebase-functions` 6 (API v2), `firebase-admin` |
 | Infra | **Firebase** | Hosting + Firestore + Storage + Functions; CI de deploy con GitHub Actions |
 | Ruteo | **react-router-dom** 7 | `BrowserRouter` (la navegación interna hoy es por estado `view`, no por rutas) |
 
@@ -83,14 +83,16 @@ nueva o modificada debe estar pensada **primero para mobile**:
 4. Constantes admin/VIP → actualizar **ambos** `constants.js` (front y back).
 5. `initializeApp()` del backend → solo en `index.js`, una vez.
 6. Escrituras retrocompatibles; nombres de campos existentes **no se renombran**.
-7. Textos de UI en **español rioplatense**, en la voz del producto (ver §7 del skill
-   de diseño). Botones en voz activa: "Guardar entrenamiento", no "Enviar".
+7. Textos de UI en **español rioplatense**, en la voz del producto (el tono de joda
+   entre amigos de `context.md` §2). Botones en voz activa: "Guardar entrenamiento",
+   no "Enviar".
 
 ---
 
 ## 4. Diseño / UI
 
-Al crear o reformar UI, seguir el skill **`.claude/skills/frontend-design.md`**:
+Al crear o reformar UI, seguir la skill **`frontend-design`**
+(`.claude/skills/frontend-design/SKILL.md`):
 elecciones deliberadas de paleta, tipografía y layout; un "elemento firma"; nada
 que se sienta un template genérico. Mantener el sistema de tokens de Tailwind ya
 existente (no hardcodear hex sueltos salvo que se actualice el token).
@@ -102,12 +104,16 @@ Piso de calidad no negociable: responsive hasta mobile, foco de teclado visible,
 
 ## 5. Verificación antes de dar algo por hecho
 
-Correr desde `frontend/`:
-```bash
-npx tsc --noEmit        # typecheck limpio
-CI=true npm test        # tests en verde
-npm run build           # el build de producción compila
+Correr desde la raíz:
+```powershell
+.\verify.ps1            # exit 0 = verde
 ```
+Chequea los invariantes que se pueden automatizar (`initializeApp` único, sin
+`toISOString()` para la clave del día, sin Firestore directo en pages/components,
+`constants.js` sincronizados), que el backend cargue, typecheck, tests y build
+(con `CI=true`: un warning de lint cuenta como error). `-Rapido` saltea el build
+mientras iterás; para cerrar, completo.
+
 Para cambios de UI, además revisar en viewport mobile (DevTools ~375px de ancho).
 No reportar "listo" sin haber verificado. Si un test/typecheck falla, se dice con
 el error, no se maquilla.
@@ -119,10 +125,13 @@ el error, no se maquilla.
 - Trabajar en `main` está permitido en este repo chico, pero **commitear/pushear
   solo cuando el dueño lo pida**.
 - Mensajes de commit en español, descriptivos (el repo usa emojis; opcional).
-- Deploy: `firebase deploy` (o `--only hosting|functions|firestore:rules|storage`).
-  El hosting sirve `frontend/build`, así que buildear antes.
+- ⚠️ **Pushear a `main` deploya el hosting a producción** (GitHub Actions). Un hook
+  de `.claude/settings.json` corre `verify.ps1` antes de cada `git push` y lo
+  bloquea si falla.
+- Functions, rules e índices se deployan **a mano** con `firebase deploy --only ...`.
+  El agente lo tiene **denegado**: arma el plan con `/deploy` y el dueño ejecuta.
 - Nunca desplegar reglas o functions sin haber verificado que no rompen el acceso
-  actual.
+  actual. Cada deploy se registra en `ESTADO.md` §5.
 
 ---
 
@@ -141,5 +150,5 @@ Registrar: qué se hizo, por qué, archivos tocados y cómo se verificó.
 - [ ] Fechas con `utils/date`, no `toISOString()`.
 - [ ] Constantes sincronizadas front/back (si aplica).
 - [ ] Mobile-first: targets táctiles, sin acciones solo-hover, sin scroll-x del body.
-- [ ] `tsc --noEmit`, `npm test` y `npm run build` en verde.
-- [ ] Worklog actualizado.
+- [ ] `.\verify.ps1` en verde (exit 0).
+- [ ] Worklog actualizado y `ESTADO.md` al día (qué falta, qué necesita el próximo deploy).

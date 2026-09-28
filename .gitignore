@@ -23,6 +23,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# salida del hook pre-push (verify.ps1)
+verify-hook.log
+
 # firebase
 .firebase/
 firebase-debug.log

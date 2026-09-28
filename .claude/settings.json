@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc --noEmit*)",
+      "Bash(npm test*)",
+      "Bash(npm run build*)",
+      "Bash(npm ci*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch*)",
+      "Bash(git fetch*)",
+      "Bash(git ls-files*)",
+      "Bash(git grep*)",
+      "Bash(gh run list*)",
+      "Bash(gh run view*)",
+      "Bash(grep*)",
+      "Bash(ls*)",
+      "Bash(cat*)",
+      "Bash(head*)",
+      "Bash(tail*)",
+      "Bash(wc*)",
+      "PowerShell(.\\verify.ps1*)",
+      "PowerShell(npx tsc --noEmit*)",
+      "PowerShell(npm test*)",
+      "PowerShell(npm run build*)",
+      "PowerShell(npm ci*)",
+      "PowerShell(git status*)",
+      "PowerShell(git diff*)",
+      "PowerShell(git log*)",
+      "PowerShell(git show*)",
+      "PowerShell(git branch*)",
+      "PowerShell(git fetch*)",
+      "PowerShell(git ls-files*)",
+      "PowerShell(git grep*)",
+      "PowerShell(gh run list*)",
+      "PowerShell(gh run view*)",
+      "PowerShell(Get-ChildItem*)",
+      "PowerShell(Get-Content*)",
+      "PowerShell(Select-String*)",
+      "PowerShell(Test-Path*)"
+    ],
+    "ask": [
+      "Bash(git push*)",
+      "PowerShell(git push*)",
+      "Bash(git commit*)",
+      "PowerShell(git commit*)",
+      "Bash(firebase*)",
+      "PowerShell(firebase*)",
+      "Bash(npx firebase*)",
+      "PowerShell(npx firebase*)",
+      "Bash(npm install*)",
+      "PowerShell(npm install*)"
+    ],
+    "deny": [
+      "Bash(firebase deploy*)",
+      "PowerShell(firebase deploy*)",
+      "Bash(npx firebase deploy*)",
+      "PowerShell(npx firebase deploy*)",
+      "Bash(npm run deploy*)",
+      "PowerShell(npm run deploy*)",
+      "Bash(firebase firestore:delete*)",
+      "PowerShell(firebase firestore:delete*)",
+      "Bash(firebase functions:delete*)",
+      "PowerShell(firebase functions:delete*)",
+      "Bash(firebase hosting:disable*)",
+      "PowerShell(firebase hosting:disable*)",
+      "Bash(firebase database:*)",
+      "PowerShell(firebase database:*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "PowerShell(git push --force*)",
+      "PowerShell(git push -f*)",
+      "Bash(git reset --hard*)",
+      "PowerShell(git reset --hard*)",
+      "Bash(git commit --no-verify*)",
+      "PowerShell(git commit --no-verify*)",
+      "Read(./.env*)",
+      "Read(./frontend/.env*)",
+      "Read(./backend/.env*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git push*)",
+            "command": "grep -q 'git[^\"]*push' || exit 0; powershell -NoProfile -ExecutionPolicy Bypass -File ./verify.ps1 > ./verify-hook.log 2>&1 && exit 0; printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"BLOQUEADO: verify.ps1 fallo. Pushear a main DEPLOYA el hosting a produccion (GitHub Actions). El detalle esta en verify-hook.log\"}}'",
+            "timeout": 400,
+            "statusMessage": "Verificando con verify.ps1 antes de pushear (push a main = deploy)..."
+          },
+          {
+            "type": "command",
+            "if": "PowerShell(git push*)",
+            "command": "grep -q 'git[^\"]*push' || exit 0; powershell -NoProfile -ExecutionPolicy Bypass -File ./verify.ps1 > ./verify-hook.log 2>&1 && exit 0; printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"BLOQUEADO: verify.ps1 fallo. Pushear a main DEPLOYA el hosting a produccion (GitHub Actions). El detalle esta en verify-hook.log\"}}'",
+            "timeout": 400,
+            "statusMessage": "Verificando con verify.ps1 antes de pushear (push a main = deploy)..."
+          }
+        ]
+      }
+    ]
+  }
+}

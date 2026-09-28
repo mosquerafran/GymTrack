@@ -4,6 +4,12 @@ Guía para Claude Code (y para cualquier persona) al trabajar en este repositori
 Todo el producto y sus datos están en **español (Argentina)**. Escribí código,
 comentarios y textos de UI en español rioplatense para mantener consistencia.
 
+> **El estado de hoy (qué hay en producción, qué falta) NO está acá: está en `ESTADO.md`.**
+> Cómo se trabaja: `protocol.md` (manda sobre el proceso). Producto y datos: `context.md`.
+> Verificación: **`.\verify.ps1`** (exit 0). Reglas por zona: `.claude/rules/` (cargan solas).
+> Ciclo de tarea: **`/arrancar-tarea`** → **`/cerrar-tarea`**. Deploy: **`/deploy`**.
+> ⚠️ **Pushear a `main` DEPLOYA el hosting a producción** (GitHub Actions). No es un push inocente.
+
 ---
 
 ## 1. Qué es
@@ -15,9 +21,7 @@ app arma un calendario personal, un muro de actividad grupal y estadísticas.
 
 - **Producción:** https://gym-tracker-1aaba.web.app
 - **Proyecto Firebase:** `gym-tracker-1aaba`
-- **Idioma de datos y UI:** español
-
-Para el detalle de producto, usuarios y modelo de datos, ver **`context.md`**.
+- **Idioma de datos y UI:** español · detalle de producto, usuarios y datos: **`context.md`**
 
 ---
 
@@ -34,7 +38,7 @@ gym-tracker/
 │   │   ├── pages/        # vistas de nivel superior (Home, Feed, Stats, Admin...)
 │   │   ├── utils/        # helpers puros (date.ts)
 │   │   └── types/        # index.ts — interfaces TS compartidas
-├── backend/           # Cloud Functions (Node 20, firebase-functions v2)
+├── backend/           # Cloud Functions (Node 22, firebase-functions 6 con API v2)
 │   └── src/
 │       ├── index.js         # entrypoint: initializeApp() + exports
 │       ├── constants.js     # ESPEJO de frontend/src/config/constants.js
@@ -62,8 +66,6 @@ equivalente. La misma lógica vive en dos lados a propósito.
 
 ## 3. Comandos
 
-Todo se ejecuta desde el subdirectorio correspondiente.
-
 ### Frontend (`cd frontend`)
 ```bash
 npm install            # instalar dependencias
@@ -82,14 +84,13 @@ npm run deploy         # firebase deploy --only functions
 npm run logs           # ver logs de las funciones
 ```
 
-### Deploy completo (desde la raíz)
-```bash
-cd frontend && npm run build && cd ..
-firebase deploy                          # hosting + functions + rules
-firebase deploy --only hosting           # solo la web
-firebase deploy --only firestore:rules   # solo reglas Firestore
-firebase deploy --only storage           # solo reglas Storage
+### Verificación y deploy (desde la raíz)
+```powershell
+.\verify.ps1           # invariantes + typecheck + tests + build → exit 0 = verde
+.\verify.ps1 -Rapido   # sin build, para iterar
 ```
+**Hosting** se deploya solo con cada push a `main`. **Functions, rules e índices** son manuales
+(`firebase deploy --only ...`); el agente tiene `firebase deploy` denegado y usa **`/deploy`**.
 
 > **Nota de entorno:** el shell principal es PowerShell en Windows. Los `&&`
 > encadenados de arriba son de Bash; en PowerShell usá `;` o el tool de Bash.
@@ -112,11 +113,12 @@ guardan con ese formato.
 `frontend/src/config/constants.js` y `backend/src/constants.js` comparten
 `ADMIN_EMAIL`, `MIEMBROS_MILLER` y `CATEGORIAS_POR_DEFECTO`. Si tocás uno,
 tocá el otro. (El frontend además tiene `CHISTES`, que el backend no necesita.)
+Lo congela `frontend/src/config/constants.sync.test.ts`: si difieren, falla.
 
 ### 4.3 `initializeApp()` del backend se llama UNA sola vez
 Solo en `backend/src/index.js`. Nunca en los módulos de funciones: un segundo
 llamado lanza *"The default Firebase app already exists"* y tumba el cold start
-de **todas** las funciones.
+de **todas** las funciones. `verify.ps1` lo controla.
 
 ### 4.4 Compatibilidad `categoriaId` / `catId`
 Existen documentos viejos con el campo `catId` y nuevos con `categoriaId`. La capa
@@ -140,7 +142,7 @@ tiene miembros VIP que se auto-reparan (cliente + función `repararMiembrosVip`)
 
 | Colección              | Doc ID   | Campos clave |
 |------------------------|----------|--------------|
-| `usuarios`             | email    | `uid, email, displayName, photoURL, estado(aprobado/pendiente/rechazado), creadoEn` |
+| `usuarios`             | email    | `uid, email, displayName, photoURL, estado(aprobado/pendiente/rechazado), creadoEn, metaSemanal?` |
 | `grupos`               | auto     | `nombre, adminEmail, miembros[] (emails), codigoInvitacion (GYM-XXXX), creadoEn` |
 | `categorias`           | auto     | `userId, nombre, cuenta(bool), activo(bool)` |
 | `asistencias`          | auto     | `userId, userName, fecha(YYYY-MM-DD), timestamp, categoriaId, notas, rutina[], imagenUrl, grupoId, likes[]` |
@@ -172,9 +174,10 @@ entrenados". Ver el detalle completo en `context.md`.
 2. Nueva lógica de datos → en `services/`, tipada, reutilizando helpers de `utils/`.
 3. Fechas → helpers de `utils/date.ts`. Nunca `toISOString()` para el día.
 4. Constantes admin/VIP → actualizá los **dos** `constants.js`.
-5. Verificá antes de dar por hecho: `cd frontend && npx tsc --noEmit` y
-   `CI=true npm test`. Para UI, `npm run build`.
-6. Registrá lo hecho en `worklog/` (una carpeta por fecha; ver `worklog/README.md`).
+5. Verificá antes de dar por hecho: **`.\verify.ps1`** con exit 0 (hay un hook que lo
+   corre antes de cada `git push` y lo bloquea si falla).
+6. Registrá lo hecho en `worklog/` (una carpeta por fecha; ver `worklog/README.md`) y
+   actualizá **`ESTADO.md`**. `/cerrar-tarea` recorre todo esto.
 
 ---
 
@@ -186,7 +189,8 @@ entrenados". Ver el detalle completo en `context.md`.
   No dependas de los de la raíz.
 - `@types/react` es 18 pero React es 19 — hay un pequeño desfasaje de tipos que
   `skipLibCheck` tolera. No lo "arregles" a la ligera.
-- `cargarFeedGlobal` trae todas las asistencias del grupo y ordena/recorta en el
-  cliente (a 50). Para grupos chicos está bien; si crece, paginar/indexar.
+- `cargarFeedGlobal` usa el índice `asistencias(grupoId, timestamp desc)` + `limit(50)`,
+  **con fallback** a traer todo el grupo si el índice falta. El fallback esconde un índice
+  sin deployar: el muro anda igual, pero caro. Ver `ESTADO.md` §2.
 - `cargarAsistenciasMes` filtra el grupo en el cliente (no en la query) para no
   excluir documentos legacy con `grupoId` vacío.

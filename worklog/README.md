@@ -55,3 +55,6 @@ Lo que quedó abierto o a tener en cuenta.
 - [08 — Podio top-3, nudge de récord y comparativa semanal](2026-07-06/08-podio-nudge-record-comparativa-semanal.md) — gamificación del ranking.
 - [09 — Reskin "Hierro Forjado" + Node 22 + Actions](2026-07-06/09-reskin-rustico-node22-actions.md) — identidad rústica-moderna e infra.
 - [10 — Optimización de performance](2026-07-06/10-optimizacion-performance.md) — cache de categorías, login optimista, índice del Muro.
+
+### 2026-09-28
+- [01 — Harness de Claude Code](2026-09-28/01-harness-claude-code.md) — verify.ps1, permisos, rules, skills, ESTADO.md y 9 hallazgos de drift.

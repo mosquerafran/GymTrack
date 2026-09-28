@@ -39,12 +39,14 @@ guardar un entreno y en el Home.
    la sube a Storage y crea el doc en `asistencias`.
 5. **Muro** (`Feed`): últimos entrenos del grupo (foto, categoría, notas, PRs),
    ordenados por fecha/hora.
-6. **Ranking/Stats** (`Stats`): días entrenados del usuario + desglose por
-   categoría + ranking del grupo. Períodos: este mes / últimos 6 meses / este año.
+6. **Ranking/Stats** (`Stats`): panel personal (constancia %, racha actual y récord,
+   progreso de la semana contra la meta semanal, heatmap del año calendario) +
+   desglose por categoría + ranking del grupo con podio top-3 y comparativa semanal.
+   Períodos: este mes / últimos 6 meses / este año. (Worklogs `2026-07-06/07` y `08`.)
 7. **Detalle de día** (`DiaDetalle`): explorar el calendario, ver quién entrenó
    cada día, y **editar/borrar los registros propios** (incluso de días pasados).
 8. **Ajustes** (`Settings`): CRUD de categorías propias (nombre, si "cuenta" para
-   el ranking, activa/inactiva).
+   el ranking, activa/inactiva) y la meta semanal (1 a 7 días).
 9. **Admin**: gestionar miembros del grupo. **Aprobaciones**: aprobar/rechazar
    usuarios globalmente (solo admin maestro).
 
@@ -100,6 +102,8 @@ uid, email, displayName, photoURL
 estado    "aprobado" | "pendiente" | "rechazado"
 creadoEn  string ISO
 migrado?  bool   (vino de una colección legacy)
+metaSemanal? number  días por semana (1-7) que se propone el usuario; si falta,
+                     se usa META_SEMANAL_DEFAULT. La escribe cada uno en su doc.
 ```
 
 > **Ojo con las identidades:** `asistencias` usa `userId` (uid) para seguridad pero
@@ -121,23 +125,14 @@ migrado?  bool   (vino de una colección legacy)
   Tailwind (config propia con tokens `primary/accent/surface/textMain...`),
   lucide-react (íconos), sweetalert2 (modales), react-calendar,
   browser-image-compression, Firebase Web SDK v12 con persistencia offline.
-- **Backend:** Node 20, firebase-functions v2, firebase-admin.
+- **Backend:** Node 22, firebase-functions 6 (API v2), firebase-admin.
 - **Infra:** Firebase Hosting + Firestore + Storage + Cloud Functions. CI de deploy
   vía GitHub Actions (`.github/workflows/firebase-hosting-*`).
 
-## 8. Estado actual (2026-07-06)
+## 8. Estado actual
 
-- App en producción y en uso por el grupo.
-- Últimos trabajos (git): sistema de PRs, edición de entrenamientos, rediseño
-  minimalista de Stats (se sacaron los gráficos), edición/borrado de días pasados.
-- **Correcciones aplicadas en esta sesión** (ver `worklog/2026-07-06/`):
-  - Bug crítico de `initializeApp()` duplicado en el backend (tumbaba las
-    Functions) — resuelto.
-  - Bug de zona horaria (UTC-3) que corría los rangos de mes/año — resuelto con
-    `utils/date.ts`.
-  - El calendario del Home no se refrescaba al registrar un entreno — resuelto.
-  - Test por defecto de CRA que siempre fallaba — reemplazado por tests reales.
-  - Dependencia `recharts` sin usar — removida.
+Vive en **`ESTADO.md`** (qué hay en producción, qué falta, qué riesgo está abierto).
+La historia de cada cambio, en `worklog/`.
 
 ## 9. Riesgos conocidos / decisiones abiertas
 
@@ -156,9 +151,13 @@ migrado?  bool   (vino de una colección legacy)
 
 ## 10. Ideas de mejora futuras (backlog sugerido)
 
-- Paginación real del feed (hoy trae todo y recorta a 50 en el cliente).
-- Índices compuestos de Firestore para ordenar el feed en la query.
+- ✅ ~~Índice compuesto para ordenar el feed en la query~~ — hecho el 2026-07-06
+  (worklog `10`): el muro trae 50 desde el servidor. Falta confirmar que el índice
+  esté deployado (`ESTADO.md` §2).
+- Paginación real del feed ("ver más" después de los primeros 50).
 - Centralizar `constants.js` (hoy duplicado front/back) en un paquete compartido.
-- Tests de los services (con emulador) y de `statsService`.
+  Mientras tanto, `constants.sync.test.ts` controla que no se desincronicen.
+- Tests de los services (con emulador). `statsService.calcularRachas` y `utils/date`
+  ya tienen tests.
 - Reactivar y completar la feature de "likes" del feed, o removerla del modelo.
 - Notificaciones push (recordatorio de racha en riesgo).

@@ -19,6 +19,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
         working-directory: frontend
+      # Lo mismo que verify.ps1: si el typecheck o los tests fallan, no hay preview.
+      # (Los tests incluyen la sincronía de los dos constants.js, que lee backend/src/.)
+      - name: Typecheck
+        run: npx tsc --noEmit
+        working-directory: frontend
+      - name: Tests
+        run: npx react-scripts test --watchAll=false
+        working-directory: frontend
+        env:
+          CI: true
       - name: Build
         run: npm run build
         working-directory: frontend
