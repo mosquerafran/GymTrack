@@ -4,6 +4,7 @@ import { ArrowLeftRight, ChevronRight, LogOut, ShieldCheck, UserCheck } from "lu
 import CategoriaCreator from "../components/CategoriaCreator";
 import MetaSemanalConfig from "../components/MetaSemanalConfig";
 import SexoConfig from "../components/SexoConfig";
+import InstalarApp from "../components/InstalarApp";
 import { ADMIN_EMAIL } from "../config/constants";
 import { Alerta } from "../config/alertas";
 import { cerrarSesion } from "../services/authService";
@@ -58,6 +59,7 @@ export default function Settings({ user, grupoActivo, irA, onCambiarGrupo }: Set
       <SexoConfig user={user} />
       <MetaSemanalConfig user={user} />
       <CategoriaCreator user={user} />
+      <InstalarApp />
 
       <section className="glass-panel px-4 py-1" aria-label="Grupo y administración">
         {fila(<ArrowLeftRight size={22} />, "Cambiar de grupo", grupoActivo ? `${grupoActivo.nombre} · código ${grupoActivo.codigoInvitacion}` : null, onCambiarGrupo)}

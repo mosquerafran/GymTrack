@@ -18,7 +18,7 @@ export default function CodigoCopiable({ codigo }: { codigo: string }): React.Re
     <button
       type="button"
       onClick={copiar}
-      className="flex items-center gap-1.5 min-h-tap px-3 rounded-xl bg-primary/10 text-primary font-mono text-sm shrink-0"
+      className="flex items-center gap-1.5 min-h-tap px-3 border-2 border-textMain text-textMain font-mono font-bold text-sm shrink-0"
       aria-label={copiado ? `Código ${codigo} copiado` : `Copiar el código de invitación ${codigo}`}
     >
       {copiado ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}

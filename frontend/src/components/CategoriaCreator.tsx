@@ -13,6 +13,7 @@ import { Musculo, NOMBRE_MUSCULO, TIPOS, TIPOS_ORDEN } from "../config/entrenos"
 import { plantillaDe } from "../utils/entrenos";
 import { useSexo } from "../hooks/useSexo";
 import Hoja from "./ui/Hoja";
+import IconoTipo from "./IconoTipo";
 import { Categoria } from "../types";
 
 const SelectorMusculos = lazy(() => import("./cuerpo/SelectorMusculos"));
@@ -97,7 +98,7 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
     const { tipo, musculos } = plantillaDe(cat);
     return tipo === "gym" && musculos.length
       ? musculos.map((m) => NOMBRE_MUSCULO[m]).join(" · ")
-      : `${TIPOS[tipo].emoji} ${TIPOS[tipo].nombre}`;
+      : TIPOS[tipo].nombre;
   };
 
   const fila = (cat: Categoria) => (
@@ -113,7 +114,7 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
           <span className="block text-sm text-textMuted truncate">{resumen(cat)}</span>
         </span>
         {cat.activo !== false && (
-          <span className={`shrink-0 text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-lg ${cat.cuenta !== false ? "bg-primary/10 text-primary" : "bg-surfaceHighlight text-textMuted"}`}>
+          <span className={`shrink-0 text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-lg ${cat.cuenta !== false ? "bg-textMain text-background" : "bg-surfaceHighlight text-textMuted"}`}>
             {cat.cuenta !== false ? "Suma" : "No suma"}
           </span>
         )}
@@ -194,9 +195,9 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
                     type="button"
                     aria-pressed={d.tipo === t}
                     onClick={() => cambiar({ tipo: t })}
-                    className={`min-h-[60px] rounded-2xl border-[1.5px] flex flex-col items-center justify-center gap-0.5 font-heading text-[13px] uppercase tracking-wide ${d.tipo === t ? "border-primary bg-primary/10 text-primary" : "border-borderBase bg-background"}`}
+                    className={`min-h-[60px] rounded-2xl border-[1.5px] flex flex-col items-center justify-center gap-0.5 font-heading text-[13px] uppercase tracking-wide ${d.tipo === t ? "border-textMain bg-textMain text-background" : "border-borderBase bg-background"}`}
                   >
-                    <span className="text-xl leading-none" aria-hidden="true">{TIPOS[t].emoji}</span>
+                    <IconoTipo tipo={t} size={20} />
                     {TIPOS[t].nombre}
                   </button>
                 ))}

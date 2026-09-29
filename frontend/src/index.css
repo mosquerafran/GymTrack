@@ -25,8 +25,8 @@
     --color-border: rgba(14, 14, 14, 0.14);
     --shadow-premium: 0 10px 24px -14px rgba(0, 0, 0, 0.35);
     /* Figura del cuerpo (components/cuerpo) */
-    --color-cuerpo: 214 214 210;
-    --color-musculo: 186 186 181;
+    --color-cuerpo: 226 226 222;
+    --color-musculo: 205 205 200;
     --color-cuerpo-contorno: rgba(14, 14, 14, 0.35);
   }
 
@@ -41,8 +41,8 @@
     --color-text-muted: 154 154 149;
     --color-border: rgba(242, 242, 239, 0.12);
     --shadow-premium: 0 14px 30px -16px rgba(0, 0, 0, 0.8);
-    --color-cuerpo: 44 44 44;
-    --color-musculo: 70 70 70;
+    --color-cuerpo: 36 36 36;
+    --color-musculo: 58 58 58;
     --color-cuerpo-contorno: rgba(242, 242, 239, 0.3);
   }
 
@@ -233,8 +233,8 @@
     transition: fill 0.15s;
   }
   .cuerpo .cuerpo-m.on { fill: rgb(var(--color-primary)); }
-  .cuerpo .cuerpo-m.i1 { fill: rgb(var(--color-text-main) / 0.3); }
-  .cuerpo .cuerpo-m.i2 { fill: rgb(var(--color-text-main) / 0.6); }
+  .cuerpo .cuerpo-m.i1 { fill: rgb(var(--color-text-main) / 0.42); }
+  .cuerpo .cuerpo-m.i2 { fill: rgb(var(--color-text-main) / 0.7); }
   .cuerpo .cuerpo-m.i3 { fill: rgb(var(--color-text-main)); }
   .cuerpo .cuerpo-m.sel { stroke: rgb(var(--color-text-main)); stroke-width: 6; }
   .cuerpo.tocable .cuerpo-m { cursor: pointer; }

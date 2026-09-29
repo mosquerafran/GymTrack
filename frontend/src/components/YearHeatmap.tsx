@@ -105,7 +105,7 @@ export default function YearHeatmap({ dias, anio }: YearHeatmapProps): React.Rea
                   <div
                     key={c.key}
                     data-hoy={c.esHoy || undefined}
-                    title={c.enAnio ? `${c.key.split("-").reverse().join("/")}${c.entreno ? " · entrenaste 💪" : ""}` : undefined}
+                    title={c.enAnio ? `${c.key.split("-").reverse().join("/")}${c.entreno ? " · entrenaste" : ""}` : undefined}
                     className={`w-3 h-3 rounded-[3px] ${
                       !c.enAnio
                         ? "bg-transparent"

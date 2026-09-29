@@ -1,5 +1,6 @@
 import React from "react";
 import { RankingUser } from "../services/statsService";
+import { nombreCorto } from "../utils/entrenos";
 
 interface PodioProps {
   ranking: RankingUser[];
@@ -35,7 +36,7 @@ export default function Podio({ ranking, miNombre }: PodioProps): React.ReactEle
               {u.nombre.charAt(0).toUpperCase()}
             </div>
             <span className={`text-sm font-bold text-center leading-tight truncate max-w-full px-1 ${esMio ? "text-primary" : "text-textMain"}`}>
-              {u.nombre}{esMio && " (vos)"}
+              {nombreCorto(u.nombre)}{esMio && " (vos)"}
             </span>
             <span className="font-mono text-xs text-textMuted">{u.dias} d · {u.porcentaje}%</span>
             <div

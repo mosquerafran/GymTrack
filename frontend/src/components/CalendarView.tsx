@@ -21,13 +21,13 @@ export default function CalendarView({ mes, entrenos, onMonthChange, onAbrirDia 
 
   const tileContent = useCallback(({ date, view }: TileArgs) => {
     if (view !== "month" || !entreno(date)) return null;
-    return <span className="block w-1.5 h-1.5 mt-0.5 rounded-full bg-primary" aria-hidden="true" />;
+    return <span className="sr-only">, entrenaste</span>;
   }, [entreno]);
 
   const tileClassName = useCallback(({ date, view }: TileArgs) => {
     if (view !== "month") return "";
     const clases = ["rounded-lg"];
-    if (entreno(date)) clases.push("bg-primary/10 text-primary font-bold");
+    if (entreno(date)) clases.push("!bg-textMain !text-background font-bold");
     if (formatDateLocal(date) === hoy) clases.push("ring-2 ring-inset ring-primary");
     return clases.join(" ");
   }, [entreno, hoy]);
@@ -50,6 +50,7 @@ export default function CalendarView({ mes, entrenos, onMonthChange, onAbrirDia 
           }}
           tileContent={tileContent}
           tileClassName={tileClassName}
+          calendarType="iso8601"
           next2Label={null}
           prev2Label={null}
           minDetail="month"

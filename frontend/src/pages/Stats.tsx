@@ -6,6 +6,7 @@ import { META_SEMANAL_DEFAULT } from "../types";
 import { Trophy, Target, RotateCw } from "lucide-react";
 import YearHeatmap from "../components/YearHeatmap";
 import Podio from "../components/Podio";
+import IconoTipo from "../components/IconoTipo";
 import { TIPOS } from "../config/entrenos";
 import { useSexo } from "../hooks/useSexo";
 
@@ -72,7 +73,7 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
           type="button"
           aria-pressed={periodo === opt.id}
           onClick={() => setPeriodo(opt.id)}
-          className={`min-h-tap rounded-xl font-heading text-sm uppercase tracking-wide transition-colors ${periodo === opt.id ? "bg-surface text-primary shadow-sm" : "text-textMuted"}`}
+          className={`min-h-tap rounded-xl font-heading text-sm uppercase tracking-wide transition-colors ${periodo === opt.id ? "bg-textMain text-background" : "text-textMuted"}`}
         >
           {opt.label}
         </button>
@@ -120,9 +121,9 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
   let recordNudge: string | null = null;
   if (data.rachaActual > 0) {
     if (data.rachaActual >= data.rachaRecord) {
-      recordNudge = `🔥 ¡Estás en tu mejor racha histórica (${data.rachaActual} días)! No la cortes.`;
+      recordNudge = `¡Estás en tu mejor racha histórica (${data.rachaActual} días)! No la cortes.`;
     } else if (data.rachaRecord - data.rachaActual <= 3) {
-      recordNudge = `A ${data.rachaRecord - data.rachaActual} día(s) de igualar tu récord de ${data.rachaRecord}. 💪`;
+      recordNudge = `A ${data.rachaRecord - data.rachaActual} día(s) de igualar tu récord de ${data.rachaRecord}.`;
     }
   }
 
@@ -144,8 +145,8 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
         <div className="flex items-end justify-between gap-3">
           <div>
             <div className="flex items-baseline">
-              <span className="font-display text-7xl text-primary leading-none tabular-nums">{data.porcentaje}</span>
-              <span className="font-display text-3xl text-primary/60">%</span>
+              <span className="font-display text-7xl text-textMain leading-none tabular-nums">{data.porcentaje}</span>
+              <span className="font-display text-3xl text-textMuted">%</span>
             </div>
             <p className="eyebrow !text-xs mt-1.5">Constancia</p>
           </div>
@@ -184,9 +185,9 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
           </p>
         )}
         <p className="flex items-center gap-2 text-sm text-textMuted">
-          <Target size={16} className="text-primary shrink-0" />
+          <Target size={16} className="text-accent shrink-0" />
           {semanaCompleta
-            ? `¡Meta de la semana cumplida! (${metaSemanal} días) 💪`
+            ? `¡Meta de la semana cumplida! (${metaSemanal} días)`
             : `Te faltan ${metaSemanal - data.diasEstaSemana} día(s) para tu meta semanal.`}
         </p>
       </section>
@@ -250,8 +251,8 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
           <ul className="grid grid-cols-2 gap-2">
             {data.conteoPorTipo.map(({ tipo, cantidad }) => (
               <li key={tipo} className="flex items-center justify-between px-3 py-2.5 rounded-2xl bg-background border border-borderBase">
-                <span className="font-semibold"><span aria-hidden="true">{TIPOS[tipo].emoji} </span>{TIPOS[tipo].nombre}</span>
-                <span className="scoreboard text-lg font-bold text-primary">{cantidad}</span>
+                <span className="flex items-center gap-2 font-semibold"><IconoTipo tipo={tipo} size={16} className="text-textMuted" />{TIPOS[tipo].nombre}</span>
+                <span className="scoreboard text-lg font-extrabold">{cantidad}</span>
               </li>
             ))}
           </ul>

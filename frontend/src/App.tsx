@@ -11,6 +11,7 @@ import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Hoja from "./components/ui/Hoja";
 import { Spinner } from "./components/ui/Estados";
+import { TriangleAlert } from "lucide-react";
 import { Asistencia, Grupo } from "./types";
 import { formatDateLocal, parseFechaLocal } from "./utils/date";
 
@@ -60,7 +61,7 @@ export default function App(): React.ReactElement {
     <PantallaCentrada>
       {errorAuth ? (
         <div className="glass-panel p-8 max-w-sm w-full text-center animate-slide-up space-y-4">
-          <span className="text-4xl" aria-hidden="true">⚠️</span>
+          <TriangleAlert size={40} className="mx-auto text-primary" aria-hidden="true" />
           <h2 className="font-heading text-xl uppercase tracking-wide">Error de conexión</h2>
           <p className="text-textMuted text-sm">{errorAuth}</p>
           <div className="space-y-2">
@@ -161,7 +162,7 @@ export default function App(): React.ReactElement {
           </span>
         ) : (
           // Tocar la fecha abre el calendario del celu: se puede cargar un día anterior (nunca a futuro).
-          <label className="relative font-heading text-sm uppercase tracking-wide min-h-tap flex items-center gap-1 px-3 rounded-xl border border-primary/50 text-primary bg-background whitespace-nowrap cursor-pointer">
+          <label className="relative font-heading text-sm uppercase tracking-wide min-h-tap flex items-center gap-1 px-3 border-2 border-textMain text-textMain bg-background whitespace-nowrap cursor-pointer">
             {fechaCorta(registro.fecha)} ▾
             <input
               type="date"

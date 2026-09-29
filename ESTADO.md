@@ -40,9 +40,10 @@ rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 ## 3. Pendientes (sin fecha)
 
 
-- ⬜ **App Check** (bloquear scripts que no son la app): configurar reCAPTCHA en la consola primero.
-- ⬜ **PWA**: service worker/offline, ícono maskable real, y probar el login en la app instalada de iOS
-  (`signInWithPopup` en standalone). Ver worklog `2026-09-28/04` → pendientes.
+- ⬜ **App Check**: descartado por ahora (bajo beneficio con la fase 2; si se activa mal deja a todos
+  afuera). Retomar si la app sale del grupo de amigos.
+- ⬜ **PWA, lo que falta**: registrar sin señal (guardar y subir después) y probar el login en la app
+  instalada de iPhone. Offline, actualizaciones e instalar: hechos (worklog `2026-09-28/08`).
 - ⬜ Lista completa de mejoras de rendimiento y orden del repo: auditoría del 2026-09-28 (ver
   worklog `2026-09-28/02` → pendientes, y el chat de esa fecha).
 

@@ -9,6 +9,8 @@ import { Alerta } from "../config/alertas";
 import { Musculo, TIPOS, TIPOS_ORDEN, TipoEntreno } from "../config/entrenos";
 import { categoriaIdDe, etiquetaDe, musculosDe, plantillaDe, tipoDe, NombresCategoria } from "../utils/entrenos";
 import { useSexo } from "../hooks/useSexo";
+import { useConexion } from "../hooks/usePwa";
+import IconoTipo from "./IconoTipo";
 import { EjercicioRutina, Asistencia, Categoria } from "../types";
 
 // El cuerpo trae ~130 KB de paths SVG: se carga recién cuando se abre el registro.
@@ -27,6 +29,7 @@ interface TrainingSelectorProps {
 
 export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEditar, onCompletado, onCancelar, enHoja = false }: TrainingSelectorProps): React.ReactElement {
   const sexo = useSexo(user.email);
+  const online = useConexion();
   const editando = !!asistenciaAEditar;
 
   const [tipo, setTipo] = useState<TipoEntreno>("gym");
@@ -110,6 +113,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
   const faltas: string[] = [];
   if (!tieneFoto) faltas.push("la foto");
   if (tipo === "gym" && musculos.size === 0) faltas.push("al menos un músculo");
+  if (!online) faltas.push("señal (la foto se sube a internet)");
   const listo = faltas.length === 0;
 
   const guardar = async () => {
@@ -155,7 +159,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
         setMusculos(new Set());
         setEtiqueta("");
         setCategoriaId("");
-        Alerta.fire({ titleText: "¡Épico! 💪", text: chisteRandom(), icon: "success", confirmButtonText: "Seguir rompiéndola" });
+        Alerta.fire({ titleText: "¡Épico!", text: chisteRandom(), icon: "success", confirmButtonText: "Seguir rompiéndola" });
       }
       onCompletado?.();
     } catch (err) {
@@ -206,10 +210,10 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
         ) : (
           <div className="grid grid-cols-2 gap-2">
             <button type="button" onClick={() => inputCamara.current?.click()} className="min-h-[88px] rounded-2xl border-2 border-dashed border-borderBase bg-background flex flex-col items-center justify-center gap-1.5 text-sm font-semibold active:scale-[0.98] transition-transform">
-              <Camera size={26} className="text-primary" /> Sacar foto
+              <Camera size={26} className="text-textMain" /> Sacar foto
             </button>
             <button type="button" onClick={() => inputGaleria.current?.click()} className="min-h-[88px] rounded-2xl border-2 border-dashed border-borderBase bg-background flex flex-col items-center justify-center gap-1.5 text-sm font-semibold active:scale-[0.98] transition-transform">
-              <ImagePlus size={26} className="text-primary" /> Elegir de galería
+              <ImagePlus size={26} className="text-textMain" /> Elegir de galería
             </button>
           </div>
         )}
@@ -233,7 +237,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
                   type="button"
                   aria-pressed={activa}
                   onClick={() => elegirCategoria(c)}
-                  className={`min-h-[52px] px-3 py-2 rounded-2xl border-[1.5px] text-left transition-colors ${activa ? "border-primary bg-primary/10 text-primary" : "border-borderBase bg-background text-textMain"}`}
+                  className={`min-h-[52px] px-3 py-2 rounded-2xl border-[1.5px] text-left transition-colors ${activa ? "border-textMain bg-textMain text-background" : "border-borderBase bg-background text-textMain"}`}
                 >
                   <span className="block font-semibold truncate">{c.nombre}</span>
                   {c.cuenta === false && <span className="block text-xs text-textMuted">No suma</span>}
@@ -261,9 +265,9 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
                 type="button"
                 aria-pressed={activo}
                 onClick={() => setTipo(t)}
-                className={`min-h-[64px] rounded-2xl border-[1.5px] flex flex-col items-center justify-center gap-0.5 font-heading text-[13px] uppercase tracking-wide transition-colors ${activo ? "border-primary bg-primary/10 text-primary" : "border-borderBase bg-background text-textMain"}`}
+                className={`min-h-[64px] rounded-2xl border-[1.5px] flex flex-col items-center justify-center gap-0.5 font-heading text-[13px] uppercase tracking-wide transition-colors ${activo ? "border-textMain bg-textMain text-background" : "border-borderBase bg-background text-textMain"}`}
               >
-                <span className="text-xl leading-none" aria-hidden="true">{TIPOS[t].emoji}</span>
+                <IconoTipo tipo={t} size={20} />
                 {TIPOS[t].nombre}
               </button>
             );
@@ -283,7 +287,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
         </Suspense>
       ) : (
         <p className="rounded-2xl border border-dashed border-borderBase bg-background p-4 text-sm text-textMuted">
-          <strong className="text-textMain">{TIPOS[tipo].emoji} {TIPOS[tipo].nombre}.</strong> No hace falta marcar músculos. Usá la etiqueta para contar qué fue.
+          <strong className="text-textMain">{TIPOS[tipo].nombre}.</strong> No hace falta marcar músculos. Usá la etiqueta para contar qué fue.
         </p>
       )}
 
@@ -297,7 +301,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
           id="ts-etiqueta"
           type="text"
           maxLength={60}
-          placeholder="Ej: Push pesado, Minubi 🥵"
+          placeholder="Ej: Push pesado, piernas al fallo"
           className="input-field"
           value={etiqueta}
           onChange={(e) => setEtiqueta(e.target.value)}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { User } from "firebase/auth";
-import { Users, Plus, KeyRound, LogOut, Sun, Moon, ShieldCheck, ChevronRight } from "lucide-react";
+import { Users, Plus, KeyRound, LogOut, Sun, Moon, ShieldCheck, ChevronRight, Building2, Dumbbell } from "lucide-react";
 import CodigoCopiable from "../components/CodigoCopiable";
 import Logo from "../components/Logo";
 import { cargarGruposDeUsuario, crearGrupo, unirseConCodigo } from "../services/gruposService";
@@ -125,7 +125,7 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
                   role="tab"
                   aria-selected={modo === t.id}
                   onClick={() => setModo(t.id)}
-                  className={`flex items-center justify-center gap-1.5 min-h-tap rounded-xl font-semibold text-sm transition-colors ${modo === t.id ? "bg-surface text-primary shadow-sm" : "text-textMuted"}`}
+                  className={`flex items-center justify-center gap-1.5 min-h-tap rounded-xl font-semibold text-sm transition-colors ${modo === t.id ? "bg-textMain text-background" : "text-textMuted"}`}
                 >
                   {t.icono} {t.label}
                 </button>
@@ -149,7 +149,7 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
                     <li key={g.id} className="glass-panel p-4 space-y-3">
                       <button type="button" onClick={() => onSelectGrupo(g)} className="w-full flex items-center gap-3 text-left min-h-tap">
                         <span className="w-12 h-12 rounded-2xl bg-primary/10 grid place-items-center text-2xl shrink-0" aria-hidden="true">
-                          {g.nombre.includes("Miller") ? "🏢" : "💪"}
+                          {g.nombre.includes("Miller") ? <Building2 size={22} /> : <Dumbbell size={22} />}
                         </span>
                         <span className="flex-1 min-w-0">
                           <span className="block font-heading text-lg uppercase tracking-wide truncate">{g.nombre}</span>
@@ -160,7 +160,7 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
                             )}
                           </span>
                         </span>
-                        <ChevronRight size={22} className="text-primary shrink-0" aria-hidden="true" />
+                        <ChevronRight size={22} className="text-textMain shrink-0" aria-hidden="true" />
                       </button>
                       <div className="flex items-center justify-between gap-2 pt-3 border-t border-borderBase">
                         <span className="text-sm text-textMuted">Código para invitar</span>

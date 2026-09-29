@@ -43,7 +43,7 @@ export default function MetaSemanalConfig({ user }: MetaSemanalConfigProps): Rea
   return (
     <div className="glass-panel p-5 sm:p-6">
       <h3 className="font-heading text-lg uppercase tracking-wide text-textMain flex items-center gap-2">
-        <Target size={20} className="text-primary" aria-hidden="true" /> Meta semanal
+        <Target size={20} className="text-accent" aria-hidden="true" /> Meta semanal
       </h3>
       <p className="text-textMuted text-sm mt-1 mb-4">
         ¿Cuántos días por semana querés entrenar? Se usa para tu % de la semana en el ranking.
@@ -65,7 +65,7 @@ export default function MetaSemanalConfig({ user }: MetaSemanalConfigProps): Rea
                 aria-label={`${n} días por semana`}
                 className={`min-h-[48px] rounded-xl font-black scoreboard text-lg transition-colors flex items-center justify-center border ${
                   activo
-                    ? "bg-primary text-white border-transparent"
+                    ? "bg-textMain text-background border-transparent"
                     : "bg-surfaceHighlight/50 text-textMuted border-borderBase hover:text-textMain hover:border-primary/30"
                 }`}
               >

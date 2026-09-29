@@ -46,7 +46,7 @@ export default function SexoConfig({ user }: SexoConfigProps): React.ReactElemen
     <div className="glass-panel p-5 sm:p-6 space-y-4">
       <div>
         <h3 className="font-heading text-lg uppercase tracking-wide text-textMain flex items-center gap-2">
-          <PersonStanding size={20} className="text-primary" /> Tu cuerpo
+          <PersonStanding size={20} className="text-accent" /> Tu cuerpo
         </h3>
         <p className="text-sm text-textMuted mt-1">El modelo que se usa al marcar músculos, en el muro y en tus stats.</p>
       </div>
@@ -59,7 +59,7 @@ export default function SexoConfig({ user }: SexoConfigProps): React.ReactElemen
               type="button"
               onClick={() => elegir(o.id)}
               aria-pressed={activo}
-              className={`min-h-[64px] rounded-2xl border-[1.5px] flex items-center justify-center gap-3 font-heading text-base uppercase tracking-wide transition-colors ${activo ? "border-primary bg-primary/10 text-primary" : "border-borderBase bg-background text-textMain"}`}
+              className={`min-h-[64px] rounded-2xl border-[1.5px] flex items-center justify-center gap-3 font-heading text-base uppercase tracking-wide transition-colors ${activo ? "border-textMain bg-textMain text-background" : "border-borderBase bg-background text-textMain"}`}
             >
               <Suspense fallback={<span className="w-6 h-12" />}>
                 <Cuerpo sexo={o.id} lado="front" etiqueta="" className="!w-6" />

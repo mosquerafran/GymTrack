@@ -42,6 +42,14 @@ function registerValidSW(swUrl: string, config?: Config) {
   navigator.serviceWorker
     .register(swUrl)
     .then((registration) => {
+      // Una versión nueva que quedó esperando de una visita anterior: avisar ya.
+      if (registration.waiting && navigator.serviceWorker.controller && config?.onUpdate) {
+        config.onUpdate(registration);
+      }
+      // La app instalada puede quedar abierta días: buscar versión nueva al volver a ella.
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") registration.update().catch(() => {});
+      });
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
         if (installingWorker == null) {

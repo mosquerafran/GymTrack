@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown, Crown } from "lucide-react";
 import Cuerpo from "./cuerpo/Cuerpo";
 import { MUSCULOS, Musculo, NOMBRE_MUSCULO, Sexo } from "../config/entrenos";
-import { nivelDeCalor } from "../utils/entrenos";
+import { nivelDeCalor, nombreCorto } from "../utils/entrenos";
 import { diasTranscurridos, parseFechaLocal } from "../utils/date";
 
 interface StatsMusculosProps {
@@ -105,8 +105,8 @@ export default function StatsMusculos({ sexo, porMusculo, umbral, ultimaVez, tre
         <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs text-textMuted">
           <span>Días:</span>
           <i className="inline-block w-[22px] h-2.5" style={{ background: "rgb(var(--color-musculo))" }} />0
-          <i className="inline-block w-[22px] h-2.5 bg-textMain/[0.3]" />{umbral[0]}{umbral[1] - 1 > umbral[0] ? `–${umbral[1] - 1}` : ""}
-          <i className="inline-block w-[22px] h-2.5 bg-textMain/[0.6]" />{umbral[1]}{umbral[2] - 1 > umbral[1] ? `–${umbral[2] - 1}` : ""}
+          <i className="inline-block w-[22px] h-2.5 bg-textMain/[0.42]" />{umbral[0]}{umbral[1] - 1 > umbral[0] ? `–${umbral[1] - 1}` : ""}
+          <i className="inline-block w-[22px] h-2.5 bg-textMain/[0.7]" />{umbral[1]}{umbral[2] - 1 > umbral[1] ? `–${umbral[2] - 1}` : ""}
           <i className="inline-block w-[22px] h-2.5 bg-textMain" />{umbral[2]}+
         </div>
         <div className="min-h-tap flex flex-wrap items-center gap-x-2.5 gap-y-0.5 px-3 py-2 rounded-xl bg-background text-sm text-textMain" aria-live="polite">
@@ -193,7 +193,7 @@ export default function StatsMusculos({ sexo, porMusculo, umbral, ultimaVez, tre
                     <Crown size={12} className="text-accent" aria-hidden="true" /> {l.zona}
                   </span>
                   <b className={`block font-heading text-base tracking-wide truncate ${soyYo ? "text-primary" : "text-textMain"}`}>
-                    {l.nombre}{soyYo && " (vos)"}
+                    {nombreCorto(l.nombre)}{soyYo && " (vos)"}
                   </b>
                   <span className="text-sm text-textMuted">{plural(l.dias, "día", "días")}</span>
                 </li>

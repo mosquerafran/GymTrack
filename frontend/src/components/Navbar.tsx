@@ -89,7 +89,7 @@ export default function Navbar({ view, irA, onRegistrar, user, theme, toggleThem
                 title={`Racha de ${streak} días seguidos`}
                 aria-label={`Racha de ${streak} días seguidos`}
               >
-                <span className="text-lg leading-none" aria-hidden="true">🔥</span>
+                <Flame size={18} strokeWidth={2.5} aria-hidden="true" />
                 <span className="scoreboard text-xl font-bold leading-none">{streak}</span>
               </div>
             )}

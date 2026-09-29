@@ -4,11 +4,12 @@
 
 export type TipoEntreno = "gym" | "futbol" | "running" | "otro";
 
-export const TIPOS: Record<TipoEntreno, { emoji: string; nombre: string }> = {
-  gym: { emoji: "🏋️", nombre: "Gym" },
-  futbol: { emoji: "⚽", nombre: "Fútbol" },
-  running: { emoji: "🏃", nombre: "Running" },
-  otro: { emoji: "✦", nombre: "Otro" },
+/** Nombre para mostrar. El ícono de cada tipo está en `components/IconoTipo` (sin emojis). */
+export const TIPOS: Record<TipoEntreno, { nombre: string }> = {
+  gym: { nombre: "Gym" },
+  futbol: { nombre: "Fútbol" },
+  running: { nombre: "Running" },
+  otro: { nombre: "Otro" },
 };
 
 export const TIPOS_ORDEN: TipoEntreno[] = ["gym", "futbol", "running", "otro"];

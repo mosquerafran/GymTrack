@@ -13,6 +13,13 @@ import {
   esTipoEntreno,
 } from "../config/entrenos";
 
+/** "Francisco Mosquera Alfaro" → "Francisco M." (para podio, reyes y lugares chicos). */
+export const nombreCorto = (nombre: string): string => {
+  const partes = nombre.trim().split(/\s+/);
+  if (partes.length < 2) return nombre.trim();
+  return `${partes[0]} ${partes[1].charAt(0).toUpperCase()}.`;
+};
+
 /** Lo mínimo de una asistencia que usan estas funciones (acepta docs viejos). */
 export interface EntrenoLeido {
   fecha?: string;

@@ -103,7 +103,7 @@ export default function DetalleDia({ user, grupoId, fecha, onEditar, onRegistrar
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0 space-y-1">
                     {etiqueta && (
-                      <span className="inline-block max-w-full truncate text-xs font-bold px-2.5 py-1 rounded-lg bg-primary/10 text-primary uppercase tracking-wide">
+                      <span className="inline-block max-w-full truncate text-xs font-bold px-2.5 py-1 border-2 border-textMain uppercase tracking-wide">
                         {etiqueta}
                       </span>
                     )}
@@ -128,7 +128,7 @@ export default function DetalleDia({ user, grupoId, fecha, onEditar, onRegistrar
                     <Dumbbell size={16} className="text-textMuted" aria-label="PRs" />
                     {a.rutina.map((ej, i) => (
                       <span key={i} className="text-sm font-semibold bg-surface border border-borderBase rounded-lg px-2 py-1">
-                        {ej.nombre} <span className="text-primary">{ej.peso ? `${ej.peso} kg` : ""}{ej.reps ? ` × ${ej.reps}` : ""}</span>
+                        {ej.nombre} <span className="font-black">{ej.peso ? `${ej.peso} kg` : ""}{ej.reps ? ` × ${ej.reps}` : ""}</span>
                       </span>
                     ))}
                   </div>

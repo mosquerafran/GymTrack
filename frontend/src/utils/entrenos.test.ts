@@ -10,6 +10,7 @@ import {
   lideresPorZona,
   musculosDe,
   musculosDeNombre,
+  nombreCorto,
   nivelDeCalor,
   tipoDe,
   ultimaVezPorMusculo,
@@ -200,4 +201,10 @@ describe("plantillaDe (lo que precarga una categoría)", () => {
   test("si no es gym, sin músculos aunque tenga guardados", () => {
     expect(plantillaDe({ nombre: "Fútbol", tipo: "futbol", musculos: ["cuadriceps"] })).toEqual({ tipo: "futbol", musculos: [] });
   });
+});
+
+test("nombreCorto: nombre + inicial del apellido", () => {
+  expect(nombreCorto("Francisco Mosquera Alfaro")).toBe("Francisco M.");
+  expect(nombreCorto("  Pedro   zaffino ")).toBe("Pedro Z.");
+  expect(nombreCorto("Rafa")).toBe("Rafa");
 });

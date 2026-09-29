@@ -3,8 +3,9 @@ import { cargarFeedGlobal } from "../services/asistenciasService";
 import { cargarMapaCategorias } from "../services/categoriasService";
 import { Dumbbell, MessageSquare, Calendar, Flame } from "lucide-react";
 import { Cargando, EstadoVacio, ErrorCarga } from "../components/ui/Estados";
+import IconoTipo from "../components/IconoTipo";
 import { Asistencia, Categoria } from "../types";
-import { SEXO_DEFAULT, TIPOS } from "../config/entrenos";
+import { SEXO_DEFAULT } from "../config/entrenos";
 import { descripcionDe, etiquetaDe, musculosDe, tipoDe, NombresCategoria } from "../utils/entrenos";
 
 // Cuerpito del entreno sobre la foto: trae los paths del cuerpo, se carga aparte.
@@ -116,11 +117,11 @@ export default function Feed({ grupoId, refresco = 0 }: FeedProps): React.ReactE
                       height={1024}
                       className="w-full h-full object-cover"
                     />
-                    {musculosDe(post).length > 0 && (
+                    {musculosDe(post, nombres).length > 0 && (
                       <Suspense fallback={null}>
                         <MiniCuerpo
                           sexo={post.sexo || SEXO_DEFAULT}
-                          musculos={musculosDe(post)}
+                          musculos={musculosDe(post, nombres)}
                           className="absolute right-2.5 bottom-2.5 bg-surface rounded-xl px-1.5 pt-1.5 pb-1 shadow-premium"
                         />
                       </Suspense>
@@ -134,15 +135,15 @@ export default function Feed({ grupoId, refresco = 0 }: FeedProps): React.ReactE
 
                 {/* Contenido Detallado */}
                 <div className="p-5 space-y-4">
-                  <p className="font-heading text-base tracking-wide text-textMain">
-                    <span aria-hidden="true">{TIPOS[tipoDe(post, nombres)].emoji} </span>
+                  <p className="flex items-center gap-2 font-heading text-base tracking-wide text-textMain">
+                    <IconoTipo tipo={tipoDe(post, nombres)} size={18} className="shrink-0 text-textMuted" />
                     {descripcionDe(post, nombres)}
                   </p>
                   {/* Notas / Mensaje Primero */}
                   {post.notas && (
                     <div className="flex gap-3 items-start bg-primary/5 p-4 rounded-2xl border border-primary/10 shadow-sm relative overflow-hidden group">
                       <div className="absolute top-0 left-0 w-1 h-full bg-primary/20 group-hover:bg-primary transition-colors" />
-                      <MessageSquare size={18} className="text-primary mt-1 shrink-0" />
+                      <MessageSquare size={18} className="text-accent mt-1 shrink-0" />
                       <p className="text-sm text-textMain italic leading-relaxed font-medium">"{post.notas}"</p>
                     </div>
                   )}
@@ -158,7 +159,7 @@ export default function Feed({ grupoId, refresco = 0 }: FeedProps): React.ReactE
                         {post.rutina.map((ej: any, i) => (
                           <div key={i} className="flex items-center gap-2 bg-surface p-2 rounded-xl border border-borderBase/40 text-xs shadow-sm">
                             <span className="font-bold text-textMain">{ej.nombre}</span>
-                            <span className="text-primary font-black bg-primary/5 px-1.5 py-0.5 rounded">
+                            <span className="font-black bg-surfaceHighlight px-1.5 py-0.5">
                               {ej.peso ? `${ej.peso}kg` : ""} {ej.reps ? `x ${ej.reps}` : ""}
                               {ej.series && !ej.peso && !ej.reps ? `${ej.series.length} series` : ""}
                             </span>
