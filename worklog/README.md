@@ -65,3 +65,4 @@ Lo que quedó abierto o a tener en cuenta.
 - [06 — Categorías plantilla y qué suma](2026-09-28/06-categorias-plantilla-que-suma.md) — músculos preseleccionados, suma por categoría, varios por día, días anteriores.
 - [07 — Identidad Silverback](2026-09-28/07-identidad-silverback.md) — nombre, paleta blanco y negro + rojo, Poppins, geometría del gorila.
 - [08 — PWA y revisión visual](2026-09-28/08-pwa-y-revision-visual.md) — offline, aviso de versión nueva, instalar; ajustes vistos con sesión.
+- [09 — Calendario con rombos](2026-09-28/09-calendario-rombos.md) — sin bloques negros; se pisan los grises por defecto de react-calendar.

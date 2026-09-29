@@ -201,17 +201,27 @@
   .custom-calendar-container .react-calendar__month-view__weekdays__weekday abbr {
     @apply no-underline text-textMuted;
   }
+  /* Día: número centrado y, si entrenaste, rombos abajo (CalendarView). Se pisan los grises,
+     el amarillo de "hoy" y el azul de "activo" que trae react-calendar por defecto. */
   .custom-calendar-container .react-calendar__tile {
-    @apply text-textMain aspect-square p-2 flex flex-col items-center justify-center rounded-lg hover:bg-surfaceHighlight transition-all;
+    @apply relative text-textMain aspect-square p-2 flex flex-col items-center justify-center bg-transparent transition-colors;
   }
-  .custom-calendar-container .react-calendar__tile--now {
-    @apply bg-primary/10 text-primary font-bold border border-primary/30;
+  .custom-calendar-container .react-calendar__tile:enabled:hover,
+  .custom-calendar-container .react-calendar__tile:enabled:focus-visible {
+    @apply bg-surfaceHighlight;
   }
+  .custom-calendar-container .react-calendar__tile:enabled:focus:not(:focus-visible) {
+    @apply bg-transparent;
+  }
+  .custom-calendar-container .react-calendar__tile--now,
   .custom-calendar-container .react-calendar__tile--active {
-    @apply bg-primary text-white font-bold !important;
+    @apply bg-transparent text-primary font-extrabold;
+    box-shadow: inset 0 0 0 2px rgb(var(--color-primary));
   }
-  .custom-calendar-container .react-calendar__month-view__days__day--neighboringMonth {
-    @apply text-textMuted/40;
+  .custom-calendar-container .react-calendar__tile:disabled,
+  .custom-calendar-container .react-calendar__month-view__days__day--neighboringMonth,
+  .custom-calendar-container .react-calendar__month-view__days__day--weekend:disabled {
+    @apply bg-transparent text-textMuted/40;
   }
 }
 

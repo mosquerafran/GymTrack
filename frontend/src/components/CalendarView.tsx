@@ -17,20 +17,29 @@ interface CalendarViewProps {
 export default function CalendarView({ mes, entrenos, onMonthChange, onAbrirDia }: CalendarViewProps): React.ReactElement {
   const hoy = formatDateLocal(new Date());
 
-  const entreno = useCallback((date: Date) => (entrenos[formatDateLocal(date)] || []).length > 0, [entrenos]);
+  const cantidad = useCallback((date: Date) => (entrenos[formatDateLocal(date)] || []).length, [entrenos]);
 
+  // Un rombo por entreno del día (hasta 3), el mismo del que usa "Esta semana".
   const tileContent = useCallback(({ date, view }: TileArgs) => {
-    if (view !== "month" || !entreno(date)) return null;
-    return <span className="sr-only">, entrenaste</span>;
-  }, [entreno]);
+    if (view !== "month") return null;
+    const n = cantidad(date);
+    if (!n) return null;
+    return (
+      <>
+        <span className="sr-only">, {n === 1 ? "entrenaste" : `entrenaste ${n} veces`}</span>
+        <span className="absolute bottom-[14%] left-0 right-0 flex justify-center gap-[3px]" aria-hidden="true">
+          {Array.from({ length: Math.min(n, 3) }, (_, i) => (
+            <i key={i} className="block w-[7px] h-[7px] rombo bg-textMain" />
+          ))}
+        </span>
+      </>
+    );
+  }, [cantidad]);
 
   const tileClassName = useCallback(({ date, view }: TileArgs) => {
     if (view !== "month") return "";
-    const clases = ["rounded-lg"];
-    if (entreno(date)) clases.push("!bg-textMain !text-background font-bold");
-    if (formatDateLocal(date) === hoy) clases.push("ring-2 ring-inset ring-primary");
-    return clases.join(" ");
-  }, [entreno, hoy]);
+    return cantidad(date) && formatDateLocal(date) !== hoy ? "font-bold" : "";
+  }, [cantidad, hoy]);
 
   return (
     <section className="glass-panel p-4 sm:p-6" aria-labelledby="cal-titulo">
@@ -55,6 +64,10 @@ export default function CalendarView({ mes, entrenos, onMonthChange, onAbrirDia 
           prev2Label={null}
           minDetail="month"
         />
+      </div>
+      <div className="flex gap-4 mt-2 font-mono text-xs text-textMuted" aria-hidden="true">
+        <span className="flex items-center gap-1.5"><i className="block w-[7px] h-[7px] rombo bg-textMain" />entrenaste</span>
+        <span className="flex items-center gap-1.5"><i className="block w-2.5 h-2.5 border-2 border-primary" />hoy</span>
       </div>
     </section>
   );
