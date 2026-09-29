@@ -1,3 +1,5 @@
+import type { Musculo, Sexo, TipoEntreno } from "../config/entrenos";
+
 export type EstadoUsuario = 'aprobado' | 'pendiente' | 'rechazado' | null;
 
 export interface Usuario {
@@ -9,6 +11,7 @@ export interface Usuario {
   creadoEn: string;
   migrado?: boolean;
   metaSemanal?: number; // objetivo de días de entrenamiento por semana
+  sexo?: Sexo; // modelo del cuerpo en el registro/muro/stats (default: hombre)
 }
 
 /** Meta semanal por defecto si el usuario no la configuró. */
@@ -37,7 +40,13 @@ export interface Asistencia {
   userName: string;
   fecha: string; // 'YYYY-MM-DD'
   timestamp: number;
-  categoriaId: string;
+  /** Docs nuevos (desde 2026-09): tipo, músculos (si es gym) y etiqueta libre. */
+  tipo?: TipoEntreno;
+  musculos?: Musculo[];
+  etiqueta?: string;
+  /** Docs viejos: categoría (legacy `catId`). Los nuevos ya no la escriben. */
+  categoriaId?: string;
+  catId?: string;
   notas: string;
   rutina?: EjercicioRutina[];
   imagenUrl?: string | null;
@@ -49,7 +58,8 @@ export interface Categoria {
   id?: string;
   userId: string;
   nombre: string;
-  cuenta: boolean;
+  /** Legacy: ya no se usa (desde 2026-09 todo entreno suma al ranking). */
+  cuenta?: boolean;
   activo: boolean;
 }
 

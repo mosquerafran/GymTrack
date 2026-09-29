@@ -48,6 +48,12 @@ service cloud.firestore {
         || (request.resource.data[campo] is list && request.resource.data[campo].size() <= max);
     }
 
+    // Modelo del cuerpo (config/entrenos.ts → Sexo).
+    function sexoOk() {
+      return !("sexo" in camposTocados())
+        || request.resource.data.sexo in ["hombre", "mujer"];
+    }
+
     function metaSemanalOk() {
       return !("metaSemanal" in camposTocados())
         || (request.resource.data.metaSemanal is int
@@ -76,12 +82,14 @@ service cloud.firestore {
       allow create: if esPropio()
         && request.resource.data.get("estado", "pendiente") in ["aprobado", "pendiente"]
         && identidadOk()
-        && metaSemanalOk();
+        && metaSemanalOk()
+        && sexoOk();
 
       allow update: if (esPropio()
           && !("estado" in camposTocados())
           && identidadOk()
-          && metaSemanalOk())
+          && metaSemanalOk()
+          && sexoOk())
         || (esAdminGlobal()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["estado"])
           && request.resource.data.estado in ["aprobado", "pendiente", "rechazado"]);
@@ -124,7 +132,8 @@ service cloud.firestore {
           && (!("imagenUrl" in camposTocados())
               || request.resource.data.imagenUrl == null
               || esTextoCorto(request.resource.data.imagenUrl, 2000))
-          && textoOk("tipo", 30)
+          && (!("tipo" in camposTocados())
+              || request.resource.data.tipo in ["gym", "futbol", "running", "otro"])
           && listaOk("musculos", 20)
           && textoOk("etiqueta", 60);
       }

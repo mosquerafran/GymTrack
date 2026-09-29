@@ -22,6 +22,10 @@
     --color-text-muted: 107 95 82;          /* piedra */
     --color-border: rgba(36, 30, 24, 0.12);
     --shadow-premium: 0 12px 30px -12px rgba(50, 35, 20, 0.25), 0 4px 10px -6px rgba(50, 35, 20, 0.15);
+    /* Figura del cuerpo (components/cuerpo) */
+    --color-cuerpo: 214 206 191;
+    --color-musculo: 190 180 162;
+    --color-cuerpo-contorno: rgba(107, 95, 82, 0.55);
   }
 
   .dark {
@@ -36,6 +40,9 @@
     --color-text-muted: 168 154 136;        /* piedra cálida */
     --color-border: rgba(237, 230, 216, 0.10);
     --shadow-premium: 0 18px 40px -16px rgba(0, 0, 0, 0.55), 0 6px 14px -8px rgba(0, 0, 0, 0.5);
+    --color-cuerpo: 58 49 40;
+    --color-musculo: 84 72 60;
+    --color-cuerpo-contorno: rgba(168, 154, 136, 0.45);
   }
 
   body {
@@ -185,5 +192,35 @@
   }
   .custom-calendar-container .react-calendar__month-view__days__day--neighboringMonth {
     @apply text-textMuted/40;
+  }
+}
+
+/* ── Figura del cuerpo (components/cuerpo/Cuerpo.tsx) ─────────────────────── */
+@layer components {
+  .cuerpo { display: block; width: 100%; height: auto; }
+  .cuerpo .cuerpo-base { fill: rgb(var(--color-cuerpo)); }
+  .cuerpo .cuerpo-contorno {
+    fill: none;
+    stroke: var(--color-cuerpo-contorno);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    pointer-events: none;
+  }
+  .cuerpo .cuerpo-m {
+    fill: rgb(var(--color-musculo));
+    stroke: rgb(var(--color-background));
+    stroke-width: 2;
+    transition: fill 0.15s;
+  }
+  .cuerpo .cuerpo-m.on { fill: rgb(var(--color-primary)); }
+  .cuerpo .cuerpo-m.i1 { fill: rgb(var(--color-primary) / 0.35); }
+  .cuerpo .cuerpo-m.i2 { fill: rgb(var(--color-primary) / 0.65); }
+  .cuerpo .cuerpo-m.i3 { fill: rgb(var(--color-primary)); }
+  .cuerpo .cuerpo-m.sel { stroke: rgb(var(--color-text-main)); stroke-width: 6; }
+  .cuerpo.tocable .cuerpo-m { cursor: pointer; }
+  .cuerpo.tocable .cuerpo-m:focus { outline: none; }
+  .cuerpo.tocable .cuerpo-m:focus-visible { stroke: rgb(var(--color-text-main)); stroke-width: 5; }
+  @media (hover: hover) {
+    .cuerpo.tocable .cuerpo-m:not(.on):hover { fill: rgb(var(--color-primary) / 0.35); }
   }
 }

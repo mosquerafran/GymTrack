@@ -3,25 +3,29 @@ import { User } from "firebase/auth";
 import {
   cargarCategorias,
   crearCategoria,
-  eliminarCategoria,
   renombrarCategoria,
-  toggleCuentaCategoria,
+  toggleActivoCategoria,
 } from "../services/categoriasService";
-import { Tag, Plus, CheckSquare, Trash2, Edit2, Check, X } from "lucide-react";
-import Swal from "sweetalert2";
+import { Tag, Plus, Edit2, Check, X, EyeOff, Eye, ChevronDown } from "lucide-react";
+import { Alerta } from "../config/alertas";
 import { Categoria } from "../types";
 
 interface CategoriaCreatorProps {
   user: User;
 }
 
+/**
+ * "Tus etiquetas": las viejas categorías, ahora sugerencias para la etiqueta del registro.
+ * No se borran: se ocultan (activo=false). Así los entrenos viejos que las usan siguen
+ * mostrando su nombre en el muro y en el detalle del día.
+ */
 export default function CategoriaCreator({ user }: CategoriaCreatorProps): React.ReactElement {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [nombre, setNombre] = useState<string>("");
-  const [cuenta, setCuenta] = useState<boolean>(true);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [nombre, setNombre] = useState("");
+  const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState<string | null>(null);
-  const [editNombre, setEditNombre] = useState<string>("");
+  const [editNombre, setEditNombre] = useState("");
+  const [verOcultas, setVerOcultas] = useState(false);
 
   useEffect(() => {
     if (user) cargar();
@@ -31,153 +35,147 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
   const cargar = async () => {
     setLoading(true);
     try {
-      const lista = await cargarCategorias(user.uid);
-      setCategorias(lista);
+      setCategorias(await cargarCategorias(user.uid));
     } catch (e) {
       console.error(e);
+      Alerta.fire({ titleText: "No se pudieron cargar tus etiquetas", icon: "error", confirmButtonText: "Entendido" });
     }
     setLoading(false);
   };
 
-  const guardar = async () => {
-    if (!nombre.trim()) return;
+  const fallo = (e: unknown) => {
+    console.error(e);
+    Alerta.fire({ titleText: "No se pudo guardar", text: "Revisá la conexión y probá de nuevo.", icon: "error", confirmButtonText: "Entendido" });
+  };
+
+  const crear = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const limpio = nombre.trim();
+    if (!limpio) return;
     try {
-      await crearCategoria({ userId: user.uid, nombre, cuenta });
+      await crearCategoria({ userId: user.uid, nombre: limpio, cuenta: true });
       setNombre("");
-      setCuenta(true);
       cargar();
-      Swal.fire({
-        title: "Categoría creada ✅",
-        icon: "success",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        background: "var(--color-surface)",
-        color: "var(--color-text-main)",
-      });
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      fallo(err);
     }
   };
 
-  const handleEliminar = async (id: string, name: string) => {
-    const res = await Swal.fire({
-      title: "¿Eliminar categoría?",
-      text: `Se borrará "${name}". Esto no borrará tus entrenamientos pasados.`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Sí, eliminar",
-      background: "var(--color-surface)",
-      color: "var(--color-text-main)",
-    });
-    if (res.isConfirmed) {
-      await eliminarCategoria(id);
-      cargar();
-    }
-  };
-
-  const iniciarEdicion = (cat: Categoria) => {
-    setEditando(cat.id || null);
-    setEditNombre(cat.nombre);
-  };
-
-  const guardarEdicion = async (id: string) => {
+  const guardarEdicion = async (e: React.FormEvent, id: string) => {
+    e.preventDefault();
     if (!editNombre.trim()) return;
-    await renombrarCategoria(id, editNombre);
-    setEditando(null);
-    cargar();
+    try {
+      await renombrarCategoria(id, editNombre);
+      setEditando(null);
+      cargar();
+    } catch (err) {
+      fallo(err);
+    }
   };
 
-  const handleToggleCuenta = async (id: string, valor: boolean) => {
-    await toggleCuentaCategoria(id, valor);
-    cargar();
+  const alternarOculta = async (cat: Categoria) => {
+    try {
+      await toggleActivoCategoria(cat.id!, cat.activo !== false);
+      cargar();
+    } catch (err) {
+      fallo(err);
+    }
   };
+
+  const visibles = categorias.filter((c) => c.activo !== false);
+  const ocultas = categorias.filter((c) => c.activo === false);
+
+  const fila = (cat: Categoria) => (
+    <li key={cat.id} className="flex items-center gap-1 min-h-[52px] border-t border-borderBase first:border-t-0">
+      {editando === cat.id ? (
+        <form className="flex-1 flex items-center gap-1" onSubmit={(e) => guardarEdicion(e, cat.id!)}>
+          <input
+            className="input-field !py-2 flex-1 min-w-0"
+            value={editNombre}
+            maxLength={40}
+            aria-label={`Nuevo nombre para ${cat.nombre}`}
+            onChange={(e) => setEditNombre(e.target.value)}
+            autoFocus
+          />
+          <button type="submit" className="btn-icon text-primary" aria-label="Guardar nombre"><Check size={20} /></button>
+          <button type="button" onClick={() => setEditando(null)} className="btn-icon text-textMuted" aria-label="Cancelar"><X size={20} /></button>
+        </form>
+      ) : (
+        <>
+          <span className={`flex-1 min-w-0 truncate font-semibold ${cat.activo === false ? "text-textMuted" : "text-textMain"}`}>{cat.nombre}</span>
+          {cat.activo !== false && (
+            <button
+              type="button"
+              onClick={() => { setEditando(cat.id || null); setEditNombre(cat.nombre); }}
+              className="btn-icon text-textMuted"
+              aria-label={`Renombrar ${cat.nombre}`}
+            >
+              <Edit2 size={18} />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => alternarOculta(cat)}
+            className="btn-icon text-textMuted"
+            aria-label={cat.activo === false ? `Volver a mostrar ${cat.nombre}` : `Ocultar ${cat.nombre}`}
+          >
+            {cat.activo === false ? <Eye size={18} /> : <EyeOff size={18} />}
+          </button>
+        </>
+      )}
+    </li>
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Creador */}
-      <div className="glass-panel p-6 animate-slide-up">
-        <h3 className="text-xl font-bold text-textMain mb-6 flex items-center gap-2">
-          <Tag className="text-accent" /> Nueva categoría
+    <div className="glass-panel p-5 sm:p-6 space-y-4">
+      <div>
+        <h3 className="font-heading text-lg uppercase tracking-wide text-textMain flex items-center gap-2">
+          <Tag size={20} className="text-accent" /> Tus etiquetas
         </h3>
-        <div className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-textMuted mb-2">Nombre de la categoría</label>
-            <div className="flex gap-2">
-              <input
-                className="input-field flex-1"
-                type="text"
-                placeholder="Ej: Pecho y Triceps"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-              />
-              <button className="btn-accent px-4" onClick={guardar}>
-                <Plus size={20} />
-              </button>
-            </div>
-          </div>
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <div className="relative flex items-center">
-              <input type="checkbox" className="peer sr-only" checked={cuenta} onChange={(e) => setCuenta(e.target.checked)} />
-              <div className="w-6 h-6 border-2 border-borderBase rounded bg-surfaceHighlight peer-checked:bg-primary peer-checked:border-primary transition-all flex items-center justify-center">
-                <CheckSquare size={16} className={`text-white transition-transform ${cuenta ? "scale-100" : "scale-0"}`} />
-              </div>
-            </div>
-            <span className="text-textMain group-hover:text-primary transition-colors select-none">
-              Cuenta para el ranking de días
-            </span>
-          </label>
-        </div>
+        <p className="text-sm text-textMuted mt-1">
+          Aparecen como sugerencia al registrar. Ocultar una no cambia tus entrenos viejos.
+        </p>
       </div>
 
-      {/* Listado */}
-      <div className="glass-panel p-6 animate-slide-up" style={{ animationDelay: "150ms" }}>
-        <h3 className="text-xl font-bold text-textMain mb-6">Mis categorías actuales</h3>
-        {loading ? (
-          <div className="flex justify-center py-6">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-          </div>
-        ) : categorias.length === 0 ? (
-          <p className="text-textMuted text-center py-4 italic">No tenés categorías todavía. Creá una arriba.</p>
-        ) : (
-          <div className="grid gap-3">
-            {categorias.map((cat) => (
-              <div key={cat.id} className="bg-surfaceHighlight/30 border border-borderBase rounded-xl p-4 flex items-center justify-between group">
-                <div className="flex-1 flex items-center gap-1">
-                  <button
-                    onClick={() => handleToggleCuenta(cat.id!, cat.cuenta)}
-                    className="btn-icon shrink-0"
-                    title={cat.cuenta ? "Cuenta para el ranking" : "No cuenta para el ranking"}
-                    aria-label={cat.cuenta ? `${cat.nombre} cuenta para el ranking` : `${cat.nombre} no cuenta para el ranking`}
-                  >
-                    <span className={`w-4 h-4 rounded-full border-2 transition-colors ${cat.cuenta ? "bg-primary border-primary" : "bg-transparent border-textMuted"}`} />
-                  </button>
-                  {editando === cat.id ? (
-                    <div className="flex-1 flex gap-2">
-                      <input className="input-field py-1 text-sm flex-1" value={editNombre} onChange={(e) => setEditNombre(e.target.value)} autoFocus />
-                      <button onClick={() => guardarEdicion(cat.id!)} className="text-green-500"><Check size={18} /></button>
-                      <button onClick={() => setEditando(null)} className="text-red-500"><X size={18} /></button>
-                    </div>
-                  ) : (
-                    <span className="text-textMain font-medium">{cat.nombre}</span>
-                  )}
-                </div>
-                {editando !== cat.id && (
-                  <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => iniciarEdicion(cat)} className="btn-icon text-textMuted hover:text-primary" aria-label={`Renombrar ${cat.nombre}`}>
-                      <Edit2 size={18} />
-                    </button>
-                    <button onClick={() => handleEliminar(cat.id!, cat.nombre)} className="btn-icon text-textMuted hover:text-red-500" aria-label={`Eliminar ${cat.nombre}`}>
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-6">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+        </div>
+      ) : visibles.length === 0 ? (
+        <p className="text-sm text-textMuted py-2">Todavía no tenés etiquetas. Creá una abajo.</p>
+      ) : (
+        <ul>{visibles.map(fila)}</ul>
+      )}
+
+      <form className="flex gap-2" onSubmit={crear}>
+        <input
+          className="input-field flex-1 min-w-0"
+          type="text"
+          maxLength={40}
+          placeholder="Nueva etiqueta (ej: Push pesado)"
+          aria-label="Nueva etiqueta"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+        />
+        <button type="submit" className="btn-accent !px-0 w-12 shrink-0" aria-label="Agregar etiqueta" disabled={!nombre.trim()}>
+          <Plus size={22} />
+        </button>
+      </form>
+
+      {ocultas.length > 0 && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setVerOcultas((v) => !v)}
+            aria-expanded={verOcultas}
+            className="w-full min-h-tap flex items-center justify-between text-sm font-semibold text-textMuted"
+          >
+            Ocultas ({ocultas.length})
+            <ChevronDown size={18} className={`transition-transform ${verOcultas ? "rotate-180" : ""}`} />
+          </button>
+          {verOcultas && <ul>{ocultas.map(fila)}</ul>}
+        </div>
+      )}
     </div>
   );
 }

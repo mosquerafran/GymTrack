@@ -213,6 +213,12 @@ describe("usuarios", () => {
     await assertFails(setDoc(doc(db(BETO), "usuarios", BETO.email), { metaSemanal: 9 }, { merge: true }));
   });
 
+  test("elegir sexo (usuarioService.actualizarSexo) funciona y solo acepta hombre/mujer", async () => {
+    await assertSucceeds(setDoc(doc(db(BETO), "usuarios", BETO.email), { sexo: "mujer" }, { merge: true }));
+    await assertSucceeds(setDoc(doc(db(BETO), "usuarios", BETO.email), { sexo: "hombre" }, { merge: true }));
+    await assertFails(setDoc(doc(db(BETO), "usuarios", BETO.email), { sexo: "<script>" }, { merge: true }));
+  });
+
   test("el merge del fallback VIP (mismo estado) funciona", async () => {
     await assertSucceeds(setDoc(doc(db(BETO), "usuarios", BETO.email), {
       uid: BETO.uid, email: BETO.email, displayName: "Beto", photoURL: "",
@@ -252,6 +258,23 @@ describe("asistencias", () => {
     await assertSucceeds(setDoc(doc(db(BETO), "asistencias/n2"), nuevaAsistencia(BETO, {
       tipo: "gym", musculos: ["pecho", "triceps"], etiqueta: "Push",
     })));
+  });
+
+  test("registrar fútbol sin músculos y sin categoriaId (registro nuevo) funciona", async () => {
+    const { categoriaId, ...sinCategoria } = nuevaAsistencia(BETO);
+    await assertSucceeds(setDoc(doc(db(BETO), "asistencias/n2b"), {
+      ...sinCategoria, tipo: "futbol", musculos: [], etiqueta: "",
+    }));
+  });
+
+  test("NO acepta un tipo de entreno inventado", async () => {
+    await assertFails(setDoc(doc(db(BETO), "asistencias/n2c"), nuevaAsistencia(BETO, { tipo: "hackeo" })));
+  });
+
+  test("editar un entreno viejo pasándolo al formato nuevo funciona", async () => {
+    await assertSucceeds(updateDoc(doc(db(BETO), "asistencias/legacy"), {
+      tipo: "gym", musculos: ["pecho"], etiqueta: "Push", timestampActualizacion: Date.now(),
+    }));
   });
 
   test("NO puede registrar en un grupo del que no es miembro", async () => {

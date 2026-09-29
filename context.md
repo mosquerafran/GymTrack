@@ -34,29 +34,36 @@ guardar un entreno y en el Home.
    con código `GYM-XXXX`, o entrar a uno existente. Se guarda en `localStorage`.
 3. **Home**: frase motivacional + calendario personal (mis días marcados) +
    `TrainingSelector` para registrar el día seleccionado.
-4. **Registrar entreno** (`TrainingSelector`): foto **obligatoria** → categoría →
-   PRs opcionales (ejercicio + kg + reps) → mensaje del día. Comprime la foto,
-   la sube a Storage y crea el doc en `asistencias`.
-5. **Muro** (`Feed`): últimos entrenos del grupo (foto, categoría, notas, PRs),
-   ordenados por fecha/hora.
+4. **Registrar entreno** (`TrainingSelector`): foto **obligatoria** (cámara o galería) →
+   **tipo** (gym / fútbol / running / otro) → si es gym, **músculos** tocando el cuerpo
+   (frente y espalda, modelo hombre o mujer; atajos Push/Pull/Legs/Torso/Core; o lista)
+   → **etiqueta** libre opcional (sugiere las del usuario) → PRs opcionales → mensaje.
+   Comprime la foto, la sube a Storage y crea el doc en `asistencias`. (Worklog `2026-09-28/03`.)
+5. **Muro** (`Feed`): últimos entrenos del grupo (foto con el cuerpito de los músculos,
+   etiqueta, tipo/músculos, notas, PRs), ordenados por fecha/hora.
 6. **Ranking/Stats** (`Stats`): panel personal (constancia %, racha actual y récord,
    progreso de la semana contra la meta semanal, heatmap del año calendario) +
-   desglose por categoría + ranking del grupo con podio top-3 y comparativa semanal.
-   Períodos: este mes / últimos 6 meses / este año. (Worklogs `2026-07-06/07` y `08`.)
+   **por músculo** (mapa de calor del cuerpo, días por músculo, olvidados ≥14 días, tren
+   superior vs. inferior, "reyes" de cada zona del grupo) + ranking con podio y desglose
+   por tipo + entrenos por tipo + heatmap anual. Períodos: semana / mes / año.
 7. **Detalle de día** (`DiaDetalle`): explorar el calendario, ver quién entrenó
    cada día, y **editar/borrar los registros propios** (incluso de días pasados).
-8. **Ajustes** (`Settings`): CRUD de categorías propias (nombre, si "cuenta" para
-   el ranking, activa/inactiva) y la meta semanal (1 a 7 días).
+8. **Ajustes** (`Settings`): modelo del cuerpo (hombre/mujer), meta semanal (1 a 7 días)
+   y "Tus etiquetas" (las viejas categorías: crear, renombrar, ocultar; no se borran).
 9. **Admin**: gestionar miembros del grupo. **Aprobaciones**: aprobar/rechazar
    usuarios globalmente (solo admin maestro).
 
 ## 4. Reglas de dominio
 
-- **"Día entrenado" que cuenta al ranking**: un día suma si el usuario registró al
-  menos una asistencia cuya **categoría tiene `cuenta=true`**. Se cuentan **días
-  únicos**, no cantidad de entrenos (entrenar dos veces el mismo día = 1 día).
-- **Categorías**: son **por usuario**. Cada uno tiene su propio set (ej. "Push",
-  "Legs", "Fútbol"). Algunas no cuentan (ej. "Fútbol" puede marcarse `cuenta=false`).
+- **"Día entrenado"**: **todo entreno suma** (desde 2026-09; antes decidía
+  `categorias.cuenta`). Se cuentan **días únicos**, no cantidad de entrenos.
+- **Tipo y músculos**: los entrenos nuevos traen `tipo` y `musculos[]`. Los viejos se
+  interpretan al leer (`utils/entrenos.ts`, **sin migrar datos**): el tipo sale del nombre
+  de la categoría ("Futbol" → fútbol, "Hikking" → otro, si no gym) y los músculos también
+  ("Pierna-hombro" → piernas + hombros). Lo que no se reconoce ("Minubi 🥵") suma al
+  ranking pero no al mapa de músculos.
+- **Etiquetas** (colección `categorias`): **por usuario**, texto libre opcional del
+  entreno. Se ocultan (`activo=false`), no se borran: los entrenos viejos muestran su nombre.
 - **Racha (`streak`)**: días consecutivos hasta hoy (o ayer) con al menos una
   asistencia. Se calcula en tiempo real con `onSnapshot` (`useStreak`).
 - **Medallas** (`gamificationService`): por volumen (1/10/50 entrenos) y por
@@ -71,7 +78,10 @@ userId       string   uid de Firebase Auth (dueño; base de las reglas de seguri
 userName     string   displayName al momento de registrar (se usa para agrupar/ranking)
 fecha        string   "YYYY-MM-DD" en HORA LOCAL
 timestamp    number   Date.now() al crear (orden del feed + medallas de horario)
-categoriaId  string   id del doc en `categorias` (docs viejos: campo `catId`)
+tipo         string   "gym" | "futbol" | "running" | "otro"  (docs nuevos, desde 2026-09)
+musculos     array    ids de config/entrenos.ts (solo si es gym; ej. ["pecho","triceps"])
+etiqueta     string   texto libre opcional ("Push pesado")
+categoriaId  string   LEGACY: docs viejos (o `catId`, más viejos). Los nuevos no lo escriben
 notas        string   "mensaje del día"
 rutina       array    [{ nombre, peso?, reps?, series? }]  (PRs)
 imagenUrl    string   URL de descarga en Storage (o null)
@@ -83,8 +93,8 @@ likes        array    userIds que reaccionaron (feature mayormente inactiva en l
 ```
 userId  string   dueño
 nombre  string   ej. "Pecho-Espalda"
-cuenta  bool     ¿suma al ranking de días?
-activo  bool     ¿aparece en el selector? (false = archivada)
+cuenta  bool     LEGACY: ya no se usa (todo suma)
+activo  bool     ¿aparece como sugerencia? (false = oculta; no se borran)
 ```
 
 ### `grupos`
@@ -104,6 +114,7 @@ creadoEn  string ISO
 migrado?  bool   (vino de una colección legacy)
 metaSemanal? number  días por semana (1-7) que se propone el usuario; si falta,
                      se usa META_SEMANAL_DEFAULT. La escribe cada uno en su doc.
+sexo?     "hombre" | "mujer"  modelo del cuerpo (registro, muro, stats). Default: hombre.
 ```
 
 > **Ojo con las identidades:** `asistencias` usa `userId` (uid) para seguridad pero

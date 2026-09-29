@@ -1,14 +1,24 @@
 import { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { cargarAsistenciasParaStats } from "./asistenciasService";
 import { cargarMapaCategorias } from "./categoriasService";
-import { StatItem, Asistencia } from "../types";
+import { Asistencia } from "../types";
+import { Musculo, TipoEntreno } from "../config/entrenos";
+import {
+  conteoPorTipo,
+  diasEntrenados,
+  diasPorMusculo,
+  diasPorTren,
+  lideresPorZona,
+  ultimaVezPorMusculo,
+  NombresCategoria,
+} from "../utils/entrenos";
 import { formatDateLocal, parseFechaLocal, diasTranscurridos, inicioSemanaLocal } from "../utils/date";
 
 export interface RankingUser {
   nombre: string;
   dias: number;
   porcentaje: number; // % de constancia = dias / diasPosibles
-  categorias: Record<string, number>;
+  porTipo: { tipo: TipoEntreno; cantidad: number }[]; // desglose (gym 11 · fútbol 6)
 }
 
 export interface StatsData {
@@ -19,13 +29,26 @@ export interface StatsData {
   rachaRecord: number;        // mejor racha histórica
   diasEstaSemana: number;     // días entrenados en la semana en curso (lun-dom)
   diasSemanaPasada: number;   // días entrenados en la semana anterior (lun-dom)
-  diasEntrenadosAnio: string[]; // claves "YYYY-MM-DD" que cuentan, del año actual (heatmap)
-  conteoPorCategoria: StatItem[];
+  diasEntrenadosAnio: string[]; // claves "YYYY-MM-DD" entrenadas del año actual (heatmap)
+  conteoPorTipo: { tipo: TipoEntreno; cantidad: number }[];
+  // ── Por músculo (docs nuevos: marcados; viejos de gym: deducidos de la categoría) ──
+  musculosPeriodo: Partial<Record<Musculo, number>>;       // días por músculo en el período
+  umbralCalor: [number, number, number];                    // días para cada nivel del mapa
+  ultimaVezMusculo: Partial<Record<Musculo, string>>;       // "YYYY-MM-DD", todo el historial
+  tren: { superior: number; inferior: number };             // días de cada tren en el período
+  lideres: { zona: string; nombre: string; dias: number }[]; // del grupo, en el período
   ranking: RankingUser[];
   misAsistencias: QueryDocumentSnapshot<DocumentData>[];
 }
 
-export type PeriodoStats = "mes" | "por_mes" | "por_anio";
+export type PeriodoStats = "semana" | "mes" | "anio";
+
+/** Días de un músculo para cada nivel del mapa de calor, según el largo del período. */
+const UMBRAL_CALOR: Record<PeriodoStats, [number, number, number]> = {
+  semana: [1, 2, 3],
+  mes: [1, 3, 6],
+  anio: [5, 20, 45],
+};
 
 /**
  * Calcula la racha actual (hasta hoy o ayer) y la mejor racha histórica a partir
@@ -87,102 +110,50 @@ export const calcularStats = async (
   const anioActual = hoy.getFullYear();
   const mesActual = hoy.getMonth();
 
-  // 1. Filtrar asistencias según el período seleccionado
-  let misAsisFiltradas = misAsistencias;
-  let todasAsisFiltradas = todasAsistencias;
-
-  if (periodo === "mes") {
-    const inicioMes = formatDateLocal(new Date(anioActual, mesActual, 1));
-    misAsisFiltradas = misAsistencias.filter((d) => (d.data() as Asistencia).fecha >= inicioMes);
-    todasAsisFiltradas = todasAsistencias.filter((d) => (d.data() as Asistencia).fecha >= inicioMes);
-  } else if (periodo === "por_anio") {
-    const inicioAnio = `${anioActual}-01-01`;
-    misAsisFiltradas = misAsistencias.filter((d) => (d.data() as Asistencia).fecha >= inicioAnio);
-    todasAsisFiltradas = todasAsistencias.filter((d) => (d.data() as Asistencia).fecha >= inicioAnio);
-  } else if (periodo === "por_mes") {
-    const inicioSemestre = formatDateLocal(new Date(anioActual, mesActual - 5, 1));
-    misAsisFiltradas = misAsistencias.filter((d) => (d.data() as Asistencia).fecha >= inicioSemestre);
-    todasAsisFiltradas = todasAsistencias.filter((d) => (d.data() as Asistencia).fecha >= inicioSemestre);
-  }
+  // 1. Período: desde el lunes de esta semana, el 1° del mes o el 1° de enero, hasta hoy.
+  let inicioPeriodo: Date;
+  if (periodo === "semana") inicioPeriodo = inicioSemanaLocal(hoy);
+  else if (periodo === "mes") inicioPeriodo = new Date(anioActual, mesActual, 1);
+  else inicioPeriodo = new Date(anioActual, 0, 1);
+  const desde = formatDateLocal(inicioPeriodo);
+  const hasta = formatDateLocal(hoy);
+  const enPeriodo = (d: QueryDocumentSnapshot<DocumentData>) => {
+    const f = (d.data() as Asistencia).fecha;
+    return !!f && f >= desde && f <= hasta;
+  };
+  const misAsisFiltradas = misAsistencias.filter(enPeriodo);
+  const todasAsisFiltradas = todasAsistencias.filter(enPeriodo);
 
   // 1.b Días "que se pudo" entrenar = días transcurridos del período (hasta hoy).
-  let inicioPeriodo: Date;
-  if (periodo === "por_anio") inicioPeriodo = new Date(anioActual, 0, 1);
-  else if (periodo === "por_mes") inicioPeriodo = new Date(anioActual, mesActual - 5, 1);
-  else inicioPeriodo = new Date(anioActual, mesActual, 1);
   const diasPosibles = Math.max(1, diasTranscurridos(inicioPeriodo, hoy));
   const pct = (dias: number) => Math.min(100, Math.round((dias / diasPosibles) * 100));
 
-  // 2. Conteo de Días Entrenados (sólo categorías con cuenta=true)
-  const diasQueCuentan = new Set<string>();
-  const conteoCategorias: Record<string, number> = {};
+  // 2. Días entrenados: TODO entreno suma (desde 2026-09 ya no se mira categorias.cuenta).
+  //    Los docs viejos (catId, categorías borradas) también cuentan: utils/entrenos.ts.
+  const nombres: NombresCategoria = Object.fromEntries(
+    Object.entries(mapaCategorias).map(([id, c]) => [id, c.nombre])
+  );
+  const datos = (docs: QueryDocumentSnapshot<DocumentData>[]) => docs.map((d) => d.data() as Asistencia);
 
-  // Inicializar conteo de categorías del usuario
-  Object.values(mapaCategorias).forEach(c => {
-    if (c.userId === userId) conteoCategorias[c.nombre] = 0;
-  });
+  const misDatosPeriodo = datos(misAsisFiltradas);
+  const diasPeriodo = diasEntrenados(misDatosPeriodo);
 
-  misAsisFiltradas.forEach((doc) => {
-    const data = doc.data() as Asistencia;
-    const cat = mapaCategorias[data.categoriaId];
-    if (!cat) return;
-
-    // Conteo total de la categoría (se cuente o no para el día)
-    if (!conteoCategorias[cat.nombre]) conteoCategorias[cat.nombre] = 0;
-    conteoCategorias[cat.nombre]++;
-
-    // Si la categoría cuenta, añadimos la fecha al set de días entrenados
-    if (cat.cuenta) {
-      diasQueCuentan.add(data.fecha);
-    }
-  });
-
-  const statsCategorias: StatItem[] = Object.entries(conteoCategorias)
-    .map(([nombre, valor]) => ({ nombre, valor }))
-    .filter(s => s.valor > 0)
-    .sort((a, b) => b.valor - a.valor);
-
-  // 3. Ranking
-  const usuariosMap: Record<string, { nombre: string; dias: Set<string>; categorias: Record<string, number> }> = {};
-  
-  todasAsisFiltradas.forEach((doc) => {
-    const data = doc.data() as Asistencia;
-    const cat = mapaCategorias[data.categoriaId];
-    if (!cat) return;
-
-    const usr = data.userName || "Desconocido";
-    if (!usuariosMap[usr]) {
-      usuariosMap[usr] = { nombre: usr, dias: new Set(), categorias: {} };
-    }
-    
-    // Contamos todas las categorías para el desglose del ranking
-    if (!usuariosMap[usr].categorias[cat.nombre]) {
-      usuariosMap[usr].categorias[cat.nombre] = 0;
-    }
-    usuariosMap[usr].categorias[cat.nombre]++;
-
-    if (cat.cuenta) {
-      usuariosMap[usr].dias.add(data.fecha);
-    }
-  });
-
-  const ranking: RankingUser[] = Object.values(usuariosMap)
-    .map((u) => ({
-      nombre: u.nombre,
-      dias: u.dias.size,
-      porcentaje: pct(u.dias.size),
-      categorias: u.categorias
-    }))
+  // 3. Ranking (agrupado por userName, como siempre: context.md §9.4)
+  const porUsuario: Record<string, Asistencia[]> = {};
+  for (const a of datos(todasAsisFiltradas)) {
+    const usr = a.userName || "Desconocido";
+    (porUsuario[usr] ||= []).push(a);
+  }
+  const ranking: RankingUser[] = Object.entries(porUsuario)
+    .map(([nombre, lista]) => {
+      const dias = diasEntrenados(lista).size;
+      return { nombre, dias, porcentaje: pct(dias), porTipo: conteoPorTipo(lista, nombres) };
+    })
     .sort((a, b) => b.dias - a.dias);
 
-  // 4. Rachas, semana y heatmap: se calculan sobre TODO el historial del usuario
-  //    (no sobre el período filtrado), usando solo días que cuentan.
-  const diasCuentaTodos = new Set<string>();
-  misAsistencias.forEach((doc) => {
-    const data = doc.data() as Asistencia;
-    const cat = mapaCategorias[data.categoriaId];
-    if (cat && cat.cuenta && data.fecha) diasCuentaTodos.add(data.fecha);
-  });
+  // 4. Rachas, semana, heatmaps: sobre TODO el historial del usuario (no el período).
+  const misDatosTodos = datos(misAsistencias);
+  const diasCuentaTodos = diasEntrenados(misDatosTodos);
 
   const { actual: rachaActual, record: rachaRecord } = calcularRachas(diasCuentaTodos);
 
@@ -204,15 +175,20 @@ export const calcularStats = async (
   const diasEntrenadosAnio = [...diasCuentaTodos].filter((f) => f.startsWith(prefijoAnio));
 
   return {
-    totalDiasEntrenados: diasQueCuentan.size,
+    totalDiasEntrenados: diasPeriodo.size,
     diasPosibles,
-    porcentaje: pct(diasQueCuentan.size),
+    porcentaje: pct(diasPeriodo.size),
     rachaActual,
     rachaRecord,
     diasEstaSemana,
     diasSemanaPasada,
     diasEntrenadosAnio,
-    conteoPorCategoria: statsCategorias,
+    conteoPorTipo: conteoPorTipo(misDatosPeriodo, nombres),
+    musculosPeriodo: diasPorMusculo(misDatosPeriodo, desde, hasta, nombres),
+    umbralCalor: UMBRAL_CALOR[periodo],
+    ultimaVezMusculo: ultimaVezPorMusculo(misDatosTodos, nombres),
+    tren: diasPorTren(misDatosPeriodo, desde, hasta, nombres),
+    lideres: lideresPorZona(datos(todasAsisFiltradas), desde, hasta, nombres),
     ranking,
     misAsistencias: misAsisFiltradas,
   };

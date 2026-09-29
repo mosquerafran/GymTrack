@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import { cargarFeedGlobal } from "../services/asistenciasService";
 import { cargarMapaCategorias } from "../services/categoriasService";
 import { Dumbbell, MessageSquare, Calendar } from "lucide-react";
 import { Asistencia, Categoria } from "../types";
+import { cargarSexosPorUid } from "../services/usuarioService";
+import { Sexo, SEXO_DEFAULT, TIPOS } from "../config/entrenos";
+import { descripcionDe, etiquetaDe, musculosDe, tipoDe, NombresCategoria } from "../utils/entrenos";
+
+// Cuerpito del entreno sobre la foto: trae los paths del cuerpo, se carga aparte.
+const MiniCuerpo = lazy(() => import("../components/cuerpo/MiniCuerpo"));
 
 interface FeedProps {
   grupoId: string;
@@ -12,6 +18,8 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
   const [posts, setPosts] = useState<Asistencia[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [mapaCat, setMapaCat] = useState<Record<string, Categoria>>({});
+  const [sexos, setSexos] = useState<Record<string, Sexo>>({});
+  const nombres: NombresCategoria = Object.fromEntries(Object.entries(mapaCat).map(([id, c]) => [id, c.nombre]));
 
   useEffect(() => {
     if (grupoId) {
@@ -22,8 +30,13 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
   }, [grupoId]);
 
   const cargarNombres = async () => {
-    const mapa = await cargarMapaCategorias();
-    setMapaCat(mapa);
+    try {
+      const [mapa, sexosPorUid] = await Promise.all([cargarMapaCategorias(), cargarSexosPorUid()]);
+      setMapaCat(mapa);
+      setSexos(sexosPorUid);
+    } catch (e) {
+      console.error(e); // sin nombres/sexos el muro igual se ve (con defaults)
+    }
   };
 
   const cargarMuro = async () => {
@@ -73,29 +86,48 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
             return (
               <div key={post.id || post.docId} className="glass-panel border-none shadow-2xl overflow-hidden animate-slide-up bg-surface/40">
                 {/* Header: Usuario, Fecha y Cat */}
-                <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                <div className="p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary/50 to-orange-600/50 p-0.5 shadow-lg">
                       <div className="w-full h-full rounded-full bg-surface flex items-center justify-center font-black text-textMain border-2 border-surface text-base">
                         {post.userName?.charAt(0).toUpperCase()}
                       </div>
                     </div>
-                    <div>
-                      <p className="font-black text-textMain text-base leading-none">{post.userName}</p>
-                      <p className="text-[11px] text-textMuted mt-1.5 flex items-center gap-1 font-bold">
+                    <div className="min-w-0">
+                      <p className="font-black text-textMain text-base leading-none truncate">{post.userName}</p>
+                      <p className="text-xs text-textMuted mt-1.5 flex items-center gap-1 font-bold">
                         <Calendar size={10} /> {formatTiempo(post.timestamp, post.fecha)}
                       </p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-black px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 uppercase tracking-widest">
-                    {mapaCat[post.categoriaId]?.nombre || "Entrenamiento"}
-                  </span>
+                  {etiquetaDe(post, nombres) && (
+                    <span className="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide max-w-[45%] truncate shrink-0">
+                      {etiquetaDe(post, nombres)}
+                    </span>
+                  )}
                 </div>
 
                 {/* Foto */}
                 {post.imagenUrl ? (
-                  <div className="w-full bg-black aspect-square flex items-center justify-center overflow-hidden border-y border-borderBase/10">
-                    <img src={post.imagenUrl} alt="Entrenamiento" className="w-full h-full object-cover" />
+                  <div className="relative w-full bg-black aspect-square flex items-center justify-center overflow-hidden border-y border-borderBase/10">
+                    <img
+                      src={post.imagenUrl}
+                      alt={`Foto del entreno de ${post.userName}`}
+                      loading="lazy"
+                      decoding="async"
+                      width={1024}
+                      height={1024}
+                      className="w-full h-full object-cover"
+                    />
+                    {musculosDe(post).length > 0 && (
+                      <Suspense fallback={null}>
+                        <MiniCuerpo
+                          sexo={sexos[post.userId] || SEXO_DEFAULT}
+                          musculos={musculosDe(post)}
+                          className="absolute right-2.5 bottom-2.5 bg-surface rounded-xl px-1.5 pt-1.5 pb-1 shadow-premium"
+                        />
+                      </Suspense>
+                    )}
                   </div>
                 ) : (
                   <div className="h-24 bg-gradient-to-b from-surfaceHighlight/20 to-transparent flex items-center justify-center text-textMuted italic text-xs font-medium border-y border-borderBase/5">
@@ -105,6 +137,10 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
 
                 {/* Contenido Detallado */}
                 <div className="p-5 space-y-4">
+                  <p className="font-heading text-base tracking-wide text-textMain">
+                    <span aria-hidden="true">{TIPOS[tipoDe(post, nombres)].emoji} </span>
+                    {descripcionDe(post, nombres)}
+                  </p>
                   {/* Notas / Mensaje Primero */}
                   {post.notas && (
                     <div className="flex gap-3 items-start bg-primary/5 p-4 rounded-2xl border border-primary/10 shadow-sm relative overflow-hidden group">

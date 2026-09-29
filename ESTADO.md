@@ -11,21 +11,21 @@
 
 | Pieza | Estado | Cómo se sabe |
 |---|---|---|
-| **Hosting** | ✅ `d82760f` (optimización de performance), deployado el 2026-07-06 | GitHub Actions, run `28817104172`, *success* |
+| **Hosting** | ✅ `5312c4f` (seguridad fase 1), deployado el 2026-09-28 | GitHub Actions, run `36497621840`, *success* |
 | **Functions** | ⚠️ **sin registro** | Se deployan a mano y el repo no guarda el resultado |
-| **Firestore rules** | ⚠️ **sin registro**. En el repo hay rules nuevas (fase 1) **sin deployar** | Ídem |
+| **Firestore rules** | ✅ fase 1 (`5312c4f`), deployadas el 2026-09-28 | `firebase deploy --only firestore:rules,storage` → *Deploy complete* |
 | **Índice `asistencias(grupoId, timestamp desc)`** | ⚠️ **sin registro** | Ídem. El muro tiene fallback, así que **funciona igual aunque falte** |
-| **Storage rules** | ⚠️ **sin registro**. Ídem: nuevas sin deployar | Ídem |
+| **Storage rules** | ✅ fase 1 (`5312c4f`), deployadas el 2026-09-28 | Ídem |
 
-El 2026-09-28 se endurecieron las rules (worklog `2026-09-28/02`). El frontend que las acompaña se
-deploya con el push; **las rules no**: van por `/deploy rules`, y siempre **después** del push.
+El 2026-09-28 se endurecieron las rules (worklog `2026-09-28/02`): primero el hosting, después las
+rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 
 ## 2. 🔴 Requiere acción
 
-0. **Deployar las rules de la fase 1, en este orden:** (a) push a `main` → esperar que Actions
-   termine en verde; (b) `/deploy rules` (firestore + storage). Al revés, a los VIP/admin se les
-   rompe la carga de grupos. Después: probar en el celu unirse a un grupo, registrar y editar un
-   entreno, y aprobar a alguien desde Aprobaciones (que **antes estaba rota**).
+0. **Smoke de la fase 1 de seguridad (deployada el 2026-09-28).** En el celu: la app carga el grupo,
+   registrar + editar un entreno con foto, muro/ranking/calendario, aprobar a alguien en Aprobaciones
+   (antes estaba rota) y que alguien se una con código. Si algo falla: rollback con
+   `git show d82760f:firestore.rules > firestore.rules` + `firebase deploy --only firestore:rules`.
 
 1. **Confirmar que las Cloud Functions corren en Node 22 — antes del 30/10/2026.** Ese día Google
    decomisiona Node 20. `backend/package.json` pide Node 22 desde el 2026-07-06 (worklog `09`), pero
@@ -43,10 +43,9 @@ deploya con el push; **las rules no**: van por `/deploy rules`, y siempre **desp
   códigos únicos → recién ahí cerrar la **lectura** de `grupos`, `asistencias` y fotos por grupo;
   filtro `grupoId` + índice `(grupoId, fecha)` en `cargarAsistenciasMes`; App Check; headers de
   seguridad en hosting; `permissions:` y pin por SHA en `firebase-hosting-merge.yml`.
-- ⬜ **Selector de cuerpo** (propuesta del dueño, aprobada 2026-09-28): tipo de entreno (gym /
-  fútbol / running / otro) + músculos en un SVG frente/espalda; **todo entreno suma** al ranking;
-  las categorías pasan a ser **etiqueta** opcional. Las rules ya aceptan `tipo`, `musculos[]`,
-  `etiqueta`. Arrancar por un prototipo visual.
+- ⬜ **Tanda 2 · pulido mobile** (maqueta aprobada 2026-09-28): botón central Registrar, detalle del
+  día en panel inferior, popups al mixin `config/alertas.ts`, safe-area del notch, botón atrás de
+  Android, targets ≥44 px y textos ≥12 px en todas las pantallas, "Salir" en Ajustes con confirmación.
 - ⬜ Lista completa de mejoras de rendimiento y orden del repo: auditoría del 2026-09-28 (ver
   worklog `2026-09-28/02` → pendientes, y el chat de esa fecha).
 
@@ -67,6 +66,9 @@ la raíz del repo.
 
 | Fecha | Commit | Qué | Resultado |
 |---|---|---|---|
+| 2026-09-28 | `5312c4f` | Firestore + Storage rules (manual, fase 1) | ✅ *Deploy complete* · smoke pendiente |
+| 2026-09-28 | `5312c4f` | Hosting (automático) | ✅ Actions `36497621840` |
+| 2026-09-28 | `0f91c30` | Hosting (automático, sin cambios de app) | ✅ Actions `36495826376` |
 | 2026-07-06 | `d82760f` | Hosting (automático) | ✅ Actions `28817104172` |
 | 2026-07-06 | `109f130` | Hosting (automático) | ✅ Actions `28814935694` |
 | 2026-07-06 | `45c638b` | Hosting (automático) | ❌ Actions falló (buildeaba en la raíz; lo arregló `109f130`) |

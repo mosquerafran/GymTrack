@@ -16,7 +16,7 @@ comentarios y textos de UI en español rioplatense para mantener consistencia.
 
 **Gym Tracker** es una PWA para que un grupo de amigos registre sus
 entrenamientos, compita en un ranking y se mantenga la constancia. Cada usuario
-sube una foto de evidencia + categoría (tipo de entreno) + PRs opcionales, y la
+sube una foto de evidencia + tipo y músculos del entreno + PRs opcionales, y la
 app arma un calendario personal, un muro de actividad grupal y estadísticas.
 
 - **Producción:** https://gym-tracker-1aaba.web.app
@@ -120,10 +120,10 @@ Solo en `backend/src/index.js`. Nunca en los módulos de funciones: un segundo
 llamado lanza *"The default Firebase app already exists"* y tumba el cold start
 de **todas** las funciones. `verify.ps1` lo controla.
 
-### 4.4 Compatibilidad `categoriaId` / `catId`
-Existen documentos viejos con el campo `catId` y nuevos con `categoriaId`. La capa
-de servicios normaliza a ambos al leer (`cargarAsistenciasMes`) y el
-`TrainingSelector` lee el que exista. Al escribir, usá siempre **`categoriaId`**.
+### 4.4 Entrenos viejos (`categoriaId` / `catId`) vs. nuevos (`tipo`, `musculos`)
+Desde 2026-09 se escribe `tipo`/`musculos[]`/`etiqueta` y ya no `categoriaId`. Los docs
+viejos NO se migran: `utils/entrenos.ts` los interpreta al leer (tipo y músculos se
+deducen del nombre de la categoría). Toda lectura de entrenos pasa por esas funciones.
 
 ### 4.5 Foto obligatoria
 Registrar un entrenamiento **requiere** una foto (regla de producto: "sin foto no
@@ -142,15 +142,15 @@ tiene miembros VIP que repara la función programada `repararMiembrosVip` (no el
 
 | Colección              | Doc ID   | Campos clave |
 |------------------------|----------|--------------|
-| `usuarios`             | email    | `uid, email, displayName, photoURL, estado(aprobado/pendiente/rechazado), creadoEn, metaSemanal?` |
+| `usuarios`             | email    | `uid, email, displayName, photoURL, estado(aprobado/pendiente/rechazado), creadoEn, metaSemanal?, sexo?` |
 | `grupos`               | auto     | `nombre, adminEmail, miembros[] (emails), codigoInvitacion (GYM-XXXX), creadoEn` |
-| `categorias`           | auto     | `userId, nombre, cuenta(bool), activo(bool)` |
-| `asistencias`          | auto     | `userId, userName, fecha(YYYY-MM-DD), timestamp, categoriaId, notas, rutina[], imagenUrl, grupoId, likes[]` |
+| `categorias` (= etiquetas) | auto | `userId, nombre, activo(bool)` · `cuenta` es legacy, ya no se usa |
+| `asistencias`          | auto     | `userId, userName, fecha(YYYY-MM-DD), timestamp, tipo, musculos[], etiqueta, notas, rutina[], imagenUrl, grupoId, likes[]` (viejos: `categoriaId`/`catId`) |
 | `usuariosPendientes`, `usuariosPermitidos` | — | **legacy**, solo lectura para migración |
 
 `rutina[]` = `[{ nombre, peso?, reps?, series? }]` (PRs del día).
-`cuenta=true` en una categoría significa que ese día suma al ranking de "días
-entrenados". Ver el detalle completo en `context.md`.
+**Todo entreno suma** al ranking de "días entrenados" (sin importar tipo ni etiqueta).
+Vocabulario (tipos, 15 músculos, atajos): `config/entrenos.ts`. Detalle: `context.md`.
 
 ---
 

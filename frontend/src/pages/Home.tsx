@@ -17,7 +17,7 @@ interface HomeProps {
   theme: "dark" | "light";
 }
 
-export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId, theme }: HomeProps): React.ReactElement {
+export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId }: HomeProps): React.ReactElement {
   const [entrenos, setEntrenos] = useState<Record<string, string[]>>({});
   const [categoriasMap, setCategoriasMap] = useState<Record<string, Categoria>>({});
   const [frase] = useState<string>(() => chisteRandom());
@@ -54,8 +54,9 @@ export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId, the
         "{frase}"
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-7">
+      {/* En el celu, registrar va primero (es a lo que se entra en el gym); en escritorio, a la derecha. */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        <div className="lg:col-span-7 order-2 lg:order-1">
           <CalendarView
             fecha={fecha}
             setFecha={setFecha}
@@ -65,13 +66,12 @@ export default function Home({ fecha, setFecha, user, abrirDetalle, grupoId, the
           />
         </div>
 
-        <div className="lg:col-span-5 relative">
-          <div className="sticky top-24">
+        <div className="lg:col-span-5 relative order-1 lg:order-2">
+          <div className="lg:sticky lg:top-24">
             <TrainingSelector
               fecha={fecha}
               user={user}
               grupoId={grupoId}
-              theme={theme}
               onCompletado={() => cargarMes(fecha)}
             />
           </div>

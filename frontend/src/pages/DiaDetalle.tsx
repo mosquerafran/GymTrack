@@ -7,6 +7,7 @@ import { cargarMapaCategorias } from "../services/categoriasService";
 import { Search, Calendar as CalendarIcon, X, Edit2, MessageSquare, Dumbbell } from "lucide-react";
 import { Categoria, Asistencia } from "../types";
 import TrainingSelector from "../components/TrainingSelector";
+import { descripcionDe, etiquetaDe, NombresCategoria } from "../utils/entrenos";
 
 const formatDate = (date: Date): string => {
   const y = date.getFullYear();
@@ -22,12 +23,17 @@ interface DiaDetalleProps {
   theme: "dark" | "light";
 }
 
-export default function DiaDetalle({ user, fecha: fechaProp, grupoId, theme }: DiaDetalleProps): React.ReactElement {
+export default function DiaDetalle({ user, fecha: fechaProp, grupoId }: DiaDetalleProps): React.ReactElement {
   const [fecha, setFecha] = useState<Date>(fechaProp || new Date());
   const [entrenos, setEntrenos] = useState<AsistenciasMapa>({});
   const [categoriasMap, setCategoriasMap] = useState<Record<string, Categoria>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [editando, setEditando] = useState<Asistencia | null>(null);
+  const nombres: NombresCategoria = Object.fromEntries(
+    Object.entries(categoriasMap).map(([id, c]) => [id, c.nombre])
+  );
+  // Etiqueta si hay (o la categoría de los docs viejos); si no, qué entrenó.
+  const tituloDe = (item: Asistencia) => etiquetaDe(item, nombres) || descripcionDe(item, nombres);
 
   useEffect(() => {
     cargar();
@@ -52,7 +58,7 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId, theme }: D
         .map(([usr, items]) => {
           const cats = items
             .map((item) => {
-              const catName = (categoriasMap[item.catId] as Categoria)?.nombre || "…";
+              const catName = tituloDe(item);
               return item.notas ? `${catName} (${item.notas})` : catName;
             })
             .join(", ");
@@ -106,7 +112,6 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId, theme }: D
               fecha={fecha} 
               user={user} 
               grupoId={grupoId} 
-              theme={theme}
               asistenciaAEditar={editando}
               onCancelar={() => setEditando(null)}
               onCompletado={() => {
@@ -188,7 +193,8 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId, theme }: D
 
                 <div className="space-y-3 pl-4 border-l-2 border-borderBase/50">
                   {items.map((item: any) => {
-                    const catName = categoriasMap[item.catId]?.nombre || "Entrenamiento";
+                    const catName = tituloDe(item);
+                    const detalle = descripcionDe(item, nombres);
                     const esMio = item.userId === user?.uid || item.userName === user?.displayName;
 
                     return (
@@ -214,6 +220,10 @@ export default function DiaDetalle({ user, fecha: fechaProp, grupoId, theme }: D
                             </div>
                           )}
                         </div>
+
+                        {detalle !== catName && (
+                          <p className="font-heading text-sm tracking-wide text-textMain mb-2">{detalle}</p>
+                        )}
 
                         {/* Mensaje primero */}
                         {item.notas && (

@@ -13,6 +13,9 @@ paths:
   datos tipados (`types/index.ts`). `hooks/` puede suscribirse (`onSnapshot`, como `useStreak`).
   `pages/` y `components/` **no** importan `firebase/firestore`: `verify.ps1` lo controla
   (sin excepciones).
+- **Entrenos: siempre a través de `utils/entrenos.ts`** (`tipoDe`, `musculosDe`, `etiquetaDe`,
+  `diasEntrenados`...). Interpretan los docs viejos (`categoriaId`/`catId`, sin tipo ni músculos)
+  y los nuevos igual. No leas `categoriaId` ni `musculos` a mano.
 
 ## Fechas — el bug que ya pasó
 - **La clave de un día es `"YYYY-MM-DD"` en HORA LOCAL**: `formatDateLocal()`, `inicioMesLocal()`,
@@ -23,7 +26,7 @@ paths:
   para la clave del día.
 
 ## Retrocompatibilidad (la regla de oro de `protocol.md` §0)
-- **No se renombran campos existentes.** Docs viejos tienen `catId` y los nuevos `categoriaId`: al
+- **No se renombran campos existentes.** Docs viejos tienen `catId`, `categoriaId` y los nuevos `tipo`/`musculos`: al
   leer, normalizá los dos; al escribir, siempre `categoriaId`.
 - `cargarAsistenciasMes` filtra el grupo **en el cliente** a propósito: hay docs legacy con
   `grupoId` vacío que una query por `grupoId` excluiría.

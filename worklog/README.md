@@ -59,3 +59,4 @@ Lo que quedó abierto o a tener en cuenta.
 ### 2026-09-28
 - [01 — Harness de Claude Code](2026-09-28/01-harness-claude-code.md) — verify.ps1, permisos, rules, skills, ESTADO.md y 9 hallazgos de drift.
 - [02 — Seguridad fase 1: rules + tests](2026-09-28/02-seguridad-rules-fase1.md) — rules endurecidas, 48 tests en emulador, XSS en Aprobaciones.
+- [03 — Registro con cuerpo y stats por músculo](2026-09-28/03-registro-con-cuerpo-y-stats-por-musculo.md) — tipo + músculos (hombre/mujer) + etiqueta, todo suma, Stats por músculo.
