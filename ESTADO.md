@@ -23,7 +23,7 @@ rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 ## 2. 🔴 Requiere acción
 
 00. **Deploy de la seguridad fase 2, EN ESTE ORDEN** (worklog `2026-09-28/05`):
-    1. `firebase deploy --only firestore:indexes` → esperar a que el índice `asistencias(grupoId, fecha)`
+    1. ✅ índice subido (2026-09-28, junto con el incidente). Esperar a que el índice `asistencias(grupoId, fecha)`
        figure como *Habilitado* en la consola (Firestore → Índices).
     2. `firebase deploy --only functions` (suben `crearGrupo` y `unirseAGrupo`).
     3. push a `main` (frontend) → esperar Actions en verde.
@@ -70,6 +70,8 @@ la raíz del repo.
 
 | Fecha | Commit | Qué | Resultado |
 |---|---|---|---|
+| 2026-09-28 | `ce634a2` | Firestore rules: **vuelta atrás** tras el incidente | ✅ prod = reglas de `ce634a2` |
+| 2026-09-28 | `12b214b` | Índices + **reglas fase 2 por error** (typo `firestore:indexe`) | ⚠️ revertido minutos después |
 | 2026-09-28 | `b174d8a` | Hosting (automático): tanda 2, pulido mobile | ✅ Actions `36502998148` |
 | 2026-09-28 | `ce634a2` | Firestore rules (manual): + `sexo` y `tipo` | ✅ *Deploy complete* |
 | 2026-09-28 | `ce634a2` | Hosting (automático): registro con cuerpo + stats por músculo | ✅ Actions `36501859965` |

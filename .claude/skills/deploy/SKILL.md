@@ -41,7 +41,11 @@ git log --oneline <último-deploy>..HEAD -- backend/ firestore.rules storage.rul
 
 ## 3. Los comandos (los corre el dueño)
 
-Dale uno por línea, en orden, con el `!` adelante:
+Dale uno por línea, en orden, con el `!` adelante. **Siempre el comando completo para copiar y
+pegar, nunca para tipear:** un destino mal escrito en `--only` (ej. `firestore:indexe`) **no da
+error** y el CLI deploya **todo Firestore**, reglas incluidas. Pasó el 2026-09-28: las reglas de la
+fase 2 salieron antes que su frontend y hubo que volver atrás (worklog `2026-09-28/05`).
+Si la salida dice `released rules` y no se pidieron reglas, **frená y volvé a las anteriores**.
 
 ```
 ! firebase deploy --only firestore:indexes

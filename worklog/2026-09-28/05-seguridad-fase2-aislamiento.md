@@ -45,6 +45,12 @@ invitación, entrenos, notas, fotos y emails de TODOS los grupos. Riesgo §9.2 d
 - Pipe de PowerShell + `Select-Object -First N` corta el proceso de npm → exit 255 falso. Y
   `Set-Content -Encoding ascii` rompe tildes: editar JSON con node.
 
+## Incidente de deploy (resuelto)
+- `firebase deploy --only firestore:indexe` (typo) **no dio error**: deployó índices **y reglas**.
+  Las reglas de la fase 2 quedaron en producción antes que las functions y el frontend (detalle del
+  día, unirse/crear grupo y miembros del admin rotos). Se volvió a las reglas de `ce634a2` con
+  `git show ce634a2:firestore.rules` + deploy de rules, en minutos. Lección en la skill `/deploy`.
+
 ## Notas / pendientes
 - **Orden de deploy** (en `ESTADO.md`): índice → functions → push → rules.
 - **App Check** (bloquear scripts que no son la app): necesita configurar reCAPTCHA en la consola.
