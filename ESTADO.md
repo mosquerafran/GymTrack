@@ -23,9 +23,8 @@ rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 
 ## 2. 🔴 Requiere acción
 
-000. **Autorizar `silverback-gym.web.app` en Firebase Auth** (Authentication → Configuración →
-    Dominios autorizados → Agregar dominio). Sin eso, el login con Google falla en la dirección nueva
-    (la vieja anda igual). Después: entrar por la nueva, loguearse e instalar la app desde ahí.
+000. ✅ **`silverback-gym.web.app` autorizado en Firebase Auth** (2026-09-28, confirmado con la config
+    pública del proyecto). Falta: que cada uno entre por la nueva, se loguee e instale la app desde ahí.
 
 00. **Smoke de la seguridad fase 2** (deployada completa el 2026-09-28): en el celu, muro, calendario,
     detalle del día y Stats cargan; Ajustes → Administrar grupo muestra los miembros; alguien se une
