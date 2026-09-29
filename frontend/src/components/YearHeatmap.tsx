@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { formatDateLocal } from "../utils/date";
 
 interface YearHeatmapProps {
@@ -62,25 +62,34 @@ export default function YearHeatmap({ dias, anio }: YearHeatmapProps): React.Rea
     return { semanas, etiquetasMes, total: set.size };
   }, [dias, anio]);
 
+  // En el celu no entra el año entero: arrancar mostrando la semana de hoy (a la derecha).
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return;
+    const hoy = el.querySelector<HTMLElement>("[data-hoy]");
+    if (hoy) el.scrollLeft = Math.max(0, hoy.offsetLeft - el.clientWidth + 48);
+  }, [semanas]);
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-black text-textMuted uppercase tracking-[0.25em]">
-          Actividad {anio}
+        <h3 className="font-heading text-base uppercase tracking-wide text-textMain">
+          Tu año {anio}
         </h3>
-        <span className="text-[10px] font-bold text-textMuted">
+        <span className="text-sm text-textMuted">
           <span className="scoreboard text-textMain">{total}</span> días
         </span>
       </div>
 
-      <div className="overflow-x-auto hide-scrollbar -mx-1 px-1">
+      <div ref={scroller} className="overflow-x-auto -mx-1 px-1 pb-1">
         <div className="inline-flex flex-col gap-1 min-w-max">
           {/* Fila de etiquetas de mes */}
           <div className="flex gap-1">
             {etiquetasMes.map((et, i) => (
               <div key={i} className="w-3 shrink-0">
                 {et && (
-                  <span className="block text-[8px] font-bold text-textMuted whitespace-nowrap leading-none">
+                  <span className="block text-xs text-textMuted whitespace-nowrap leading-none">
                     {et}
                   </span>
                 )}
@@ -95,12 +104,13 @@ export default function YearHeatmap({ dias, anio }: YearHeatmapProps): React.Rea
                 {sem.map((c) => (
                   <div
                     key={c.key}
+                    data-hoy={c.esHoy || undefined}
                     title={c.enAnio ? `${c.key.split("-").reverse().join("/")}${c.entreno ? " · entrenaste 💪" : ""}` : undefined}
                     className={`w-3 h-3 rounded-[3px] ${
                       !c.enAnio
                         ? "bg-transparent"
                         : c.entreno
-                        ? "bg-primary shadow-[0_0_6px_rgba(59,130,246,0.5)]"
+                        ? "bg-primary"
                         : "bg-surfaceHighlight border border-borderBase"
                     } ${c.esHoy ? "ring-1 ring-accent" : ""}`}
                   />
@@ -113,10 +123,10 @@ export default function YearHeatmap({ dias, anio }: YearHeatmapProps): React.Rea
 
       {/* Leyenda */}
       <div className="flex items-center gap-1.5 justify-end">
-        <span className="text-[9px] font-bold text-textMuted">Descanso</span>
+        <span className="text-xs text-textMuted">Descanso</span>
         <span className="w-2.5 h-2.5 rounded-[3px] bg-surfaceHighlight border border-borderBase" />
         <span className="w-2.5 h-2.5 rounded-[3px] bg-primary" />
-        <span className="text-[9px] font-bold text-textMuted">Entreno</span>
+        <span className="text-xs text-textMuted">Entreno</span>
       </div>
     </div>
   );

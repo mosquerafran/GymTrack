@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { auth } from "../config/firebase";
-import { signOut, User } from "firebase/auth";
-import { Users, Plus, KeyRound, LogOut, Sun, Moon, Copy, Check, ShieldCheck } from "lucide-react";
-import Swal from "sweetalert2";
+import { User } from "firebase/auth";
+import { Users, Plus, KeyRound, LogOut, Sun, Moon, ShieldCheck, ChevronRight } from "lucide-react";
+import CodigoCopiable from "../components/CodigoCopiable";
 import { cargarGruposDeUsuario, crearGrupo, unirseConCodigo } from "../services/gruposService";
+import { cerrarSesion } from "../services/authService";
+import { Alerta } from "../config/alertas";
+import { Cargando, ErrorCarga } from "../components/ui/Estados";
 import { Grupo } from "../types";
 
 interface GrupoSelectorProps {
@@ -13,12 +15,15 @@ interface GrupoSelectorProps {
   toggleTheme: () => void;
 }
 
+type Modo = "lista" | "crear" | "unirse";
+
 export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme }: GrupoSelectorProps): React.ReactElement {
   const [grupos, setGrupos] = useState<Grupo[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [modo, setModo] = useState<"lista" | "crear" | "unirse">("lista");
-  const [nombreNuevo, setNombreNuevo] = useState<string>("");
-  const [codigoInput, setCodigoInput] = useState<string>("");
+  const [estado, setEstado] = useState<"cargando" | "listo" | "error">("cargando");
+  const [modo, setModo] = useState<Modo>("lista");
+  const [nombreNuevo, setNombreNuevo] = useState("");
+  const [codigoInput, setCodigoInput] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
     cargar();
@@ -26,250 +31,199 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
   }, [user]);
 
   const cargar = async () => {
-    setLoading(true);
+    setEstado("cargando");
     try {
       const lista = await cargarGruposDeUsuario(user);
       setGrupos(lista);
+      setEstado("listo");
+      if (lista.length === 0) setModo("unirse");
     } catch (e) {
       console.error("Error cargando grupos:", e);
+      setEstado("error");
     }
-    setLoading(false);
   };
 
   const handleCrearGrupo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombreNuevo.trim() || !user.email) return;
+    if (!nombreNuevo.trim() || !user.email || enviando) return;
+    setEnviando(true);
     try {
       await crearGrupo(nombreNuevo, user.email);
-      Swal.fire({
-        title: "¡Grupo Creado! 🎉",
-        icon: "success",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        background: "var(--color-surface)",
-        color: "var(--color-text-main)",
-      });
       setNombreNuevo("");
       setModo("lista");
-      cargar();
-    } catch (e) {
-      console.error(e);
+      await cargar();
+    } catch (err) {
+      console.error(err);
+      Alerta.fire({ titleText: "No se pudo crear el grupo", text: "Revisá la conexión y probá de nuevo.", icon: "error", confirmButtonText: "Entendido" });
     }
+    setEnviando(false);
   };
 
   const handleUnirse = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!codigoInput.trim() || !user.email) return;
+    if (!codigoInput.trim() || !user.email || enviando) return;
+    setEnviando(true);
     try {
       await unirseConCodigo(codigoInput, user.email);
-      Swal.fire({
-        title: `¡Te uniste! 💪`,
-        icon: "success",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        background: "var(--color-surface)",
-        color: "var(--color-text-main)",
-      });
       setCodigoInput("");
       setModo("lista");
-      cargar();
-    } catch (e: any) {
-      Swal.fire({
-        title: e.message || "Error",
+      await cargar();
+    } catch (err) {
+      Alerta.fire({
+        titleText: "No te pudiste unir",
+        text: err instanceof Error ? err.message : "Revisá el código y probá de nuevo.",
         icon: "error",
-        background: "var(--color-surface)",
-        color: "var(--color-text-main)",
+        confirmButtonText: "Entendido",
       });
     }
+    setEnviando(false);
   };
 
-  const CodigoCopiable = ({ codigo }: { codigo: string }) => {
-    const [copiado, setCopiado] = useState(false);
-    const copiar = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      navigator.clipboard.writeText(codigo);
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 2000);
-    };
-    return (
-      <button
-        onClick={copiar}
-        className="flex items-center gap-1.5 text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-full border border-primary/20 hover:bg-primary/20 transition-all font-mono"
-        title="Copiar código"
-      >
-        {copiado ? <Check size={10} className="text-green-500" /> : <Copy size={10} />}
-        <span>{codigo}</span>
-      </button>
-    );
-  };
+  const pestanas: { id: Modo; icono: React.ReactNode; label: string }[] = [
+    { id: "lista", icono: <Users size={18} aria-hidden="true" />, label: "Mis grupos" },
+    { id: "unirse", icono: <KeyRound size={18} aria-hidden="true" />, label: "Unirme" },
+    { id: "crear", icono: <Plus size={18} aria-hidden="true" />, label: "Crear" },
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background">
-      {/* Background Orbs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[140px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-accent/10 rounded-full blur-[140px] pointer-events-none animate-pulse" style={{ animationDelay: "1s" }} />
-
-      {/* Header Navigation */}
-      <div className="absolute top-6 right-6 flex items-center gap-3 z-30">
-        <button onClick={toggleTheme} className="p-3 rounded-2xl bg-surface/50 backdrop-blur-sm border border-borderBase text-textMuted hover:text-textMain hover:border-primary/50 transition-all shadow-sm">
-          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+    <div className="min-h-screen bg-background pt-safe">
+      <header className="flex items-center justify-end gap-1 px-3 py-2">
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="btn-icon text-textMuted"
+          aria-label={theme === "dark" ? "Pasar a modo claro" : "Pasar a modo oscuro"}
+        >
+          {theme === "dark" ? <Sun size={22} /> : <Moon size={22} />}
         </button>
-        <button onClick={() => signOut(auth)} className="p-3 rounded-2xl bg-red-500/5 backdrop-blur-sm border border-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Salir">
-          <LogOut size={20} />
+        <button type="button" onClick={cerrarSesion} className="btn-icon text-red-600 dark:text-red-400" aria-label="Cerrar sesión">
+          <LogOut size={22} />
         </button>
-      </div>
+      </header>
 
-      <div className="w-full max-w-2xl relative z-20 animate-fade-in px-2">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-bold mb-4 border border-primary/20">
-            <Users size={14} /> MULTI-TENANT SYSTEM
-          </div>
-          <h1 className="font-display text-5xl md:text-6xl text-textMain mb-3 leading-none tracking-tight">
-            ELEGÍ TU <span className="text-primary">GRUPO</span>
+      <main className="w-full max-w-xl mx-auto px-4 pb-10 space-y-6 animate-fade-in">
+        <div>
+          <p className="eyebrow">Hola, {(user.displayName || "").split(" ")[0] || "crack"}</p>
+          <h1 className="font-display text-5xl uppercase leading-none mt-1">
+            Elegí tu <span className="text-primary">grupo</span>
           </h1>
-          <p className="text-textMuted text-lg">
-            Hola <span className="text-textMain font-bold underline decoration-primary/40 underline-offset-4">{user.displayName}</span>, ¿qué equipo te acompaña hoy?
-          </p>
         </div>
 
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-primary shadow-[0_0_20px_rgba(59,130,246,0.3)]" />
-            <p className="text-textMuted font-medium animate-pulse">Cargando tus grupos...</p>
-          </div>
+        {estado === "cargando" ? (
+          <Cargando texto="Cargando tus grupos…" />
+        ) : estado === "error" ? (
+          <ErrorCarga texto="No se pudieron cargar tus grupos" onReintentar={cargar} />
         ) : (
-          <div className="space-y-6">
-            {/* Mode Selector Tabs */}
-            <div className="flex bg-surface/50 backdrop-blur-md p-1.5 rounded-2xl border border-borderBase shadow-sm mb-2">
-              {([
-                { id: "lista", icon: <Users size={18} />, label: "Mis Grupos" },
-                { id: "crear", icon: <Plus size={18} />, label: "Crear" },
-                { id: "unirse", icon: <KeyRound size={18} />, label: "Unirme" },
-              ] as const).map((tab) => (
+          <>
+            <div className="grid grid-cols-3 gap-1 bg-surfaceHighlight p-1 rounded-2xl" role="tablist" aria-label="Qué querés hacer">
+              {pestanas.map((t) => (
                 <button
-                  key={tab.id}
-                  onClick={() => setModo(tab.id)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${modo === tab.id ? "bg-primary text-white shadow-lg shadow-primary/30" : "text-textMuted hover:text-textMain"}`}
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={modo === t.id}
+                  onClick={() => setModo(t.id)}
+                  className={`flex items-center justify-center gap-1.5 min-h-tap rounded-xl font-semibold text-sm transition-colors ${modo === t.id ? "bg-surface text-primary shadow-sm" : "text-textMuted"}`}
                 >
-                  {tab.icon} {tab.label}
+                  {t.icono} {t.label}
                 </button>
               ))}
             </div>
 
-            <div className="min-h-[300px]">
-              {/* Lista de grupos */}
-              {modo === "lista" && (
-                <div className="space-y-4 animate-slide-up">
-                  {grupos.length === 0 ? (
-                    <div className="glass-panel p-12 text-center">
-                      <div className="w-20 h-20 bg-surfaceHighlight rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-dashed border-borderBase">
-                        <Users size={40} className="text-textMuted" />
-                      </div>
-                      <h3 className="text-xl font-bold text-textMain mb-2">No tenés grupos todavía</h3>
-                      <p className="text-textMuted mb-8 max-w-xs mx-auto">Comenzá creando un grupo nuevo o pedile el código a un amigo para unirte.</p>
-                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        <button onClick={() => setModo("crear")} className="btn-primary">Crear mi primer grupo</button>
-                        <button onClick={() => setModo("unirse")} className="btn-secondary">Unirme a uno</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {grupos.map((g, i) => (
-                        <button
-                          key={g.id}
-                          onClick={() => onSelectGrupo(g)}
-                          className="glass-panel p-6 text-left group hover:border-primary hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 flex flex-col relative overflow-hidden"
-                          style={{ animationDelay: `${i * 100}ms` }}
-                        >
-                          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-700" />
-                          <div className="flex items-start justify-between mb-4 relative z-10">
-                            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-3xl group-hover:scale-110 group-hover:bg-primary/20 transition-all duration-300 shadow-inner">
-                              {g.nombre.includes("Miller") ? "🏢" : "💪"}
-                            </div>
-                            <CodigoCopiable codigo={g.codigoInvitacion} />
-                          </div>
-                          <div className="relative z-10">
-                            <h3 className="text-xl font-black text-textMain mb-1 group-hover:text-primary transition-colors tracking-tight">{g.nombre}</h3>
-                            <div className="flex items-center gap-4 text-textMuted text-sm font-medium">
-                              <span className="flex items-center gap-1.5 bg-surfaceHighlight/50 px-2 py-1 rounded-lg border border-borderBase">
-                                <Users size={14} className="text-primary" /> {g.miembros?.length || 0} miembros
-                              </span>
-                              {g.adminEmail === user.email && (
-                                <span className="flex items-center gap-1.5 text-accent font-bold uppercase text-[10px] tracking-wider">
-                                  <ShieldCheck size={12} /> Propietario
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="mt-6 flex items-center justify-between text-primary font-bold text-sm group-hover:translate-x-2 transition-transform duration-300 relative z-10">
-                            Entrar al grupo <Plus size={16} />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Crear grupo */}
-              {modo === "crear" && (
-                <div className="glass-panel p-8 md:p-10 animate-slide-up relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1.5 bg-primary" />
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Plus size={24} /></div>
-                    <div>
-                      <h2 className="text-2xl font-black text-textMain tracking-tight">Crear Grupo Nuevo</h2>
-                      <p className="text-textMuted text-sm">Convertite en el admin de un nuevo equipo</p>
-                    </div>
+            {modo === "lista" && (
+              grupos.length === 0 ? (
+                <div className="glass-panel p-8 text-center space-y-4">
+                  <Users size={36} className="text-accent mx-auto" aria-hidden="true" />
+                  <p className="font-heading text-lg uppercase tracking-wide">No tenés grupos todavía</p>
+                  <p className="text-sm text-textMuted">Pedile el código a un amigo para unirte, o creá uno nuevo.</p>
+                  <div className="grid gap-2">
+                    <button type="button" onClick={() => setModo("unirse")} className="btn-primary">Unirme con un código</button>
+                    <button type="button" onClick={() => setModo("crear")} className="btn-secondary">Crear un grupo</button>
                   </div>
-                  <form onSubmit={handleCrearGrupo} className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-bold text-textMain mb-2 ml-1">Nombre del Equipo</label>
-                      <input type="text" placeholder="Ej: Los Pibes de Miller, Strong Team..." className="input-field text-lg" value={nombreNuevo} onChange={(e) => setNombreNuevo(e.target.value)} required autoFocus />
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                      <button type="submit" className="btn-primary flex-[2] py-4 text-lg">Confirmar Creación</button>
-                      <button type="button" onClick={() => setModo("lista")} className="btn-secondary flex-1 py-4">Volver</button>
-                    </div>
-                  </form>
                 </div>
-              )}
+              ) : (
+                <ul className="space-y-3">
+                  {grupos.map((g) => (
+                    <li key={g.id} className="glass-panel p-4 space-y-3">
+                      <button type="button" onClick={() => onSelectGrupo(g)} className="w-full flex items-center gap-3 text-left min-h-tap">
+                        <span className="w-12 h-12 rounded-2xl bg-primary/10 grid place-items-center text-2xl shrink-0" aria-hidden="true">
+                          {g.nombre.includes("Miller") ? "🏢" : "💪"}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block font-heading text-lg uppercase tracking-wide truncate">{g.nombre}</span>
+                          <span className="flex items-center gap-3 text-sm text-textMuted">
+                            <span className="flex items-center gap-1"><Users size={14} aria-hidden="true" /> {g.miembros?.length || 0} miembros</span>
+                            {g.adminEmail === user.email && (
+                              <span className="flex items-center gap-1 text-accent font-semibold"><ShieldCheck size={14} aria-hidden="true" /> Sos admin</span>
+                            )}
+                          </span>
+                        </span>
+                        <ChevronRight size={22} className="text-primary shrink-0" aria-hidden="true" />
+                      </button>
+                      <div className="flex items-center justify-between gap-2 pt-3 border-t border-borderBase">
+                        <span className="text-sm text-textMuted">Código para invitar</span>
+                        <CodigoCopiable codigo={g.codigoInvitacion} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )
+            )}
 
-              {/* Unirse con código */}
-              {modo === "unirse" && (
-                <div className="glass-panel p-8 md:p-10 animate-slide-up relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1.5 bg-accent" />
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-accent/10 rounded-2xl text-accent"><KeyRound size={24} /></div>
-                    <div>
-                      <h2 className="text-2xl font-black text-textMain tracking-tight">Unirse con Código</h2>
-                      <p className="text-textMuted text-sm">Ingresá el código que te pasó tu amigo</p>
-                    </div>
-                  </div>
-                  <form onSubmit={handleUnirse} className="space-y-6 text-center">
-                    <div>
-                      <label className="block text-sm font-bold text-textMain mb-4">Código de Invitación</label>
-                      <input type="text" placeholder="GYM-XXXX" className="input-field text-center font-black text-3xl tracking-[0.2em] uppercase py-6 border-dashed border-2 focus:border-accent focus:ring-accent/20" value={codigoInput} onChange={(e) => setCodigoInput(e.target.value)} required autoFocus maxLength={8} />
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                      <button type="submit" className="btn-accent flex-[2] py-4 text-lg !text-slate-900">Unirse al Equipo</button>
-                      <button type="button" onClick={() => setModo("lista")} className="btn-secondary flex-1 py-4">Volver</button>
-                    </div>
-                  </form>
+            {modo === "crear" && (
+              <form onSubmit={handleCrearGrupo} className="glass-panel p-5 space-y-4">
+                <div>
+                  <h2 className="font-heading text-xl uppercase tracking-wide">Crear un grupo</h2>
+                  <p className="text-sm text-textMuted">Vas a ser el admin y vas a poder invitar con un código.</p>
                 </div>
-              )}
-            </div>
-          </div>
+                <label className="block">
+                  <span className="block text-sm font-semibold mb-2">Nombre del grupo</span>
+                  <input
+                    type="text"
+                    placeholder="Ej: Los del gym de la esquina"
+                    className="input-field"
+                    value={nombreNuevo}
+                    maxLength={60}
+                    onChange={(e) => setNombreNuevo(e.target.value)}
+                    required
+                  />
+                </label>
+                <button type="submit" className="btn-primary w-full" disabled={enviando}>
+                  {enviando ? "Creando…" : "Crear grupo"}
+                </button>
+              </form>
+            )}
+
+            {modo === "unirse" && (
+              <form onSubmit={handleUnirse} className="glass-panel p-5 space-y-4">
+                <div>
+                  <h2 className="font-heading text-xl uppercase tracking-wide">Unirme con un código</h2>
+                  <p className="text-sm text-textMuted">Pedíselo a alguien del grupo: está en su pantalla de Ajustes.</p>
+                </div>
+                <label className="block">
+                  <span className="block text-sm font-semibold mb-2">Código de invitación</span>
+                  <input
+                    type="text"
+                    placeholder="GYM-XXXX"
+                    className="input-field text-center font-heading text-3xl tracking-[0.2em] uppercase"
+                    value={codigoInput}
+                    onChange={(e) => setCodigoInput(e.target.value)}
+                    required
+                    maxLength={8}
+                    autoCapitalize="characters"
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
+                </label>
+                <button type="submit" className="btn-accent w-full" disabled={enviando}>
+                  {enviando ? "Uniéndote…" : "Unirme al grupo"}
+                </button>
+              </form>
+            )}
+          </>
         )}
-
-        <p className="text-center mt-12 text-textMuted text-xs font-medium tracking-widest uppercase">
-          Gym Tracker v3.0 • Clean Architecture
-        </p>
-      </div>
+      </main>
     </div>
   );
 }

@@ -17,6 +17,12 @@ paths:
   `diasEntrenados`...). Interpretan los docs viejos (`categoriaId`/`catId`, sin tipo ni músculos)
   y los nuevos igual. No leas `categoriaId` ni `musculos` a mano.
 
+## UI (mobile-first, se usa casi siempre desde el celu)
+- Popups: **solo** `Alerta` de `config/alertas.ts` (`verify.ps1` lo controla), con `titleText`/`text`.
+- Paneles: `components/ui/Hoja.tsx` (integra "atrás" del celu). Cargando/vacío/error:
+  `components/ui/Estados.tsx` — un error nunca se muestra como "no hay datos".
+- Navegación: `irA(vista)` de `useVistaConHistorial` (no `setView` suelto: rompe "atrás").
+
 ## Fechas — el bug que ya pasó
 - **La clave de un día es `"YYYY-MM-DD"` en HORA LOCAL**: `formatDateLocal()`, `inicioMesLocal()`,
   `finMesLocal()` y `parseFechaLocal()` de `utils/date.ts`.

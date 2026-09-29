@@ -1,7 +1,8 @@
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { cargarFeedGlobal } from "../services/asistenciasService";
 import { cargarMapaCategorias } from "../services/categoriasService";
-import { Dumbbell, MessageSquare, Calendar } from "lucide-react";
+import { Dumbbell, MessageSquare, Calendar, Flame } from "lucide-react";
+import { Cargando, EstadoVacio, ErrorCarga } from "../components/ui/Estados";
 import { Asistencia, Categoria } from "../types";
 import { cargarSexosPorUid } from "../services/usuarioService";
 import { Sexo, SEXO_DEFAULT, TIPOS } from "../config/entrenos";
@@ -12,11 +13,14 @@ const MiniCuerpo = lazy(() => import("../components/cuerpo/MiniCuerpo"));
 
 interface FeedProps {
   grupoId: string;
+  /** Aumenta cuando se guarda o borra un entreno, para recargar. */
+  refresco?: number;
 }
 
-export default function Feed({ grupoId }: FeedProps): React.ReactElement {
+export default function Feed({ grupoId, refresco = 0 }: FeedProps): React.ReactElement {
   const [posts, setPosts] = useState<Asistencia[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState(false);
   const [mapaCat, setMapaCat] = useState<Record<string, Categoria>>({});
   const [sexos, setSexos] = useState<Record<string, Sexo>>({});
   const nombres: NombresCategoria = Object.fromEntries(Object.entries(mapaCat).map(([id, c]) => [id, c.nombre]));
@@ -27,7 +31,7 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
       cargarNombres();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grupoId]);
+  }, [grupoId, refresco]);
 
   const cargarNombres = async () => {
     try {
@@ -41,11 +45,13 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
 
   const cargarMuro = async () => {
     setLoading(true);
+    setError(false);
     try {
       const data = await cargarFeedGlobal(grupoId);
       setPosts(data as Asistencia[]);
     } catch (e) {
       console.error(e);
+      setError(true); // un error no es "no hay registros"
     }
     setLoading(false);
   };
@@ -65,21 +71,18 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
   };
 
   return (
-    <div className="max-w-xl mx-auto space-y-6 animate-fade-in pb-24">
-      <div className="glass-panel p-6 border-b-4 border-b-primary">
-        <h2 className="font-display text-4xl text-textMain flex items-center gap-2 leading-none">
-          COMUNIDAD <span className="text-primary">GYM</span>
-        </h2>
-        <p className="eyebrow mt-2">Registros de Actividad</p>
+    <div className="max-w-xl mx-auto space-y-4 animate-fade-in">
+      <div>
+        <p className="eyebrow">Lo que entrenó el grupo</p>
+        <h1 className="font-display text-4xl uppercase leading-none mt-1">Muro</h1>
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-primary" />
-          <p className="text-textMuted text-sm font-medium animate-pulse">Cargando registros...</p>
-        </div>
+        <Cargando texto="Cargando el muro…" />
+      ) : error ? (
+        <ErrorCarga texto="No se pudo cargar el muro" onReintentar={cargarMuro} />
       ) : posts.length === 0 ? (
-        <div className="text-center text-textMuted py-10 font-medium">No hay registros recientes.</div>
+        <EstadoVacio icono={Flame} titulo="Todavía no hay entrenos" texto="Cuando alguien del grupo registre uno, aparece acá." />
       ) : (
         <div className="space-y-6">
           {posts.map((post) => {
@@ -155,7 +158,7 @@ export default function Feed({ grupoId }: FeedProps): React.ReactElement {
                     <div className="bg-surfaceHighlight/20 rounded-2xl p-4 border border-borderBase/20">
                       <div className="flex items-center gap-2 mb-3">
                         <Dumbbell size={14} className="text-textMuted" />
-                        <span className="text-[10px] font-black uppercase text-textMuted tracking-widest">PRs LOGRADOS</span>
+                        <span className="text-xs font-black uppercase text-textMuted tracking-widest">PRs LOGRADOS</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {post.rutina.map((ej: any, i) => (

@@ -32,8 +32,11 @@ guardar un entreno y en el Home.
    `verificarAcceso` (con fallback local).
 2. **Selección de grupo** (`GrupoSelector`): crear grupo (te volvés admin), unirte
    con código `GYM-XXXX`, o entrar a uno existente. Se guarda en `localStorage`.
-3. **Home**: frase motivacional + calendario personal (mis días marcados) +
-   `TrainingSelector` para registrar el día seleccionado.
+3. **Inicio** (`Home`): tarjeta "Hoy" (botón **Registrar entreno**, o "Hoy ya entrenaste"),
+   la semana en curso contra la meta semanal, y el calendario del usuario. **Tocar un día**
+   abre su detalle en un panel inferior. En el celu la navegación es una **barra inferior**
+   (Inicio · Muro · **Registrar** al centro · Ranking · Ajustes); "atrás" del celu vuelve a la
+   pantalla anterior o cierra el panel abierto (`hooks/useHistorial.ts`). (Worklog `2026-09-28/04`.)
 4. **Registrar entreno** (`TrainingSelector`): foto **obligatoria** (cámara o galería) →
    **tipo** (gym / fútbol / running / otro) → si es gym, **músculos** tocando el cuerpo
    (frente y espalda, modelo hombre o mujer; atajos Push/Pull/Legs/Torso/Core; o lista)
@@ -46,10 +49,11 @@ guardar un entreno y en el Home.
    **por músculo** (mapa de calor del cuerpo, días por músculo, olvidados ≥14 días, tren
    superior vs. inferior, "reyes" de cada zona del grupo) + ranking con podio y desglose
    por tipo + entrenos por tipo + heatmap anual. Períodos: semana / mes / año.
-7. **Detalle de día** (`DiaDetalle`): explorar el calendario, ver quién entrenó
-   cada día, y **editar/borrar los registros propios** (incluso de días pasados).
-8. **Ajustes** (`Settings`): modelo del cuerpo (hombre/mujer), meta semanal (1 a 7 días)
-   y "Tus etiquetas" (las viejas categorías: crear, renombrar, ocultar; no se borran).
+7. **Detalle de día** (`DetalleDia`, en un panel inferior): quién del grupo entrenó ese día,
+   y **editar/borrar lo propio** (incluso días pasados). Si no registraste, "Registrar este día".
+8. **Ajustes** (`Settings`): modelo del cuerpo (hombre/mujer), meta semanal (1 a 7 días),
+   "Tus etiquetas" (las viejas categorías: crear, renombrar, ocultar; no se borran), cambiar de
+   grupo, admin del grupo / aprobaciones (si corresponde) y **cerrar sesión** (con confirmación).
 9. **Admin**: gestionar miembros del grupo. **Aprobaciones**: aprobar/rechazar
    usuarios globalmente (solo admin maestro).
 

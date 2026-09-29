@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { User } from "firebase/auth";
 import { cargarMiembrosGrupo, agregarMiembro, eliminarMiembro } from "../services/gruposService";
-import { ShieldCheck, UserPlus, Trash2, Mail, UserCheck } from "lucide-react";
-import Swal from "sweetalert2";
+import { ShieldCheck, UserPlus, Trash2, UserCheck, ChevronLeft } from "lucide-react";
 import { ADMIN_EMAIL } from "../config/constants";
+import { Alerta } from "../config/alertas";
+import { Cargando, ErrorCarga } from "../components/ui/Estados";
+import CodigoCopiable from "../components/CodigoCopiable";
 import { Grupo } from "../types";
 
 interface AdminProps {
@@ -12,10 +14,11 @@ interface AdminProps {
   setView: (view: string) => void;
 }
 
+/** Admin del grupo: invitar por código o email y quitar miembros. */
 export default function Admin({ user, grupoActivo, setView }: AdminProps): React.ReactElement {
   const [miembros, setMiembros] = useState<string[]>([]);
-  const [nuevoEmail, setNuevoEmail] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
+  const [nuevoEmail, setNuevoEmail] = useState("");
+  const [estado, setEstado] = useState<"cargando" | "listo" | "error">("cargando");
 
   useEffect(() => {
     if (grupoActivo) cargar();
@@ -23,130 +26,137 @@ export default function Admin({ user, grupoActivo, setView }: AdminProps): React
   }, [grupoActivo]);
 
   const cargar = async () => {
-    setLoading(true);
+    setEstado("cargando");
     try {
-      const lista = await cargarMiembrosGrupo(grupoActivo.id, grupoActivo.codigoInvitacion || "");
-      setMiembros(lista);
+      setMiembros(await cargarMiembrosGrupo(grupoActivo.id, grupoActivo.codigoInvitacion || ""));
+      setEstado("listo");
     } catch (error) {
       console.error("Error al cargar miembros:", error);
+      setEstado("error");
     }
-    setLoading(false);
+  };
+
+  const fallo = (e: unknown) => {
+    console.error(e);
+    Alerta.fire({ titleText: "No se pudo guardar", text: "Revisá la conexión y probá de nuevo.", icon: "error", confirmButtonText: "Entendido" });
   };
 
   const handleAgregar = async (e: React.FormEvent) => {
     e.preventDefault();
     const email = nuevoEmail.toLowerCase().trim();
-    if (!email || !email.includes("@")) return;
-
+    if (!email.includes("@")) return;
     if (miembros.includes(email)) {
-      Swal.fire({ title: "Atención", text: "Ya es miembro.", icon: "warning" });
+      Alerta.fire({ titleText: "Ya es miembro", text: `${email} ya está en el grupo.`, icon: "info", confirmButtonText: "Entendido" });
       return;
     }
-
     try {
       await agregarMiembro(grupoActivo.id, miembros, email);
       setNuevoEmail("");
       cargar();
-      Swal.fire({ title: "Agregado", icon: "success", toast: true, position: "top-end", timer: 1500, showConfirmButton: false });
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      fallo(err);
     }
   };
 
   const handleEliminar = async (email: string) => {
     if (email === ADMIN_EMAIL) return;
-    const res = await Swal.fire({
-      title: "¿Quitar del grupo?",
-      text: `${email} ya no verá este grupo.`,
+    const res = await Alerta.fire({
+      titleText: "¿Quitar del grupo?",
+      text: `${email} ya no va a ver este grupo. Sus entrenos no se borran.`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Sí, quitar",
+      cancelButtonText: "Cancelar",
     });
-
-    if (res.isConfirmed) {
+    if (!res.isConfirmed) return;
+    try {
       await eliminarMiembro(grupoActivo.id, miembros, email);
       cargar();
+    } catch (err) {
+      fallo(err);
     }
   };
 
   if (user?.email !== ADMIN_EMAIL && grupoActivo?.adminEmail !== user?.email) {
     return (
-      <div className="glass-panel p-10 text-center animate-fade-in">
-        <h2 className="text-2xl font-bold text-red-500 mb-2">Acceso Denegado</h2>
-        <p className="text-textMuted">Solo el administrador del grupo puede ver esta página.</p>
+      <div className="glass-panel p-8 text-center max-w-md mx-auto space-y-2">
+        <h2 className="font-heading text-xl uppercase tracking-wide">Solo para el admin</h2>
+        <p className="text-sm text-textMuted">Solo el administrador del grupo puede ver esta pantalla.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
-      <div className="glass-panel p-6 md:p-8 border-t-4 border-t-primary">
-        <div className="flex justify-between items-start">
-          <div>
-            <h2 className="text-2xl font-bold text-textMain flex items-center gap-2 mb-2">
-              <ShieldCheck className="text-primary" size={28} /> Admin: {grupoActivo?.nombre}
-            </h2>
-            <p className="text-textMuted">Gestioná los integrantes y acceso al grupo.</p>
-          </div>
-          {user.email === ADMIN_EMAIL && (
-            <button
-              onClick={() => setView("aprobaciones")}
-              className="flex items-center gap-2 text-xs bg-yellow-500/10 text-yellow-500 px-3 py-2 rounded-xl border border-yellow-500/20 hover:bg-yellow-500 hover:text-slate-900 transition-all font-bold"
-            >
-              <UserCheck size={16} /> Aprobaciones Globales
-            </button>
-          )}
-        </div>
+    <div className="max-w-xl mx-auto space-y-4 animate-fade-in">
+      <button type="button" onClick={() => setView("settings")} className="flex items-center gap-1 min-h-tap text-sm font-semibold text-textMuted -ml-1">
+        <ChevronLeft size={20} aria-hidden="true" /> Ajustes
+      </button>
+      <div>
+        <p className="eyebrow flex items-center gap-1.5"><ShieldCheck size={14} aria-hidden="true" /> Admin</p>
+        <h1 className="font-display text-4xl uppercase leading-none mt-1 break-words">{grupoActivo?.nombre}</h1>
       </div>
 
-      <div className="glass-panel p-6 md:p-8">
-        <h3 className="text-lg font-bold text-textMain mb-4">Invitar por Email</h3>
-        <form onSubmit={handleAgregar} className="flex flex-col sm:flex-row gap-3 mb-8">
-          <div className="relative flex-1">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-textMuted" size={18} />
-            <input type="email" placeholder="correo@ejemplo.com" className="input-field pl-10 w-full" value={nuevoEmail} onChange={(e) => setNuevoEmail(e.target.value)} required />
-          </div>
-          <button type="submit" className="btn-primary flex justify-center items-center gap-2">
-            <UserPlus size={18} /> Agregar
+      <section className="glass-panel p-4 space-y-3" aria-labelledby="adm-invitar">
+        <h2 id="adm-invitar" className="font-heading text-base uppercase tracking-wide">Invitar</h2>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm text-textMuted">Pasales este código para que se unan:</p>
+          <CodigoCopiable codigo={grupoActivo.codigoInvitacion} />
+        </div>
+        <form onSubmit={handleAgregar} className="flex gap-2 pt-3 border-t border-borderBase">
+          <input
+            type="email"
+            inputMode="email"
+            autoComplete="off"
+            placeholder="o agregá un email"
+            aria-label="Email del nuevo miembro"
+            className="input-field flex-1 min-w-0"
+            value={nuevoEmail}
+            onChange={(e) => setNuevoEmail(e.target.value)}
+            required
+          />
+          <button type="submit" className="btn-primary !px-4 shrink-0" aria-label="Agregar miembro">
+            <UserPlus size={20} aria-hidden="true" />
           </button>
         </form>
+      </section>
 
-        <div className="flex items-center justify-between mb-4 border-b border-borderBase pb-2">
-          <h3 className="text-lg font-bold text-textMain">Miembros Actuales ({miembros.length})</h3>
-          <div className="text-xs text-textMuted bg-surfaceHighlight px-2 py-1 rounded-lg font-mono">
-            Código: {grupoActivo.codigoInvitacion}
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-          </div>
+      <section className="glass-panel p-4 space-y-2" aria-labelledby="adm-miembros">
+        <h2 id="adm-miembros" className="font-heading text-base uppercase tracking-wide">Miembros ({miembros.length})</h2>
+        {estado === "cargando" ? (
+          <Cargando />
+        ) : estado === "error" ? (
+          <ErrorCarga texto="No se pudieron cargar los miembros" onReintentar={cargar} />
         ) : (
-          <div className="grid gap-3">
-            {miembros.map((m, i) => (
-              <div key={i} className="bg-surfaceHighlight/50 border border-borderBase rounded-xl p-4 flex items-center justify-between group transition-all hover:border-primary/30">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                    {m.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-medium text-textMain">{m}</p>
-                    {m === ADMIN_EMAIL && (
-                      <span className="text-[10px] bg-accent text-slate-900 px-2 py-0.5 rounded-full font-bold mt-1 inline-block">Master Admin</span>
-                    )}
-                  </div>
-                </div>
+          <ul>
+            {miembros.map((m) => (
+              <li key={m} className="flex items-center gap-3 min-h-[56px] border-t border-borderBase first:border-t-0">
+                <span className="w-9 h-9 rounded-full bg-primary/15 text-primary grid place-items-center font-bold shrink-0" aria-hidden="true">
+                  {m.charAt(0).toUpperCase()}
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-semibold break-all">{m}</span>
+                  {(m === ADMIN_EMAIL || m === grupoActivo.adminEmail) && (
+                    <span className="text-xs font-bold text-accent uppercase tracking-wide">
+                      {m === ADMIN_EMAIL ? "Admin de la app" : "Admin del grupo"}
+                    </span>
+                  )}
+                </span>
                 {m !== ADMIN_EMAIL && m !== grupoActivo.adminEmail && (
-                  <button onClick={() => handleEliminar(m)} className="text-textMuted hover:text-red-500 p-2">
+                  <button type="button" onClick={() => handleEliminar(m)} className="btn-icon text-textMuted hover:text-red-600" aria-label={`Quitar a ${m} del grupo`}>
                     <Trash2 size={20} />
                   </button>
                 )}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
-      </div>
+      </section>
+
+      {user.email === ADMIN_EMAIL && (
+        <button type="button" onClick={() => setView("aprobaciones")} className="btn-secondary w-full">
+          <UserCheck size={20} aria-hidden="true" /> Aprobaciones de la app
+        </button>
+      )}
     </div>
   );
 }

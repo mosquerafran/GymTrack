@@ -98,7 +98,7 @@ export default function StatsMusculos({ sexo, porMusculo, umbral, ultimaVez, tre
                 etiqueta={lado === "front" ? "Mapa de calor, frente: tocá un músculo para ver el detalle" : "Mapa de calor, espalda: tocá un músculo para ver el detalle"}
                 className="max-w-[160px]"
               />
-              <span className="font-mono text-[11px] tracking-[0.14em] uppercase text-textMuted">{lado === "front" ? "Frente" : "Espalda"}</span>
+              <span className="font-mono text-xs tracking-[0.14em] uppercase text-textMuted">{lado === "front" ? "Frente" : "Espalda"}</span>
             </div>
           ))}
         </div>

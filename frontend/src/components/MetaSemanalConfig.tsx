@@ -3,7 +3,7 @@ import { User } from "firebase/auth";
 import { obtenerMetaSemanal, actualizarMetaSemanal } from "../services/usuarioService";
 import { META_SEMANAL_DEFAULT } from "../types";
 import { Target, Loader } from "lucide-react";
-import Swal from "sweetalert2";
+import { Alerta } from "../config/alertas";
 
 interface MetaSemanalConfigProps {
   user: User;
@@ -30,32 +30,22 @@ export default function MetaSemanalConfig({ user }: MetaSemanalConfigProps): Rea
     setMeta(valor); // optimista
     setGuardando(valor);
     try {
-      await actualizarMetaSemanal(user.email, valor);
-      Swal.fire({
-        title: `Meta: ${valor} días/semana`,
-        icon: "success",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 1500,
-        background: "var(--color-surface)",
-        color: "var(--color-text-main)",
-      });
+      await actualizarMetaSemanal(user.email, valor); // el botón marcado ya es la confirmación
     } catch (e) {
       console.error(e);
       setMeta(anterior); // revertir si falla
-      Swal.fire({ title: "No se pudo guardar", icon: "error", background: "var(--color-surface)", color: "var(--color-text-main)" });
+      Alerta.fire({ titleText: "No se pudo guardar", text: "Revisá la conexión y probá de nuevo.", icon: "error", confirmButtonText: "Entendido" });
     } finally {
       setGuardando(null);
     }
   };
 
   return (
-    <div className="glass-panel p-6 animate-slide-up">
-      <h3 className="text-xl font-bold text-textMain mb-2 flex items-center gap-2">
-        <Target className="text-primary" /> Meta semanal
+    <div className="glass-panel p-5 sm:p-6">
+      <h3 className="font-heading text-lg uppercase tracking-wide text-textMain flex items-center gap-2">
+        <Target size={20} className="text-primary" aria-hidden="true" /> Meta semanal
       </h3>
-      <p className="text-textMuted text-sm mb-5">
+      <p className="text-textMuted text-sm mt-1 mb-4">
         ¿Cuántos días por semana querés entrenar? Se usa para tu % de la semana en el ranking.
       </p>
 
@@ -73,9 +63,9 @@ export default function MetaSemanalConfig({ user }: MetaSemanalConfigProps): Rea
                 onClick={() => elegir(n)}
                 aria-pressed={activo}
                 aria-label={`${n} días por semana`}
-                className={`min-h-tap rounded-xl font-black scoreboard text-lg transition-all flex items-center justify-center border ${
+                className={`min-h-[48px] rounded-xl font-black scoreboard text-lg transition-colors flex items-center justify-center border ${
                   activo
-                    ? "bg-primary text-white border-transparent shadow-lg shadow-primary/25 scale-105"
+                    ? "bg-primary text-white border-transparent"
                     : "bg-surfaceHighlight/50 text-textMuted border-borderBase hover:text-textMain hover:border-primary/30"
                 }`}
               >

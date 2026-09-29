@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { User } from "firebase/auth";
 import { obtenerUsuarios, cambiarEstadoUsuario } from "../services/authService";
-import { UserCheck, UserX, ShieldCheck, Clock } from "lucide-react";
-import Swal from "sweetalert2";
+import { UserCheck, UserX, ShieldCheck, Clock, ChevronLeft, CheckCircle2 } from "lucide-react";
 import { ADMIN_EMAIL } from "../config/constants";
+import { Alerta } from "../config/alertas";
+import { Cargando, EstadoVacio, ErrorCarga } from "../components/ui/Estados";
 import { Usuario, EstadoUsuario } from "../types";
 
 interface AprobacionesProps {
@@ -14,25 +15,27 @@ interface UsuarioDoc extends Usuario {
   id: string;
 }
 
+/** Aprobar o rechazar usuarios de la app (solo el admin global). */
 export default function Aprobaciones({ user }: AprobacionesProps): React.ReactElement {
   const [pendientes, setPendientes] = useState<UsuarioDoc[]>([]);
   const [aprobados, setAprobados] = useState<UsuarioDoc[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [estado, setEstado] = useState<"cargando" | "listo" | "error">("cargando");
 
   useEffect(() => {
     if (user?.email === ADMIN_EMAIL) cargar();
   }, [user]);
 
   const cargar = async () => {
-    setLoading(true);
+    setEstado("cargando");
     try {
       const { pendientes: pend, aprobados: apr } = await obtenerUsuarios();
       setPendientes(pend as UsuarioDoc[]);
       setAprobados(apr as UsuarioDoc[]);
+      setEstado("listo");
     } catch (e) {
       console.error(e);
+      setEstado("error");
     }
-    setLoading(false);
   };
 
   // `id` es el email (doc id de `usuarios`). Se usa el id y no el campo `email`
@@ -40,102 +43,87 @@ export default function Aprobaciones({ user }: AprobacionesProps): React.ReactEl
   // para que SweetAlert lo muestre como texto y no interprete HTML.
   const cambiarEstado = async (id: string, nuevoEstado: EstadoUsuario) => {
     const accion = nuevoEstado === "aprobado" ? "aprobar" : "rechazar";
-    const res = await Swal.fire({
+    const res = await Alerta.fire({
       titleText: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} a ${id}?`,
       icon: "question",
       showCancelButton: true,
       confirmButtonText: `Sí, ${accion}`,
       cancelButtonText: "Cancelar",
-      background: "var(--color-surface)",
-      color: "var(--color-text-main)",
     });
-
-    if (res.isConfirmed) {
-      try {
-        await cambiarEstadoUsuario(id, nuevoEstado);
-      } catch (e) {
-        console.error(e);
-        Swal.fire("Error", "No se pudo cambiar el estado del usuario.", "error");
-      }
-      cargar();
+    if (!res.isConfirmed) return;
+    try {
+      await cambiarEstadoUsuario(id, nuevoEstado);
+    } catch (e) {
+      console.error(e);
+      Alerta.fire({ titleText: "No se pudo cambiar el estado", text: "Revisá la conexión y probá de nuevo.", icon: "error", confirmButtonText: "Entendido" });
     }
+    cargar();
   };
 
   if (user?.email !== ADMIN_EMAIL) {
     return (
-      <div className="glass-panel p-10 text-center animate-fade-in">
-        <h2 className="text-2xl font-bold text-red-500 mb-2">Acceso Denegado</h2>
-        <p className="text-textMuted">Solo el administrador puede ver esta página.</p>
+      <div className="glass-panel p-8 text-center max-w-md mx-auto space-y-2">
+        <h2 className="font-heading text-xl uppercase tracking-wide">Solo para el admin</h2>
+        <p className="text-sm text-textMuted">Solo el administrador de la app puede ver esta pantalla.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
-      <div className="glass-panel p-6 md:p-8 border-t-4 border-t-yellow-500">
-        <h2 className="text-2xl font-bold text-textMain flex items-center gap-2 mb-2">
-          <Clock className="text-yellow-500" size={28} /> Solicitudes Pendientes
-        </h2>
-        <p className="text-textMuted">Usuarios que quieren acceder a la aplicación.</p>
+    <div className="max-w-xl mx-auto space-y-4 animate-fade-in">
+      <button type="button" onClick={() => window.history.back()} className="flex items-center gap-1 min-h-tap text-sm font-semibold text-textMuted -ml-1">
+        <ChevronLeft size={20} aria-hidden="true" /> Volver
+      </button>
+      <div>
+        <p className="eyebrow flex items-center gap-1.5"><Clock size={14} aria-hidden="true" /> Admin de la app</p>
+        <h1 className="font-display text-4xl uppercase leading-none mt-1">Aprobaciones</h1>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-10">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-        </div>
-      ) : pendientes.length === 0 ? (
-        <div className="glass-panel p-8 text-center text-textMuted">
-          <span className="text-3xl block mb-3">✅</span>
-          No hay solicitudes pendientes. ¡Todo al día!
-        </div>
+      {estado === "cargando" ? (
+        <Cargando />
+      ) : estado === "error" ? (
+        <ErrorCarga texto="No se pudieron cargar los usuarios" onReintentar={cargar} />
       ) : (
-        <div className="grid gap-3">
-          {pendientes.map((u) => (
-            <div key={u.id} className="glass-panel p-4 flex items-center justify-between animate-slide-up">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 font-bold">
-                  {u.email.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p className="font-medium text-textMain">{u.displayName || "Sin nombre"}</p>
-                  <p className="text-sm text-textMuted">{u.email}</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => cambiarEstado(u.id, "aprobado")} className="flex items-center gap-1 px-3 py-2 rounded-lg bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all font-medium text-sm">
-                  <UserCheck size={16} /> Aprobar
-                </button>
-                <button onClick={() => cambiarEstado(u.id, "rechazado")} className="flex items-center gap-1 px-3 py-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all font-medium text-sm">
-                  <UserX size={16} /> Rechazar
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+        <>
+          {pendientes.length === 0 ? (
+            <EstadoVacio icono={CheckCircle2} titulo="Todo al día" texto="No hay solicitudes pendientes." />
+          ) : (
+            <ul className="space-y-3">
+              {pendientes.map((u) => (
+                <li key={u.id} className="glass-panel p-4 space-y-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold">{u.displayName || "Sin nombre"}</p>
+                    <p className="text-sm text-textMuted break-all">{u.id}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => cambiarEstado(u.id, "aprobado")} className="btn-primary !py-2">
+                      <UserCheck size={18} aria-hidden="true" /> Aprobar
+                    </button>
+                    <button type="button" onClick={() => cambiarEstado(u.id, "rechazado")} className="min-h-tap rounded-xl border-[1.5px] border-red-600/60 text-red-600 dark:text-red-400 font-bold flex items-center justify-center gap-2">
+                      <UserX size={18} aria-hidden="true" /> Rechazar
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
 
-      {aprobados.length > 0 && (
-        <div className="glass-panel p-6 md:p-8">
-          <h3 className="text-lg font-bold text-textMain mb-4 flex items-center gap-2">
-            <ShieldCheck className="text-green-500" size={20} /> Usuarios Aprobados ({aprobados.length})
-          </h3>
-          <div className="grid gap-2">
-            {aprobados.map((u) => (
-              <div key={u.id} className="bg-surfaceHighlight/50 border border-borderBase rounded-xl p-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 text-sm font-bold">
-                    {u.email.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-textMain">{u.displayName || u.email}</p>
-                    <p className="text-xs text-textMuted">{u.email}</p>
-                  </div>
-                </div>
-                <span className="text-xs bg-green-500/10 text-green-500 px-2 py-1 rounded-full font-bold">Aprobado</span>
-              </div>
-            ))}
-          </div>
-        </div>
+          {aprobados.length > 0 && (
+            <section className="glass-panel p-4 space-y-1" aria-labelledby="apr-aprobados">
+              <h2 id="apr-aprobados" className="font-heading text-base uppercase tracking-wide flex items-center gap-2">
+                <ShieldCheck size={18} className="text-accent" aria-hidden="true" /> Aprobados ({aprobados.length})
+              </h2>
+              <ul>
+                {aprobados.map((u) => (
+                  <li key={u.id} className="py-2.5 border-t border-borderBase first:border-t-0 min-w-0">
+                    <p className="text-sm font-semibold truncate">{u.displayName || u.id}</p>
+                    <p className="text-xs text-textMuted break-all">{u.id}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
       )}
     </div>
   );

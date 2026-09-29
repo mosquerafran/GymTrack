@@ -1,74 +1,60 @@
-import React from "react";
+import React, { useCallback } from "react";
 import Calendar, { TileArgs } from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { Categoria } from "../types";
+import { formatDateLocal } from "../utils/date";
 
 interface CalendarViewProps {
-  fecha: Date;
-  setFecha: (date: Date) => void;
+  /** Mes que se está mostrando. */
+  mes: Date;
+  /** Días con entrenos del usuario: { "YYYY-MM-DD": [...] }. */
   entrenos: Record<string, string[]>;
-  categoriasMap: Record<string, Categoria>;
   onMonthChange?: (date: Date) => void;
-  abrirDetalle?: (date: Date) => void;
+  /** Tocar un día abre su detalle (quién entrenó, editar lo propio). */
+  onAbrirDia: (date: Date) => void;
 }
 
-export default function CalendarView({ fecha, setFecha, entrenos, categoriasMap, onMonthChange, abrirDetalle }: CalendarViewProps): React.ReactElement {
-  const formatDate = (date: Date): string => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  };
+/** Calendario del usuario: los días entrenados se marcan; tocar un día abre el detalle. */
+export default function CalendarView({ mes, entrenos, onMonthChange, onAbrirDia }: CalendarViewProps): React.ReactElement {
+  const hoy = formatDateLocal(new Date());
 
-  const tileContent = ({ date, view }: TileArgs) => {
-    if (view === "month") {
-      const dateStr = formatDate(date);
-      const diaEntrenos = entrenos[dateStr];
-      if (diaEntrenos && diaEntrenos.length > 0) {
-        return (
-          <div className="flex justify-center mt-1">
-            <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-          </div>
-        );
-      }
-    }
-    return null;
-  };
+  const entreno = useCallback((date: Date) => (entrenos[formatDateLocal(date)] || []).length > 0, [entrenos]);
 
-  const tileClassName = ({ date, view }: TileArgs) => {
-    if (view === "month") {
-      const dateStr = formatDate(date);
-      if (entrenos[dateStr] && entrenos[dateStr].length > 0) {
-        return "bg-primary/10 text-primary font-bold rounded-lg border border-primary/20";
-      }
-    }
-    return "rounded-lg hover:bg-surfaceHighlight transition-colors";
-  };
+  const tileContent = useCallback(({ date, view }: TileArgs) => {
+    if (view !== "month" || !entreno(date)) return null;
+    return <span className="block w-1.5 h-1.5 mt-0.5 rounded-full bg-primary" aria-hidden="true" />;
+  }, [entreno]);
 
-  const handleClickDay = (value: Date) => {
-    setFecha(value);
-    if (abrirDetalle) abrirDetalle(value);
-  };
+  const tileClassName = useCallback(({ date, view }: TileArgs) => {
+    if (view !== "month") return "";
+    const clases = ["rounded-lg"];
+    if (entreno(date)) clases.push("bg-primary/10 text-primary font-bold");
+    if (formatDateLocal(date) === hoy) clases.push("ring-2 ring-inset ring-primary");
+    return clases.join(" ");
+  }, [entreno, hoy]);
 
   return (
-    <div className="glass-panel p-6 animate-slide-up">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-textMain flex items-center gap-2">
-          <span className="text-primary">📅</span> Mi Calendario
-        </h2>
+    <section className="glass-panel p-4 sm:p-6" aria-labelledby="cal-titulo">
+      <div className="flex items-baseline justify-between gap-2 mb-2">
+        <h2 id="cal-titulo" className="font-heading text-base uppercase tracking-wide">Tu calendario</h2>
+        <span className="font-mono text-xs text-textMuted">tocá un día</span>
       </div>
       <div className="custom-calendar-container">
         <Calendar
-          onChange={(val) => setFecha(val as Date)}
-          value={fecha}
-          onClickDay={handleClickDay}
-          onActiveStartDateChange={({ activeStartDate }) => {
-            if (onMonthChange && activeStartDate) onMonthChange(activeStartDate);
+          locale="es-AR"
+          activeStartDate={new Date(mes.getFullYear(), mes.getMonth(), 1)}
+          value={null}
+          maxDate={new Date()}
+          onClickDay={onAbrirDia}
+          onActiveStartDateChange={({ activeStartDate, view }) => {
+            if (view === "month" && onMonthChange && activeStartDate) onMonthChange(activeStartDate);
           }}
           tileContent={tileContent}
           tileClassName={tileClassName}
+          next2Label={null}
+          prev2Label={null}
+          minDetail="month"
         />
       </div>
-    </div>
+    </section>
   );
 }

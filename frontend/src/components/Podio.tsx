@@ -41,13 +41,13 @@ export default function Podio({ ranking, miNombre }: PodioProps): React.ReactEle
                 {u.nombre.charAt(0).toUpperCase()}
               </div>
 
-              <span className={`mt-1.5 text-[11px] sm:text-xs font-black text-center leading-tight truncate max-w-full px-1 ${esMio ? "text-primary" : "text-textMain"}`}>
+              <span className={`mt-1.5 text-xs sm:text-sm font-black text-center leading-tight truncate max-w-full px-1 ${esMio ? "text-primary" : "text-textMain"}`}>
                 {u.nombre}{esMio && " (vos)"}
               </span>
 
               <div className="flex items-baseline gap-1 mt-0.5">
                 <span className={`scoreboard text-lg font-bold ${cfg.txt}`}>{u.dias}</span>
-                <span className="text-[9px] font-bold text-textMuted">d · {u.porcentaje}%</span>
+                <span className="text-xs font-bold text-textMuted">d · {u.porcentaje}%</span>
               </div>
 
               {/* Pedestal */}

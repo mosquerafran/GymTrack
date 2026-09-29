@@ -1,7 +1,7 @@
 import { db, auth } from "../config/firebase";
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { signOut, User as FirebaseUser } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut, User as FirebaseUser } from "firebase/auth";
 import { ADMIN_EMAIL, MIEMBROS_MILLER } from "../config/constants";
 import { Usuario, EstadoUsuario } from "../types";
 
@@ -122,4 +122,14 @@ export const obtenerUsuarios = async (): Promise<{pendientes: Usuario[], aprobad
  */
 export const cambiarEstadoUsuario = async (email: string, estado: EstadoUsuario): Promise<void> => {
   await updateDoc(doc(db, "usuarios", email), { estado });
+};
+
+/** Cierra la sesión (el único lugar de la app que lo hace). */
+export const cerrarSesion = async (): Promise<void> => {
+  await signOut(auth);
+};
+
+/** Login con Google (popup). */
+export const iniciarSesionGoogle = async (): Promise<void> => {
+  await signInWithPopup(auth, new GoogleAuthProvider());
 };

@@ -119,6 +119,15 @@ Paso 'pages/ y components/ no importan Firestore/Storage directo' {
   }
 }
 
+Paso 'SweetAlert solo vía config/alertas.ts (popups con la identidad y sin HTML)' {
+  $patron = 'from\s+[''"]sweetalert2[''"]'
+  foreach ($l in @(Buscar-EnCodigo @("$frontend\src") $patron @('*.ts', '*.tsx'))) {
+    if ((Split-Path $l.Path -Leaf) -ne 'alertas.ts') {
+      "!$(Relativa $l.Path):$($l.LineNumber) → usá Alerta de config/alertas.ts"
+    }
+  }
+}
+
 # ── 3. Backend carga ─────────────────────────────────────────────────────────
 Paso 'El backend carga (require de index.js)' {
   Push-Location $backend

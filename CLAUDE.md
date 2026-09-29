@@ -34,7 +34,7 @@ gym-tracker/
 │   │   ├── config/       # firebase.js (init SDK), constants.js (admin/VIP/chistes)
 │   │   ├── hooks/        # useAuth, useGrupo, useStreak, useTheme
 │   │   ├── services/     # capa de acceso a Firestore/Storage (SIN JSX)
-│   │   ├── components/   # UI reutilizable (Navbar, Calendarios, TrainingSelector...)
+│   │   ├── components/   # UI (Navbar, TrainingSelector, cuerpo/, ui/ = Hoja, Estados...)
 │   │   ├── pages/        # vistas de nivel superior (Home, Feed, Stats, Admin...)
 │   │   ├── utils/        # helpers puros (date.ts)
 │   │   └── types/        # index.ts — interfaces TS compartidas

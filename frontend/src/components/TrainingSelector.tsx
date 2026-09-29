@@ -21,9 +21,11 @@ interface TrainingSelectorProps {
   asistenciaAEditar?: Asistencia | null;
   onCompletado?: () => void;
   onCancelar?: () => void;
+  /** Dentro de un panel (components/ui/Hoja): sin marco ni título, y Guardar fijo abajo. */
+  enHoja?: boolean;
 }
 
-export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEditar, onCompletado, onCancelar }: TrainingSelectorProps): React.ReactElement {
+export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEditar, onCompletado, onCancelar, enHoja = false }: TrainingSelectorProps): React.ReactElement {
   const sexo = useSexo(user.email);
   const editando = !!asistenciaAEditar;
 
@@ -144,7 +146,8 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
   const fechaTexto = fecha.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="glass-panel p-4 sm:p-6 space-y-6">
+    <div className={enHoja ? "space-y-6" : "glass-panel p-4 sm:p-6 space-y-6"}>
+      {!enHoja && (
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="font-heading text-xl uppercase tracking-wide text-textMain">
@@ -158,6 +161,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
           </button>
         )}
       </div>
+      )}
 
       {/* Foto: cámara o galería (sin foto no hay gains) */}
       <section aria-labelledby="ts-foto">
@@ -326,7 +330,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
         />
       </section>
 
-      <div className="space-y-1.5">
+      <div className={enHoja ? "sticky bottom-0 -mx-4 -mb-4 px-4 pt-3 pb-safe-3 bg-surface border-t border-borderBase space-y-1.5" : "space-y-1.5"}>
         <button type="button" className="btn-primary w-full min-h-[52px] text-lg disabled:opacity-40 disabled:pointer-events-none" onClick={guardar} disabled={!listo || guardando}>
           {guardando ? <Loader className="animate-spin" size={20} /> : editando ? <Save size={20} /> : <Plus size={22} />}
           {guardando ? "Guardando..." : editando ? "Guardar cambios" : "Guardar entreno"}

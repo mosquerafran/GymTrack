@@ -1,145 +1,179 @@
 import React, { useState, Suspense, lazy } from "react";
-import { signOut } from "firebase/auth";
-import { auth } from "./config/firebase";
 
 import { useAuth } from "./hooks/useAuth";
 import { useGrupo } from "./hooks/useGrupo";
 import { useTheme } from "./hooks/useTheme";
+import { useVistaConHistorial } from "./hooks/useHistorial";
+import { cerrarSesion } from "./services/authService";
 
 import Login from "./components/Login";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
-import { Grupo } from "./types";
+import Hoja from "./components/ui/Hoja";
+import { Spinner } from "./components/ui/Estados";
+import { Asistencia, Grupo } from "./types";
 
 // Lazy Loading
 const Stats = lazy(() => import("./pages/Stats"));
 const Settings = lazy(() => import("./pages/Settings"));
-const DiaDetalle = lazy(() => import("./pages/DiaDetalle"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Aprobaciones = lazy(() => import("./pages/Aprobaciones"));
 const GrupoSelector = lazy(() => import("./pages/GrupoSelector"));
 const Feed = lazy(() => import("./pages/Feed"));
+const TrainingSelector = lazy(() => import("./components/TrainingSelector"));
+const DetalleDia = lazy(() => import("./components/DetalleDia"));
 
-const Spinner = ({ size = "large" }: { size?: "small" | "large" }) => (
-  <div className={`animate-spin rounded-full border-t-4 border-b-4 border-primary ${size === "large" ? "h-16 w-16" : "h-12 w-12"}`} />
+const PantallaCentrada = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4 pt-safe">{children}</div>
 );
+
+const fechaCorta = (f: Date) =>
+  f.toLocaleDateString("es-AR", { weekday: "short", day: "numeric", month: "short" }).replace(".", "");
 
 export default function App(): React.ReactElement {
   const { user, estadoUsuario, loading, errorAuth, reintentar } = useAuth();
   const { grupoActivo, seleccionarGrupo, cambiarGrupo } = useGrupo(user, estadoUsuario);
   const { theme, toggleTheme } = useTheme();
+  const [view, irA] = useVistaConHistorial("home");
 
-  const [view, setView] = useState<string>("home");
-  const [fecha, setFecha] = useState<Date>(new Date());
-  const [fechaDetalle, setFechaDetalle] = useState<Date | null>(null);
-
-  const abrirDetalle = (f: Date) => {
-    setFechaDetalle(f);
-    setView("dayDetail");
-  };
+  // Paneles: registrar/editar un entreno y el detalle de un día (se pueden apilar).
+  const [registro, setRegistro] = useState<{ fecha: Date; editar?: Asistencia } | null>(null);
+  const [diaAbierto, setDiaAbierto] = useState<Date | null>(null);
+  // Cambia cada vez que se guarda o borra un entreno: Inicio y el detalle se recargan.
+  const [refresco, setRefresco] = useState(0);
+  const huboCambios = () => setRefresco((n) => n + 1);
 
   const handleSeleccionarGrupo = (grupo: Grupo) => {
     seleccionarGrupo(grupo);
-    setView("home");
+    irA("home");
   };
 
   // ── Cargando ───────────────────────────────────────────────────────────────
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-background transition-colors duration-300">
-      <Spinner size="large" />
-    </div>
-  );
+  if (loading) return <PantallaCentrada><Spinner grande /></PantallaCentrada>;
 
   // ── No logueado ────────────────────────────────────────────────────────────
   if (!user) return <Login />;
 
   // ── Error de auth / verificando ────────────────────────────────────────────
   if (estadoUsuario === null) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+    <PantallaCentrada>
       {errorAuth ? (
-        <div className="glass-panel p-8 max-w-sm w-full text-center animate-slide-up border-red-500/30">
-          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">⚠️</span>
-          </div>
-          <h2 className="text-xl font-bold text-textMain mb-2">Error de Conexión</h2>
-          <p className="text-textMuted mb-6 text-sm">{errorAuth}</p>
-          <div className="space-y-3">
-            <button className="btn-primary w-full py-2" onClick={reintentar}>Reintentar</button>
-            <button className="btn-secondary w-full py-2" onClick={() => signOut(auth)}>Cerrar Sesión</button>
+        <div className="glass-panel p-8 max-w-sm w-full text-center animate-slide-up space-y-4">
+          <span className="text-4xl" aria-hidden="true">⚠️</span>
+          <h2 className="font-heading text-xl uppercase tracking-wide">Error de conexión</h2>
+          <p className="text-textMuted text-sm">{errorAuth}</p>
+          <div className="space-y-2">
+            <button className="btn-primary w-full" onClick={reintentar}>Reintentar</button>
+            <button className="btn-secondary w-full" onClick={cerrarSesion}>Cerrar sesión</button>
           </div>
         </div>
       ) : (
         <>
-          <Spinner size="large" />
-          <p className="text-textMuted animate-pulse mt-4">Verificando acceso...</p>
+          <Spinner grande />
+          <p className="text-textMuted mt-4" aria-live="polite">Verificando acceso…</p>
         </>
       )}
-    </div>
+    </PantallaCentrada>
   );
 
   // ── Pendiente de aprobación ────────────────────────────────────────────────
   if (estadoUsuario === "pendiente") return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="glass-panel p-8 md:p-12 max-w-md w-full text-center animate-slide-up">
-        <div className="w-20 h-20 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-          <span className="text-4xl">⏳</span>
-        </div>
-        <h1 className="text-2xl font-bold text-textMain mb-3">Solicitud Enviada</h1>
-        <p className="text-textMuted mb-6">
-          ¡Hola <span className="text-textMain font-semibold">{user.displayName}</span>! 
-          Tu solicitud fue enviada al administrador. Cuando te aprueben, podrás entrar.
+    <PantallaCentrada>
+      <div className="glass-panel p-8 max-w-md w-full text-center animate-slide-up space-y-4">
+        <span className="text-5xl" aria-hidden="true">⏳</span>
+        <h1 className="font-heading text-2xl uppercase tracking-wide">Solicitud enviada</h1>
+        <p className="text-textMuted">
+          ¡Hola <span className="text-textMain font-semibold">{user.displayName}</span>! El administrador tiene
+          que aprobarte. Cuando lo haga, vas a poder entrar.
         </p>
-        <button className="btn-secondary w-full py-3" onClick={() => signOut(auth)}>
-          Cerrar Sesión
-        </button>
+        <button className="btn-secondary w-full" onClick={cerrarSesion}>Cerrar sesión</button>
       </div>
-    </div>
+    </PantallaCentrada>
   );
 
   // ── Selector de grupo ──────────────────────────────────────────────────────
   if (estadoUsuario === "aprobado" && !grupoActivo) return (
-    <div className="min-h-screen bg-background transition-colors duration-300">
-      <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><Spinner /></div>}>
-        <GrupoSelector
-          user={user}
-          onSelectGrupo={handleSeleccionarGrupo}
-          theme={theme}
-          toggleTheme={toggleTheme}
-        />
+    <div className="min-h-screen bg-background">
+      <Suspense fallback={<PantallaCentrada><Spinner /></PantallaCentrada>}>
+        <GrupoSelector user={user} onSelectGrupo={handleSeleccionarGrupo} theme={theme} toggleTheme={toggleTheme} />
       </Suspense>
     </div>
   );
 
+  const grupoId = grupoActivo?.id || "";
+  const registrar = (fecha: Date) => setRegistro({ fecha });
+
   // ── App principal ──────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen pb-28 md:pb-20 max-w-5xl mx-auto transition-colors duration-300">
-        <Navbar
-          view={view} setView={setView}
-          user={user}
-          theme={theme} toggleTheme={toggleTheme}
-          grupoActivo={grupoActivo!} onCambiarGrupo={cambiarGrupo}
-        />
+    <div className="min-h-screen pb-28 md:pb-12 max-w-5xl mx-auto">
+      <Navbar
+        view={view} irA={irA}
+        onRegistrar={() => registrar(new Date())}
+        user={user}
+        theme={theme} toggleTheme={toggleTheme}
+        grupoActivo={grupoActivo} onCambiarGrupo={cambiarGrupo}
+      />
 
-      <main className="px-4 md:px-8 animate-fade-in relative min-h-[60vh]">
-        <Suspense fallback={
-          <div className="absolute inset-0 flex justify-center items-center">
-            <Spinner />
-          </div>
-        }>
+      <main className="px-4 md:px-8 relative min-h-[60vh]">
+        <Suspense fallback={<div className="flex justify-center py-24"><Spinner /></div>}>
           {view === "home" && (
-            <Home
-              user={user} fecha={fecha} setFecha={setFecha}
-              abrirDetalle={abrirDetalle} grupoId={grupoActivo?.id || ""} theme={theme}
-            />
+            <Home user={user} grupoId={grupoId} onRegistrar={registrar} onAbrirDia={setDiaAbierto} refresco={refresco} />
           )}
-          {view === "feed" && <Feed grupoId={grupoActivo?.id || ""} />}
-          {view === "stats" && <Stats user={user} grupoId={grupoActivo?.id || ""} />}
-          {view === "settings" && <Settings user={user} />}
-          {view === "admin" && <Admin user={user} grupoActivo={grupoActivo!} setView={setView} />}
+          {view === "feed" && <Feed grupoId={grupoId} refresco={refresco} />}
+          {view === "stats" && <Stats user={user} grupoId={grupoId} />}
+          {view === "settings" && <Settings user={user} grupoActivo={grupoActivo} irA={irA} onCambiarGrupo={cambiarGrupo} />}
+          {view === "admin" && <Admin user={user} grupoActivo={grupoActivo!} setView={irA} />}
           {view === "aprobaciones" && <Aprobaciones user={user} />}
-          {view === "dayDetail" && <DiaDetalle fecha={fechaDetalle as Date} user={user} grupoId={grupoActivo?.id || ""} theme={theme} />}
         </Suspense>
       </main>
+
+      {/* Detalle de un día (desde el calendario o "Hoy ya entrenaste") */}
+      <Hoja
+        abierta={!!diaAbierto}
+        onCerrar={() => setDiaAbierto(null)}
+        titulo={diaAbierto ? diaAbierto.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" }) : ""}
+      >
+        {diaAbierto && (
+          <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
+            <DetalleDia
+              user={user}
+              grupoId={grupoId}
+              fecha={diaAbierto}
+              refresco={refresco}
+              onCambio={huboCambios}
+              onEditar={(a) => setRegistro({ fecha: diaAbierto, editar: a })}
+              onRegistrar={registrar}
+            />
+          </Suspense>
+        )}
+      </Hoja>
+
+      {/* Registrar / editar (pantalla completa, arriba del detalle si está abierto) */}
+      <Hoja
+        abierta={!!registro}
+        onCerrar={() => setRegistro(null)}
+        titulo={registro?.editar ? "Editar entreno" : "Registrar"}
+        completa
+        accion={registro && (
+          <span className="font-heading text-sm uppercase tracking-wide px-3 py-2 rounded-xl border border-borderBase bg-background whitespace-nowrap">
+            {fechaCorta(registro.fecha)}
+          </span>
+        )}
+      >
+        {registro && (
+          <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
+            <TrainingSelector
+              enHoja
+              fecha={registro.fecha}
+              user={user}
+              grupoId={grupoId}
+              asistenciaAEditar={registro.editar || null}
+              onCancelar={() => setRegistro(null)}
+              onCompletado={() => { setRegistro(null); huboCambios(); }}
+            />
+          </Suspense>
+        )}
+      </Hoja>
     </div>
   );
 }

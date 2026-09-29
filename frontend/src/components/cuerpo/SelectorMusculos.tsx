@@ -51,7 +51,7 @@ export default function SelectorMusculos({ sexo, seleccion, onChange, onAtajo }:
               etiqueta={lado === "front" ? "Cuerpo de frente: tocá un músculo para marcarlo" : "Cuerpo de espalda: tocá un músculo para marcarlo"}
               className="max-w-[160px]"
             />
-            <span className="font-mono text-[11px] tracking-[0.14em] uppercase text-textMuted">
+            <span className="font-mono text-xs tracking-[0.14em] uppercase text-textMuted">
               {lado === "front" ? "Frente" : "Espalda"}
             </span>
           </div>

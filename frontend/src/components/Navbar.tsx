@@ -1,13 +1,13 @@
-import { auth } from "../config/firebase";
-import { signOut, User } from "firebase/auth";
-import { Home, BarChart2, Calendar, Settings, LogOut, Sun, Moon, ShieldCheck, ArrowLeftRight, Flame, LucideIcon } from "lucide-react";
+import React from "react";
+import { User } from "firebase/auth";
+import { Home, BarChart2, Settings, Sun, Moon, ArrowLeftRight, Flame, Plus, LucideIcon } from "lucide-react";
 import { useStreak } from "../hooks/useStreak";
-import { ADMIN_EMAIL } from "../config/constants";
 import { Grupo } from "../types";
 
 interface NavbarProps {
   view: string;
-  setView: (view: string) => void;
+  irA: (view: string) => void;
+  onRegistrar: () => void;
   user: User | null;
   theme: "dark" | "light";
   toggleTheme: () => void;
@@ -15,115 +15,116 @@ interface NavbarProps {
   onCambiarGrupo: () => void;
 }
 
-export default function Navbar({ view, setView, user, theme, toggleTheme, grupoActivo, onCambiarGrupo }: NavbarProps) {
+const PESTANAS: { view: string; icon: LucideIcon; label: string }[] = [
+  { view: "home", icon: Home, label: "Inicio" },
+  { view: "feed", icon: Flame, label: "Muro" },
+  { view: "stats", icon: BarChart2, label: "Ranking" },
+  { view: "settings", icon: Settings, label: "Ajustes" },
+];
+
+/**
+ * Header (grupo, racha, tema) + navegación. En el celu, barra inferior con 4 pestañas y el
+ * botón central "Registrar" al alcance del pulgar. "Salir" y el admin viven en Ajustes.
+ */
+export default function Navbar({ view, irA, onRegistrar, user, theme, toggleTheme, grupoActivo, onCambiarGrupo }: NavbarProps): React.ReactElement {
   const streak = useStreak(user, grupoActivo);
 
-  const logout = async () => { await signOut(auth); };
-
-  const NavButton = ({ targetView, icon: Icon, label }: { targetView: string, icon: LucideIcon, label: string }) => (
-    <button
-      onClick={() => setView(targetView)}
-      className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-        view === targetView
-          ? "bg-primary text-white shadow-lg shadow-primary/30"
-          : "text-textMuted hover:text-textMain hover:bg-surfaceHighlight"
-      }`}
-      title={label}
-    >
-      <Icon size={20} />
-      <span className={`${view === targetView ? "inline" : "hidden"} xl:inline text-sm md:text-base`}>{label}</span>
-    </button>
-  );
+  const pestana = (p: (typeof PESTANAS)[number]) => {
+    const activa = view === p.view;
+    return (
+      <button
+        key={p.view}
+        type="button"
+        onClick={() => irA(p.view)}
+        aria-current={activa ? "page" : undefined}
+        className={`flex flex-col items-center justify-center gap-0.5 min-h-[52px] rounded-xl text-xs font-semibold transition-colors
+          ${activa ? "text-primary" : "text-textMuted active:bg-surfaceHighlight/60"}`}
+      >
+        <p.icon size={24} strokeWidth={activa ? 2.4 : 2} aria-hidden="true" />
+        {p.label}
+      </button>
+    );
+  };
 
   return (
     <>
-      {/* Top Header */}
-      <nav className="sticky top-0 z-50 glass-panel border-x-0 border-t-0 rounded-none px-4 py-3 mb-6 flex items-center justify-between gap-2 overflow-x-auto hide-scrollbar">
-        <div className="flex items-center gap-1 sm:gap-2">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur-sm border-b border-borderBase pt-safe mb-4 md:mb-6">
+        <div className="flex items-center gap-2 px-3 md:px-4 py-2">
           <button
+            type="button"
             onClick={onCambiarGrupo}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent/10 text-accent hover:bg-accent/20 transition-all font-bold text-sm border border-accent/20 shrink-0"
-            title="Cambiar de grupo"
+            className="flex items-center gap-2 min-h-tap min-w-0 flex-1 md:flex-none px-3 rounded-xl border border-borderBase bg-background font-heading text-sm uppercase tracking-wide"
+            aria-label={`Cambiar de grupo. Grupo actual: ${grupoActivo?.nombre || "sin grupo"}`}
           >
-            <ArrowLeftRight size={16} />
-            <span className="max-w-[120px] truncate">{grupoActivo?.nombre || "Grupo"}</span>
+            <ArrowLeftRight size={18} className="text-accent shrink-0" aria-hidden="true" />
+            <span className="truncate">{grupoActivo?.nombre || "Grupo"}</span>
           </button>
 
-          <div className="hidden md:block w-px h-6 bg-borderBase mx-1" />
+          {/* Escritorio: pestañas + Registrar en el header */}
+          <nav className="hidden md:flex items-center gap-1 ml-2" aria-label="Navegación principal">
+            {PESTANAS.map((p) => (
+              <button
+                key={p.view}
+                type="button"
+                onClick={() => irA(p.view)}
+                aria-current={view === p.view ? "page" : undefined}
+                className={`flex items-center gap-2 min-h-tap px-3 rounded-xl font-semibold transition-colors ${view === p.view ? "bg-primary/10 text-primary" : "text-textMuted hover:text-textMain hover:bg-surfaceHighlight"}`}
+              >
+                <p.icon size={20} aria-hidden="true" /> {p.label}
+              </button>
+            ))}
+            <button type="button" onClick={onRegistrar} className="btn-primary !py-2 ml-1">
+              <Plus size={20} aria-hidden="true" /> Registrar
+            </button>
+          </nav>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-2">
-            <NavButton targetView="home" icon={Home} label="Inicio" />
-            <NavButton targetView="feed" icon={Flame} label="Muro" />
-            <NavButton targetView="stats" icon={BarChart2} label="Ranking" />
-            <NavButton targetView="dayDetail" icon={Calendar} label="Detalle" />
+          <div className="flex items-center gap-1 ml-auto shrink-0">
+            {streak > 0 && (
+              <div
+                className="flex items-center gap-1 min-h-tap px-2.5 rounded-xl bg-primary/10 text-primary"
+                title={`Racha de ${streak} días seguidos`}
+                aria-label={`Racha de ${streak} días seguidos`}
+              >
+                <span className="text-lg leading-none" aria-hidden="true">🔥</span>
+                <span className="scoreboard text-xl font-bold leading-none">{streak}</span>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="btn-icon text-textMuted hover:text-textMain"
+              aria-label={theme === "dark" ? "Pasar a modo claro" : "Pasar a modo oscuro"}
+            >
+              {theme === "dark" ? <Sun size={22} /> : <Moon size={22} />}
+            </button>
           </div>
         </div>
+      </header>
 
-        <div className="flex items-center gap-1 sm:gap-2 ml-auto shrink-0">
-          {streak > 0 && (
-            <div
-              className="flex items-center gap-1 text-orange-500 font-bold px-3 py-1.5 bg-orange-500/10 rounded-xl border border-orange-500/20 animate-float"
-              title={`¡Racha de ${streak} días seguidos!`}
-            >
-              <span className="text-xl leading-none">🔥</span>
-              <span className="scoreboard text-lg font-bold leading-none">{streak}</span>
-            </div>
-          )}
-
-          <button onClick={toggleTheme} className="flex items-center justify-center p-2 rounded-xl text-textMuted hover:text-textMain hover:bg-surfaceHighlight transition-all duration-300" title="Alternar tema">
-            {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
-
-          <div className="w-px h-6 bg-borderBase mx-1" />
-
+      {/* Celu: barra inferior con el botón central de Registrar */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-borderBase pb-safe"
+        aria-label="Navegación principal"
+      >
+        <div className="grid grid-cols-5 items-end px-1.5 pt-1.5 pb-1">
+          {pestana(PESTANAS[0])}
+          {pestana(PESTANAS[1])}
           <button
-            onClick={() => setView("settings")}
-            className={`hidden md:flex items-center gap-2 p-2 rounded-xl transition-all duration-300 ${view === "settings" ? "text-primary" : "text-textMuted hover:text-textMain hover:bg-surfaceHighlight"}`}
-            title="Ajustes"
+            type="button"
+            onClick={onRegistrar}
+            className="flex flex-col items-center gap-0.5 text-xs font-semibold text-textMain"
+            aria-label="Registrar entreno"
           >
-            <Settings size={20} />
+            <span className="-mt-7 w-[58px] h-[58px] rounded-2xl bg-primary text-white grid place-items-center border-4 border-surface shadow-lg shadow-primary/40 active:scale-95 transition-transform">
+              <Plus size={30} strokeWidth={2.6} aria-hidden="true" />
+            </span>
+            Registrar
           </button>
-
-          {user?.email === ADMIN_EMAIL && (
-            <button
-              onClick={() => setView("admin")}
-              title="Admin"
-              className={`p-2 rounded-xl transition-all duration-300 ${view === "admin" ? "bg-accent text-slate-900" : "text-accent hover:bg-accent/10"}`}
-            >
-              <ShieldCheck size={20} />
-            </button>
-          )}
-
-          <button onClick={logout} className="flex items-center gap-2 p-2 rounded-xl text-red-500 hover:text-white hover:bg-red-500 transition-all duration-300" title="Salir">
-            <LogOut size={20} />
-          </button>
+          {pestana(PESTANAS[2])}
+          {pestana(PESTANAS[3])}
         </div>
       </nav>
-
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-safe pt-2 bg-gradient-to-t from-background via-background/95 to-transparent pointer-events-none">
-        <div className="glass-panel rounded-2xl flex items-center justify-around p-1.5 pointer-events-auto">
-          {[
-            { view: "home", icon: Home, label: "Inicio" },
-            { view: "feed", icon: Flame, label: "Muro" },
-            { view: "stats", icon: BarChart2, label: "Ranking" },
-            { view: "dayDetail", icon: Calendar, label: "Detalle" },
-            { view: "settings", icon: Settings, label: "Ajustes" },
-          ].map((item) => (
-            <button
-              key={item.view}
-              onClick={() => setView(item.view)}
-              aria-label={item.label}
-              aria-current={view === item.view ? "page" : undefined}
-              className={`flex flex-col items-center gap-1 py-1.5 flex-1 min-h-tap rounded-xl transition-all ${view === item.view ? "text-primary bg-primary/5" : "text-textMuted active:bg-surfaceHighlight/50"}`}
-            >
-              <item.icon size={24} fill={item.view === view ? "currentColor" : "none"} />
-              <span className="text-[10px] font-bold">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
     </>
   );
 }

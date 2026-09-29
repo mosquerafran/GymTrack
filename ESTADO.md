@@ -11,9 +11,9 @@
 
 | Pieza | Estado | Cómo se sabe |
 |---|---|---|
-| **Hosting** | ✅ `5312c4f` (seguridad fase 1), deployado el 2026-09-28 | GitHub Actions, run `36497621840`, *success* |
+| **Hosting** | ✅ `ce634a2` (registro con cuerpo + stats por músculo), deployado el 2026-09-28 | GitHub Actions, run `36501859965`, *success* |
 | **Functions** | ⚠️ **sin registro** | Se deployan a mano y el repo no guarda el resultado |
-| **Firestore rules** | ✅ fase 1 (`5312c4f`), deployadas el 2026-09-28 | `firebase deploy --only firestore:rules,storage` → *Deploy complete* |
+| **Firestore rules** | ✅ `ce634a2` (fase 1 + validación de `sexo` y `tipo`), deployadas el 2026-09-28 | `firebase deploy --only firestore:rules,storage` → *Deploy complete* |
 | **Índice `asistencias(grupoId, timestamp desc)`** | ⚠️ **sin registro** | Ídem. El muro tiene fallback, así que **funciona igual aunque falte** |
 | **Storage rules** | ✅ fase 1 (`5312c4f`), deployadas el 2026-09-28 | Ídem |
 
@@ -43,9 +43,8 @@ rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
   códigos únicos → recién ahí cerrar la **lectura** de `grupos`, `asistencias` y fotos por grupo;
   filtro `grupoId` + índice `(grupoId, fecha)` en `cargarAsistenciasMes`; App Check; headers de
   seguridad en hosting; `permissions:` y pin por SHA en `firebase-hosting-merge.yml`.
-- ⬜ **Tanda 2 · pulido mobile** (maqueta aprobada 2026-09-28): botón central Registrar, detalle del
-  día en panel inferior, popups al mixin `config/alertas.ts`, safe-area del notch, botón atrás de
-  Android, targets ≥44 px y textos ≥12 px en todas las pantallas, "Salir" en Ajustes con confirmación.
+- ⬜ **PWA**: service worker/offline, ícono maskable real, y probar el login en la app instalada de iOS
+  (`signInWithPopup` en standalone). Ver worklog `2026-09-28/04` → pendientes.
 - ⬜ Lista completa de mejoras de rendimiento y orden del repo: auditoría del 2026-09-28 (ver
   worklog `2026-09-28/02` → pendientes, y el chat de esa fecha).
 
@@ -66,6 +65,8 @@ la raíz del repo.
 
 | Fecha | Commit | Qué | Resultado |
 |---|---|---|---|
+| 2026-09-28 | `ce634a2` | Firestore rules (manual): + `sexo` y `tipo` | ✅ *Deploy complete* |
+| 2026-09-28 | `ce634a2` | Hosting (automático): registro con cuerpo + stats por músculo | ✅ Actions `36501859965` |
 | 2026-09-28 | `5312c4f` | Firestore + Storage rules (manual, fase 1) | ✅ *Deploy complete* · smoke pendiente |
 | 2026-09-28 | `5312c4f` | Hosting (automático) | ✅ Actions `36497621840` |
 | 2026-09-28 | `0f91c30` | Hosting (automático, sin cambios de app) | ✅ Actions `36495826376` |
