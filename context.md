@@ -42,7 +42,7 @@ guardar un entreno y en el Home.
    (Inicio · Muro · **Registrar** al centro · Ranking · Ajustes); "atrás" del celu vuelve a la
    pantalla anterior o cierra el panel abierto (`hooks/useHistorial.ts`). (Worklog `2026-09-28/04`.)
 4. **Registrar entreno** (`TrainingSelector`): se puede cargar **cualquier día hasta hoy** (la fecha
-   de arriba se toca) y **varios entrenos por día**. Foto **obligatoria** (cámara o galería) →
+   de arriba se toca) y **varios entrenos por día**. Foto **opcional** (cámara o galería) →
    **tu categoría** (opcional: precarga tipo, músculos y nombre) → **tipo** (gym / fútbol / running / otro) → si es gym, **músculos** tocando el cuerpo
    (frente y espalda, modelo hombre o mujer; atajos Push/Pull/Legs/Torso/Core; o lista)
    → **etiqueta** libre opcional (sugiere las del usuario) → PRs opcionales → mensaje.
@@ -82,7 +82,7 @@ guardar un entreno y en el Home.
   asistencia. Se calcula en tiempo real con `onSnapshot` (`useStreak`).
 - **Medallas** (`gamificationService`): por volumen (1/10/50 entrenos) y por
   horario (madrugador <8am, noctámbulo ≥21hs), derivadas del `timestamp`.
-- **Foto obligatoria**: sin foto no se puede guardar.
+- **Foto opcional** (desde 2026-09-28; antes era obligatoria): sin foto el entreno se guarda igual.
 
 ## 5. Modelo de datos (detalle)
 

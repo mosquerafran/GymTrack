@@ -171,6 +171,7 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
         onCerrar={() => setEditando(null)}
         titulo={editando?.id ? "Editar categoría" : "Nueva categoría"}
         completa
+        barraPropia
       >
         {d && (
           <div className="space-y-6">
@@ -228,7 +229,7 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
               />
             </label>
 
-            <div className="sticky bottom-0 -mx-4 -mb-4 px-4 pt-3 pb-safe-3 bg-surface border-t border-borderBase space-y-2">
+            <div className="sticky -bottom-4 -mx-4 -mb-4 px-4 pt-3 pb-safe-3 bg-surface border-t border-borderBase space-y-2">
               <button type="button" className="btn-primary w-full min-h-[52px]" onClick={guardar} disabled={!d.nombre.trim() || guardando}>
                 {guardando ? "Guardando…" : "Guardar categoría"}
               </button>

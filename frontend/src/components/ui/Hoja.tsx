@@ -13,6 +13,8 @@ interface HojaProps {
   accion?: React.ReactNode;
   /** Barra fija de abajo (ej. "Guardar"), siempre al alcance del pulgar. */
   pie?: React.ReactNode;
+  /** El contenido trae su propia barra fija abajo (con el margen del celu): no agregar otro. */
+  barraPropia?: boolean;
   children: React.ReactNode;
 }
 
@@ -21,7 +23,7 @@ interface HojaProps {
  * En escritorio es un diálogo centrado. Cierra con la X, tocando afuera, con Escape o con
  * "atrás" del celu. Bloquea el scroll de atrás y devuelve el foco al cerrar.
  */
-export default function Hoja({ abierta, onCerrar, titulo, completa = false, accion, pie, children }: HojaProps): React.ReactElement | null {
+export default function Hoja({ abierta, onCerrar, titulo, completa = false, accion, pie, barraPropia = false, children }: HojaProps): React.ReactElement | null {
   const panel = useRef<HTMLDivElement>(null);
   useCerrarConAtras(abierta, onCerrar);
 
@@ -73,7 +75,7 @@ export default function Hoja({ abierta, onCerrar, titulo, completa = false, acci
         </div>
         <div className="flex-1 overflow-y-auto overscroll-contain p-4">{children}</div>
         {pie && <div className="shrink-0 border-t border-borderBase bg-surface px-4 pt-3 pb-safe-3">{pie}</div>}
-        {!pie && <div className="shrink-0 pb-safe" />}
+        {!pie && !barraPropia && <div className="shrink-0 pb-safe" />}
       </div>
     </div>,
     document.body

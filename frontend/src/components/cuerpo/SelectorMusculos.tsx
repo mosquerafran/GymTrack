@@ -40,7 +40,13 @@ export default function SelectorMusculos({ sexo, seleccion, onChange, onAtajo }:
         <span className="font-mono text-xs text-textMuted">{n === 1 ? "1 elegido" : `${n} elegidos`}</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-1 bg-background rounded-2xl px-1 pt-2.5 pb-1.5">
+      {/* Con la lista abierta, el cuerpo se achica y queda fijo arriba del panel: así cada tilde
+          de la lista se ve marcada en la figura sin volver a subir. (-top-4: el padding del panel.) */}
+      <div
+        className={`grid grid-cols-2 gap-1 bg-background px-1 pt-2.5 pb-1.5 ${listaAbierta
+          ? "sticky -top-4 z-10 -mx-4 px-4 border-b border-borderBase"
+          : "rounded-2xl"}`}
+      >
         {(["front", "back"] as const).map((lado) => (
           <div key={lado} className="flex flex-col items-center gap-0.5 min-w-0">
             <Cuerpo
@@ -49,7 +55,7 @@ export default function SelectorMusculos({ sexo, seleccion, onChange, onAtajo }:
               seleccion={seleccion}
               onToggle={toggle}
               etiqueta={lado === "front" ? "Cuerpo de frente: tocá un músculo para marcarlo" : "Cuerpo de espalda: tocá un músculo para marcarlo"}
-              className="max-w-[160px]"
+              className={listaAbierta ? "max-w-[84px]" : "max-w-[160px]"}
             />
             <span className="font-mono text-xs tracking-[0.14em] uppercase text-textMuted">
               {lado === "front" ? "Frente" : "Espalda"}

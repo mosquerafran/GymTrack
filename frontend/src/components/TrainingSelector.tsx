@@ -109,11 +109,9 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
     setRutina(nueva);
   };
 
-  const tieneFoto = !!(foto || asistenciaAEditar?.imagenUrl);
   const faltas: string[] = [];
-  if (!tieneFoto) faltas.push("la foto");
   if (tipo === "gym" && musculos.size === 0) faltas.push("al menos un músculo");
-  if (!online) faltas.push("señal (la foto se sube a internet)");
+  if (!online) faltas.push("señal");
   const listo = faltas.length === 0;
 
   const guardar = async () => {
@@ -190,11 +188,11 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
       </div>
       )}
 
-      {/* Foto: cámara o galería (sin foto no hay gains) */}
+      {/* Foto: cámara o galería (opcional) */}
       <section aria-labelledby="ts-foto">
         <div className="flex justify-between items-baseline mb-2">
           <span id="ts-foto" className="eyebrow">Foto</span>
-          <span className="font-mono text-xs text-textMuted">obligatoria</span>
+          <span className="font-mono text-xs text-textMuted">opcional</span>
         </div>
         {fotoPreview ? (
           <div className="relative rounded-2xl overflow-hidden bg-surfaceHighlight aspect-[4/3]">
@@ -375,7 +373,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
         />
       </section>
 
-      <div className={enHoja ? "sticky bottom-0 -mx-4 -mb-4 px-4 pt-3 pb-safe-3 bg-surface border-t border-borderBase space-y-1.5" : "space-y-1.5"}>
+      <div className={enHoja ? "sticky -bottom-4 -mx-4 -mb-4 px-4 pt-3 pb-safe-3 bg-surface border-t border-borderBase space-y-1.5" : "space-y-1.5"}>
         <button type="button" className="btn-primary w-full min-h-[52px] text-lg disabled:opacity-40 disabled:pointer-events-none" onClick={guardar} disabled={!listo || guardando}>
           {guardando ? <Loader className="animate-spin" size={20} /> : editando ? <Save size={20} /> : <Plus size={22} />}
           {guardando ? "Guardando..." : editando ? "Guardar cambios" : "Guardar entreno"}

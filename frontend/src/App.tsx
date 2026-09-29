@@ -156,6 +156,7 @@ export default function App(): React.ReactElement {
         onCerrar={() => setRegistro(null)}
         titulo={registro?.editar ? "Editar entreno" : "Registrar"}
         completa
+        barraPropia
         accion={registro && (registro.editar ? (
           <span className="font-heading text-sm uppercase tracking-wide px-3 py-2 rounded-xl border border-borderBase bg-background whitespace-nowrap">
             {fechaCorta(registro.fecha)}

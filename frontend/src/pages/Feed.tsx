@@ -127,11 +127,7 @@ export default function Feed({ grupoId, refresco = 0 }: FeedProps): React.ReactE
                       </Suspense>
                     )}
                   </div>
-                ) : (
-                  <div className="h-24 bg-gradient-to-b from-surfaceHighlight/20 to-transparent flex items-center justify-center text-textMuted italic text-xs font-medium border-y border-borderBase/5">
-                    Registro sin foto de evidencia
-                  </div>
-                )}
+                ) : null}
 
                 {/* Contenido Detallado */}
                 <div className="p-5 space-y-4">

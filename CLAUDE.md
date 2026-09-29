@@ -125,9 +125,9 @@ Desde 2026-09 se escribe `tipo`/`musculos[]`/`etiqueta` y ya no `categoriaId`. L
 viejos NO se migran: `utils/entrenos.ts` los interpreta al leer (tipo y músculos se
 deducen del nombre de la categoría). Toda lectura de entrenos pasa por esas funciones.
 
-### 4.5 Foto obligatoria
-Registrar un entrenamiento **requiere** una foto (regla de producto: "sin foto no
-hay gains"). Las fotos se comprimen en el cliente (`browser-image-compression`,
+### 4.5 Foto opcional (desde 2026-09-28)
+La foto ya **no** es obligatoria (pedido del dueño); `imagenUrl` puede ser `null` y el muro
+no muestra nada en su lugar. Las fotos se comprimen en el cliente (`browser-image-compression`,
 máx 1MB / 1024px) y se guardan en Storage bajo `entrenamientos/{userId}/`.
 Al borrar una asistencia se borra también su foto (`eliminarAsistencia`).
 
