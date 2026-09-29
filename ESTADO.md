@@ -11,9 +11,9 @@
 
 | Pieza | Estado | Cómo se sabe |
 |---|---|---|
-| **Hosting** | ✅ `b174d8a` (tanda 2: pulido mobile), deployado el 2026-09-28 | GitHub Actions, run `36502998148`, *success* |
+| **Hosting** | ✅ `ac7799b` (seguridad fase 2), deployado el 2026-09-28 | GitHub Actions, run `36504460641`, *success* |
 | **Functions** | ✅ las 6 en **Node.js 22** (2nd Gen), deployadas el 2026-09-28 (`4bc4c46`), incluye `crearGrupo` y `unirseAGrupo` | `firebase deploy --only functions` → *Deploy complete* |
-| **Firestore rules** | ✅ `ce634a2` (fase 1 + validación de `sexo` y `tipo`), deployadas el 2026-09-28 | `firebase deploy --only firestore:rules,storage` → *Deploy complete* |
+| **Firestore rules** | ✅ **fase 2** (`4bc4c46`: lectura aislada por grupo), deployadas el 2026-09-28 | `firebase deploy --only firestore:rules,storage` → *Deploy complete* |
 | **Índice `asistencias(grupoId, timestamp desc)`** | ⚠️ **sin registro** | Ídem. El muro tiene fallback, así que **funciona igual aunque falte** |
 | **Storage rules** | ✅ fase 1 (`5312c4f`), deployadas el 2026-09-28 | Ídem |
 
@@ -22,13 +22,10 @@ rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 
 ## 2. 🔴 Requiere acción
 
-00. **Deploy de la seguridad fase 2, EN ESTE ORDEN** (worklog `2026-09-28/05`):
-    1. ✅ índice subido (2026-09-28, junto con el incidente). Esperar a que el índice `asistencias(grupoId, fecha)`
-       figure como *Habilitado* en la consola (Firestore → Índices).
-    2. ✅ functions deployadas (2026-09-28).
-    3. push a `main` (frontend) → esperar Actions en verde.
-    4. `firebase deploy --only firestore:rules` (recién acá se cierra la lectura).
-    Después: en el celu, entrar, ver el muro/calendario/stats, y que alguien se una con código.
+00. **Smoke de la seguridad fase 2** (deployada completa el 2026-09-28): en el celu, muro, calendario,
+    detalle del día y Stats cargan; Ajustes → Administrar grupo muestra los miembros; alguien se une
+    con código. Si algo falla, volver con
+    `git show ce634a2:firestore.rules > firestore.rules` + `firebase deploy --only firestore:rules`.
 
 0. **Smoke de la fase 1 de seguridad (deployada el 2026-09-28).** En el celu: la app carga el grupo,
    registrar + editar un entreno con foto, muro/ranking/calendario, aprobar a alguien en Aprobaciones
@@ -65,6 +62,8 @@ la raíz del repo.
 
 | Fecha | Commit | Qué | Resultado |
 |---|---|---|---|
+| 2026-09-28 | `4bc4c46` | Firestore rules fase 2 (manual, en orden) | ✅ *Deploy complete* |
+| 2026-09-28 | `ac7799b` | Hosting (automático): frontend fase 2 | ✅ Actions `36504460641` |
 | 2026-09-28 | `4bc4c46` | Functions (manual): + crearGrupo, unirseAGrupo; todas a Node 22 | ✅ *Deploy complete* |
 | 2026-09-28 | `ce634a2` | Firestore rules: **vuelta atrás** tras el incidente | ✅ prod = reglas de `ce634a2` |
 | 2026-09-28 | `4bc4c46` | Índices + **reglas fase 2 por error** (typo `firestore:indexe`) | ⚠️ revertido minutos después |
