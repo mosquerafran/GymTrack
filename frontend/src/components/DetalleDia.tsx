@@ -3,9 +3,8 @@ import { User } from "firebase/auth";
 import { Dumbbell, Edit2, MessageSquare, Plus, Trash2, CalendarX } from "lucide-react";
 import { cargarAsistenciasMes, eliminarAsistencia } from "../services/asistenciasService";
 import { cargarMapaCategorias } from "../services/categoriasService";
-import { cargarSexosPorUid } from "../services/usuarioService";
 import { Alerta } from "../config/alertas";
-import { Sexo, SEXO_DEFAULT } from "../config/entrenos";
+import { SEXO_DEFAULT } from "../config/entrenos";
 import { descripcionDe, etiquetaDe, musculosDe, NombresCategoria } from "../utils/entrenos";
 import { formatDateLocal } from "../utils/date";
 import { Asistencia } from "../types";
@@ -28,20 +27,14 @@ interface DetalleDiaProps {
 export default function DetalleDia({ user, grupoId, fecha, onEditar, onRegistrar, refresco, onCambio }: DetalleDiaProps): React.ReactElement {
   const [porUsuario, setPorUsuario] = useState<Record<string, Asistencia[]>>({});
   const [nombres, setNombres] = useState<NombresCategoria>({});
-  const [sexos, setSexos] = useState<Record<string, Sexo>>({});
   const [estado, setEstado] = useState<"cargando" | "listo" | "error">("cargando");
 
   const cargar = async () => {
     setEstado("cargando");
     try {
-      const [mes, mapa, sexosPorUid] = await Promise.all([
-        cargarAsistenciasMes(grupoId, fecha),
-        cargarMapaCategorias(),
-        cargarSexosPorUid().catch(() => ({} as Record<string, Sexo>)),
-      ]);
+      const [mes, mapa] = await Promise.all([cargarAsistenciasMes(grupoId, fecha), cargarMapaCategorias()]);
       setPorUsuario((mes[formatDateLocal(fecha)] || {}) as Record<string, Asistencia[]>);
       setNombres(Object.fromEntries(Object.entries(mapa).map(([id, c]) => [id, c.nombre])));
-      setSexos(sexosPorUid);
       setEstado("listo");
     } catch (e) {
       console.error(e);
@@ -116,7 +109,7 @@ export default function DetalleDia({ user, grupoId, fecha, onEditar, onRegistrar
                   </div>
                   {musculos.length > 0 && (
                     <Suspense fallback={null}>
-                      <MiniCuerpo sexo={sexos[a.userId] || SEXO_DEFAULT} musculos={musculos} className="shrink-0" />
+                      <MiniCuerpo sexo={a.sexo || SEXO_DEFAULT} musculos={musculos} className="shrink-0" />
                     </Suspense>
                   )}
                 </div>

@@ -44,6 +44,8 @@ export interface Asistencia {
   tipo?: TipoEntreno;
   musculos?: Musculo[];
   etiqueta?: string;
+  /** Modelo del cuerpo de quien lo registró (para el cuerpito del muro sin leer usuarios ajenos). */
+  sexo?: Sexo;
   /** Docs viejos: categoría (legacy `catId`). Los nuevos ya no la escriben. */
   categoriaId?: string;
   catId?: string;

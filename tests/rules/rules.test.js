@@ -10,7 +10,9 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, orderBy, query, setDoc, updateDoc, where,
+} from "firebase/firestore";
 import { ref, uploadBytes } from "firebase/storage";
 
 const ADMIN = { uid: "u-admin", email: "mosquerafran265@gmail.com" }; // ADMIN_EMAIL
@@ -80,6 +82,13 @@ beforeEach(async () => {
       userId: BETO.uid, userName: "Beto", fecha: "2025-01-10", timestamp: 1,
       catId: "cat-vieja", notas: "x".repeat(5000), grupoId: "",
     });
+    await setDoc(doc(f, "grupos/g2"), {
+      nombre: "Otro grupo", adminEmail: CARLA.email, miembros: [CARLA.email],
+      codigoInvitacion: "GYM-ZZ22", creadoEn: "",
+    });
+    await setDoc(doc(f, "asistencias/ajena"), nuevaAsistencia(CARLA, { grupoId: "g2", userName: "Carla" }));
+    await setDoc(doc(f, "usuariosPendientes", CARLA.email), { email: CARLA.email, estado: "pendiente" });
+    await setDoc(doc(f, "usuariosPermitidos/viejo1"), { email: BETO.email });
     await setDoc(doc(f, "categorias/cat1"), { userId: BETO.uid, nombre: "Push", cuenta: true, activo: true });
     await setDoc(doc(f, "categorias/cat-larga"), { userId: BETO.uid, nombre: "n".repeat(80), cuenta: true });
   });
@@ -103,10 +112,11 @@ describe("grupos", () => {
     await assertFails(deleteDoc(doc(db(BETO), "grupos/g1")));
   });
 
-  test("unirse con código (como unirseConCodigo) funciona", async () => {
-    await assertSucceeds(updateDoc(doc(db(CARLA), "grupos/g1"), {
+  test("fase 2: el cliente NO puede agregarse solo a un grupo (se une vía Cloud Function)", async () => {
+    await assertFails(updateDoc(doc(db(CARLA), "grupos/g1"), {
       miembros: [...grupoG1.miembros, CARLA.email],
     }));
+    await assertFails(updateDoc(doc(db(CARLA), "grupos/g1"), { miembros: arrayUnion(CARLA.email) }));
   });
 
   test("al unirse NO puede meter a otra persona", async () => {
@@ -121,8 +131,12 @@ describe("grupos", () => {
     }));
   });
 
-  test("un miembro puede salirse a sí mismo", async () => {
-    await assertSucceeds(updateDoc(doc(db(BETO), "grupos/g1"), { miembros: [ANA.email] }));
+  test("un miembro puede salirse a sí mismo (lista entera o arrayRemove)", async () => {
+    await assertSucceeds(updateDoc(doc(db(BETO), "grupos/g1"), { miembros: arrayRemove(BETO.email) }));
+  });
+
+  test("un miembro NO puede sacar a otro", async () => {
+    await assertFails(updateDoc(doc(db(BETO), "grupos/g1"), { miembros: arrayRemove(ANA.email) }));
   });
 
   test("con email NO verificado no puede unirse", async () => {
@@ -131,11 +145,9 @@ describe("grupos", () => {
     }));
   });
 
-  test("el admin del grupo agrega y quita miembros (Admin.tsx)", async () => {
-    await assertSucceeds(updateDoc(doc(db(ANA), "grupos/g1"), {
-      miembros: [ANA.email, BETO.email, "nuevo@example.com"],
-    }));
-    await assertSucceeds(updateDoc(doc(db(ANA), "grupos/g1"), { miembros: [ANA.email] }));
+  test("el admin del grupo agrega y quita miembros (Admin.tsx, arrayUnion/arrayRemove)", async () => {
+    await assertSucceeds(updateDoc(doc(db(ANA), "grupos/g1"), { miembros: arrayUnion("nuevo@example.com") }));
+    await assertSucceeds(updateDoc(doc(db(ANA), "grupos/g1"), { miembros: arrayRemove(BETO.email) }));
   });
 
   test("el admin global edita un grupo ajeno", async () => {
@@ -148,8 +160,8 @@ describe("grupos", () => {
     await assertSucceeds(deleteDoc(doc(db(ANA), "grupos/g1")));
   });
 
-  test("crear grupo (como crearGrupo) funciona", async () => {
-    await assertSucceeds(setDoc(doc(db(CARLA), "grupos/g2"), {
+  test("fase 2: el cliente NO crea grupos (crearGrupo es Cloud Function con código único)", async () => {
+    await assertFails(setDoc(doc(db(CARLA), "grupos/g9"), {
       nombre: "Grupo de Carla", adminEmail: CARLA.email, miembros: [CARLA.email],
       codigoInvitacion: "GYM-X7K2", creadoEn: new Date().toISOString(),
     }));
@@ -164,6 +176,22 @@ describe("grupos", () => {
       nombre: "Trampa", adminEmail: CARLA.email, miembros: [CARLA.email],
       codigoInvitacion: "<script>", creadoEn: "",
     }));
+  });
+
+  test("un miembro lee su grupo y lista los suyos (cargarGruposDeUsuario)", async () => {
+    await assertSucceeds(getDoc(doc(db(BETO), "grupos/g1")));
+    const q = query(collection(db(BETO), "grupos"), where("miembros", "array-contains", BETO.email));
+    await assertSucceeds(getDocs(q));
+  });
+
+  test("fase 2: NO lee grupos ajenos, ni listándolos ni buscando un código", async () => {
+    await assertFails(getDoc(doc(db(CARLA), "grupos/g1")));
+    await assertFails(getDocs(collection(db(CARLA), "grupos")));
+    await assertFails(getDocs(query(collection(db(CARLA), "grupos"), where("codigoInvitacion", "==", "GYM-AB12"))));
+  });
+
+  test("el admin global lee cualquier grupo", async () => {
+    await assertSucceeds(getDoc(doc(db(ADMIN), "grupos/g2")));
   });
 
   test("crear grupo a nombre de otro admin falla", async () => {
@@ -243,8 +271,24 @@ describe("usuarios", () => {
     await assertFails(updateDoc(doc(db(BETO), "usuarios", "pendiente@example.com"), { estado: "aprobado" }));
   });
 
-  test("cualquier logueado lee usuarios", async () => {
-    await assertSucceeds(getDoc(doc(db(CARLA), "usuarios", BETO.email)));
+  test("cada uno lee su propio doc (meta, sexo, fallback de verificarAcceso)", async () => {
+    await assertSucceeds(getDoc(doc(db(BETO), "usuarios", BETO.email)));
+  });
+
+  test("fase 2: NO lee el doc de otro usuario ni lista todos", async () => {
+    await assertFails(getDoc(doc(db(CARLA), "usuarios", BETO.email)));
+    await assertFails(getDocs(collection(db(BETO), "usuarios")));
+  });
+
+  test("el admin global lista todos (Aprobaciones)", async () => {
+    await assertSucceeds(getDocs(collection(db(ADMIN), "usuarios")));
+  });
+
+  test("legacy: cada uno lee solo su registro (por id o por email)", async () => {
+    await assertSucceeds(getDoc(doc(db(CARLA), "usuariosPendientes", CARLA.email)));
+    await assertSucceeds(getDocs(query(collection(db(BETO), "usuariosPermitidos"), where("email", "==", BETO.email))));
+    await assertFails(getDoc(doc(db(BETO), "usuariosPendientes", CARLA.email)));
+    await assertFails(getDocs(collection(db(BETO), "usuariosPermitidos")));
   });
 });
 
@@ -332,8 +376,33 @@ describe("asistencias", () => {
     await assertSucceeds(deleteDoc(doc(db(BETO), "asistencias/a1")));
   });
 
-  test("cualquier logueado lee asistencias (fase 1: todavía sin aislar por grupo)", async () => {
-    await assertSucceeds(getDoc(doc(db(CARLA), "asistencias/a1")));
+  test("un miembro lee los entrenos de su grupo con las queries de la app", async () => {
+    const f = db(ANA);
+    await assertSucceeds(getDoc(doc(f, "asistencias/a1")));
+    // muro (cargarFeedGlobal), mes (cargarAsistenciasMes), stats, racha, calendario
+    await assertSucceeds(getDocs(query(collection(f, "asistencias"), where("grupoId", "==", "g1"), orderBy("timestamp", "desc"))));
+    await assertSucceeds(getDocs(query(collection(f, "asistencias"), where("grupoId", "==", "g1"),
+      where("fecha", ">=", "2026-09-01"), where("fecha", "<=", "2026-09-30"))));
+    await assertSucceeds(getDocs(query(collection(f, "asistencias"), where("userId", "==", ANA.uid), where("grupoId", "==", "g1"))));
+    await assertSucceeds(getDocs(query(collection(f, "asistencias"), where("grupoId", "==", "g1"),
+      where("userName", "==", "Beto"), where("fecha", ">=", "2026-09-01"), where("fecha", "<=", "2026-09-30"))));
+  });
+
+  test("fase 2: NO lee entrenos de otro grupo, ni una query sin filtro de grupo", async () => {
+    await assertFails(getDoc(doc(db(BETO), "asistencias/ajena")));
+    await assertFails(getDocs(query(collection(db(BETO), "asistencias"), where("grupoId", "==", "g2"))));
+    await assertFails(getDocs(query(collection(db(BETO), "asistencias"),
+      where("fecha", ">=", "2026-09-01"), where("fecha", "<=", "2026-09-30")))); // la query vieja del detalle
+  });
+
+  test("el dueño lee su entreno aunque haya dejado el grupo", async () => {
+    await assertSucceeds(getDoc(doc(db(CARLA), "asistencias/ajena")));
+  });
+
+  test("guardar el sexo en el entreno: solo hombre/mujer", async () => {
+    await assertSucceeds(setDoc(doc(db(BETO), "asistencias/s1"), nuevaAsistencia(BETO, { sexo: "mujer" })));
+    await assertFails(setDoc(doc(db(BETO), "asistencias/s2"), nuevaAsistencia(BETO, { sexo: "robot" })));
+    await assertSucceeds(updateDoc(doc(db(BETO), "asistencias/a1"), { sexo: "hombre", timestampActualizacion: 1 }));
   });
 });
 

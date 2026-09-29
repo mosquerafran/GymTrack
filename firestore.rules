@@ -62,7 +62,8 @@ service cloud.firestore {
     }
 
     // ── Usuarios (doc id = email) ─────────────────────────────────────────────
-    // Cualquiera logueado lee (ranking, admin). Cada uno escribe su propio doc,
+    // Cada uno lee SOLO su doc (fase 2: antes cualquiera veía emails y nombres de
+    // todos); el admin global lee todos (pantalla Aprobaciones). Cada uno escribe su propio doc,
     // pero NUNCA su `estado`: al crearlo solo puede nacer aprobado/pendiente
     // (política actual de auto-aprobación, context.md §9.1) y después no se
     // toca. El admin global sí cambia el `estado` de otros (pantalla Aprobaciones).
@@ -71,7 +72,7 @@ service cloud.firestore {
         return emailVerificado() && request.auth.token.email == email;
       }
 
-      allow read: if logueado();
+      allow read: if esPropio() || esAdminGlobal();
 
       // uid/email: si vienen, tienen que ser los tuyos (docs viejos pueden no tenerlos).
       function identidadOk() {
@@ -118,12 +119,13 @@ service cloud.firestore {
     }
 
     // ── Asistencias ───────────────────────────────────────────────────────────
-    // Lectura abierta a logueados por ahora (fase 2: aislar por grupo, ver ESTADO.md).
+    // Se leen las propias y las de los grupos de los que sos miembro (fase 2). Toda
+    // query de la app filtra por grupoId (o userId): si no, Firestore la rechaza entera.
     // Se crean solo en un grupo del que sos miembro y con tu userId. Al editar,
     // dueño, grupo, usuario y fecha quedan fijos.
     match /asistencias/{docId} {
       // Campos del contenido del entreno, comunes a create y update.
-      // tipo / musculos / etiqueta: selector de cuerpo (próxima feature).
+      // tipo / musculos / etiqueta / sexo: registro con cuerpo (2026-09).
       function contenidoValido() {
         return textoOk("notas", 1000)
           && listaOk("rutina", 30)
@@ -135,10 +137,12 @@ service cloud.firestore {
           && (!("tipo" in camposTocados())
               || request.resource.data.tipo in ["gym", "futbol", "running", "otro"])
           && listaOk("musculos", 20)
-          && textoOk("etiqueta", 60);
+          && textoOk("etiqueta", 60)
+          && (!("sexo" in camposTocados()) || request.resource.data.sexo in ["hombre", "mujer"]);
       }
 
-      allow read: if logueado();
+      allow read: if logueado()
+        && (resource.data.userId == request.auth.uid || esMiembroDe(resource.data.grupoId));
 
       allow create: if logueado()
         && request.resource.data.userId == request.auth.uid
@@ -154,7 +158,7 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
              "categoriaId", "notas", "rutina", "imagenUrl", "timestampActualizacion",
-             "tipo", "musculos", "etiqueta"
+             "tipo", "musculos", "etiqueta", "sexo"
            ])
         && contenidoValido();
 
@@ -162,57 +166,56 @@ service cloud.firestore {
     }
 
     // ── Grupos ────────────────────────────────────────────────────────────────
-    // El admin del grupo (o el admin global) edita todo. Cualquier otro solo
-    // puede agregarse o sacarse A SÍ MISMO de `miembros` (unirse / salir).
-    // Fase 2: unirse vía Cloud Function y cerrar la lectura (ESTADO.md).
+    // Solo los miembros (y el admin global) lo leen. Crear y unirse con código van
+    // por Cloud Functions (backend/src/grupos/gestionGrupos.js): el cliente no puede
+    // buscar un código entre grupos ajenos. El admin del grupo (o el global) edita todo;
+    // un miembro solo puede SACARSE a sí mismo.
     match /grupos/{grupoId} {
       function esAdminDelGrupo() {
         return emailVerificado() && request.auth.token.email == resource.data.adminEmail;
       }
 
-      function soloCambiaSuMembresia() {
+      function soloSeSaca() {
         let yo = request.auth.token.email;
         let antes = resource.data.miembros.toSet();
         let despues = request.resource.data.miembros.toSet();
         return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["miembros"])
           && request.resource.data.miembros is list
-          && (
-            // unirse: despues = antes + yo
-            (!(yo in antes) && despues.difference(antes) == [yo].toSet() && antes.difference(despues).size() == 0)
-            // salir: despues = antes - yo
-            || ((yo in antes) && antes.difference(despues) == [yo].toSet() && despues.difference(antes).size() == 0)
-          );
+          && (yo in antes)
+          && antes.difference(despues) == [yo].toSet()
+          && despues.difference(antes).size() == 0;
       }
 
-      allow read: if logueado();
+      allow read: if esAdminGlobal()
+        || (emailVerificado() && request.auth.token.email in resource.data.miembros);
 
-      allow create: if emailVerificado()
-        && request.resource.data.adminEmail == request.auth.token.email
-        && request.resource.data.miembros == [request.auth.token.email]
-        && esTextoCorto(request.resource.data.nombre, 60)
-        && request.resource.data.nombre.size() > 0
-        && request.resource.data.codigoInvitacion is string
-        && request.resource.data.codigoInvitacion.matches("^GYM-[A-Z0-9]{4,8}$");
+      allow create: if false; // crearGrupo (Cloud Function) con código único
 
       allow update: if emailVerificado() && (
         ((esAdminDelGrupo() || esAdminGlobal())
           && request.resource.data.miembros is list
           && request.resource.data.miembros.size() <= 100
           && esTextoCorto(request.resource.data.nombre, 60))
-        || soloCambiaSuMembresia()
+        || soloSeSaca()
       );
 
       allow delete: if esAdminDelGrupo() || esAdminGlobal();
     }
 
     // ── Colecciones legacy (solo lectura para la migración del fallback) ──────
+    // Cada uno lee solo su registro (por doc id = email o por el campo email).
+    function esSuRegistroLegacy(docId) {
+      return emailVerificado()
+        && (docId == request.auth.token.email || resource.data.get("email", "") == request.auth.token.email);
+    }
+
     match /usuariosPendientes/{docId} {
-      allow read: if logueado();
+      allow read: if esSuRegistroLegacy(docId);
       allow write: if false;
     }
 
     match /usuariosPermitidos/{docId} {
-      allow read: if logueado();
+      allow read: if esSuRegistroLegacy(docId);
       allow write: if false;
     }
   }

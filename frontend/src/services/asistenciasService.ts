@@ -19,7 +19,7 @@ import {
 import { storage } from "../config/firebase";
 import { ref, deleteObject } from "firebase/storage";
 import { Asistencia, EjercicioRutina } from "../types";
-import { Musculo, TipoEntreno } from "../config/entrenos";
+import { Musculo, Sexo, TipoEntreno } from "../config/entrenos";
 import { formatDateLocal, inicioMesLocal, finMesLocal } from "../utils/date";
 
 export type AsistenciasMapa = Record<string, Record<string, any[]>>;
@@ -33,6 +33,8 @@ interface GuardarAsistenciaParams {
   musculos?: Musculo[];
   /** Texto libre opcional ("Push pesado", "Minubi 🥵"). Reemplaza a las categorías. */
   etiqueta?: string;
+  /** Modelo del cuerpo de quien registra (el muro lo usa sin leer su doc de usuario). */
+  sexo?: Sexo;
   notas?: string;
   grupoId: string;
   imagenUrl?: string | null;
@@ -43,7 +45,7 @@ interface GuardarAsistenciaParams {
  * Guarda un entrenamiento en Firestore. Desde 2026-09 escribe tipo/musculos/etiqueta
  * y ya no categoriaId (los docs viejos se interpretan con utils/entrenos.ts).
  */
-export const guardarAsistencia = async ({ userId, userName, fecha, tipo, musculos = [], etiqueta = "", notas, grupoId, imagenUrl = null, rutina = [] }: GuardarAsistenciaParams): Promise<void> => {
+export const guardarAsistencia = async ({ userId, userName, fecha, tipo, musculos = [], etiqueta = "", sexo, notas, grupoId, imagenUrl = null, rutina = [] }: GuardarAsistenciaParams): Promise<void> => {
   const fechaStr = formatDateLocal(fecha);
 
   await addDoc(collection(db, "asistencias"), {
@@ -54,6 +56,7 @@ export const guardarAsistencia = async ({ userId, userName, fecha, tipo, musculo
     tipo,
     musculos: tipo === "gym" ? musculos : [],
     etiqueta: etiqueta.trim(),
+    ...(sexo ? { sexo } : {}),
     notas: notas?.trim() || "",
     rutina,      // Array de ejercicios: [{nombre, series: [{reps, peso}]}]
     imagenUrl,   // URL de la foto en Storage
@@ -63,7 +66,10 @@ export const guardarAsistencia = async ({ userId, userName, fecha, tipo, musculo
 };
 
 /**
- * Carga todas las asistencias de un mes para un grupo.
+ * Carga todas las asistencias de un mes para un grupo (índice grupoId + fecha).
+ * Desde la seguridad fase 2 filtra por grupo en la query: las rules no dejan leer
+ * entrenos de otros grupos, y Firestore rechaza la query entera si pudiera traerlos.
+ * (Los docs legacy con grupoId vacío ya no aparecen; tampoco aparecían en muro/stats.)
  * @returns {Promise<AsistenciasMapa>} Mapa { "YYYY-MM-DD": { userName: [{ docId, catId, notas }] } }
  */
 export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): Promise<AsistenciasMapa> => {
@@ -72,6 +78,7 @@ export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): 
 
   const q = query(
     collection(db, "asistencias"),
+    where("grupoId", "==", grupoId),
     where("fecha", ">=", inicioStr),
     where("fecha", "<=", finStr)
   );
@@ -81,7 +88,6 @@ export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): 
 
   snap.forEach((document) => {
     const data = document.data() as Asistencia;
-    if (grupoId && data.grupoId && data.grupoId !== grupoId) return;
 
     const fechaKey = data.fecha;
     const usr = data.userName || "Desconocido";

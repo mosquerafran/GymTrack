@@ -4,8 +4,7 @@ import { cargarMapaCategorias } from "../services/categoriasService";
 import { Dumbbell, MessageSquare, Calendar, Flame } from "lucide-react";
 import { Cargando, EstadoVacio, ErrorCarga } from "../components/ui/Estados";
 import { Asistencia, Categoria } from "../types";
-import { cargarSexosPorUid } from "../services/usuarioService";
-import { Sexo, SEXO_DEFAULT, TIPOS } from "../config/entrenos";
+import { SEXO_DEFAULT, TIPOS } from "../config/entrenos";
 import { descripcionDe, etiquetaDe, musculosDe, tipoDe, NombresCategoria } from "../utils/entrenos";
 
 // Cuerpito del entreno sobre la foto: trae los paths del cuerpo, se carga aparte.
@@ -22,7 +21,6 @@ export default function Feed({ grupoId, refresco = 0 }: FeedProps): React.ReactE
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState(false);
   const [mapaCat, setMapaCat] = useState<Record<string, Categoria>>({});
-  const [sexos, setSexos] = useState<Record<string, Sexo>>({});
   const nombres: NombresCategoria = Object.fromEntries(Object.entries(mapaCat).map(([id, c]) => [id, c.nombre]));
 
   useEffect(() => {
@@ -35,11 +33,9 @@ export default function Feed({ grupoId, refresco = 0 }: FeedProps): React.ReactE
 
   const cargarNombres = async () => {
     try {
-      const [mapa, sexosPorUid] = await Promise.all([cargarMapaCategorias(), cargarSexosPorUid()]);
-      setMapaCat(mapa);
-      setSexos(sexosPorUid);
+      setMapaCat(await cargarMapaCategorias());
     } catch (e) {
-      console.error(e); // sin nombres/sexos el muro igual se ve (con defaults)
+      console.error(e); // sin nombres el muro igual se ve (sin etiquetas viejas)
     }
   };
 
@@ -125,7 +121,7 @@ export default function Feed({ grupoId, refresco = 0 }: FeedProps): React.ReactE
                     {musculosDe(post).length > 0 && (
                       <Suspense fallback={null}>
                         <MiniCuerpo
-                          sexo={sexos[post.userId] || SEXO_DEFAULT}
+                          sexo={post.sexo || SEXO_DEFAULT}
                           musculos={musculosDe(post)}
                           className="absolute right-2.5 bottom-2.5 bg-surface rounded-xl px-1.5 pt-1.5 pb-1 shadow-premium"
                         />

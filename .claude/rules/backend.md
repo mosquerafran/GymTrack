@@ -17,6 +17,9 @@ paths:
 - **La lógica de `verificarAcceso` está duplicada a propósito** en el cliente
   (`authService.verificarEstadoUsuario`, como fallback si la function no responde). Cambiar una sin
   la otra hace que el resultado dependa de si la function estaba caliente.
+- **`crearGrupo` / `unirseAGrupo`** (`src/grupos/gestionGrupos.js`): los únicos caminos para crear
+  un grupo o unirse (las rules lo bloquean en el cliente). Exigen `email_verified`; los mensajes de
+  `HttpsError` le llegan tal cual al usuario (escribilos para él). Tests: `tests/rules/funciones.test.js`.
 - **Auto-aprobación:** hoy `verificarAcceso` aprueba a cualquiera que se loguee. Es una decisión
   abierta (`context.md` §9.1): no la cambies sin que el dueño lo pida.
 - **Probar sin tocar producción:** `npm run serve` levanta el emulador. El agente **no puede**

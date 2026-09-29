@@ -12,6 +12,8 @@ exports.verificarAcceso = require("./auth/verificarAcceso").verificarAcceso;
 
 // Grupos
 exports.repararMiembrosVip = require("./grupos/repararMiembros").repararMiembrosVip;
+exports.crearGrupo = require("./grupos/gestionGrupos").crearGrupo;
+exports.unirseAGrupo = require("./grupos/gestionGrupos").unirseAGrupo;
 
 // Categorías
 exports.restaurarCategorias = require("./categorias/restaurarCategorias").restaurarCategorias;

@@ -1,5 +1,5 @@
 import { db } from "../config/firebase";
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { Usuario, META_SEMANAL_DEFAULT } from "../types";
 import { Sexo, SEXO_DEFAULT, esSexo } from "../config/entrenos";
 
@@ -31,22 +31,4 @@ export const obtenerSexo = async (email: string): Promise<Sexo> => {
 /** Guarda el modelo del cuerpo del usuario. Merge: no pisa el resto del doc. */
 export const actualizarSexo = async (email: string, sexo: Sexo): Promise<void> => {
   await setDoc(doc(db, "usuarios", email), { sexo }, { merge: true });
-  cacheSexos = null;
-};
-
-// Cache en memoria del sexo de cada usuario por uid (para dibujar el cuerpito del muro).
-let cacheSexos: { en: number; mapa: Record<string, Sexo> } | null = null;
-const TTL_SEXOS_MS = 5 * 60_000;
-
-/** Mapa uid → sexo de todos los usuarios (los que no lo eligieron, con el default). */
-export const cargarSexosPorUid = async (): Promise<Record<string, Sexo>> => {
-  if (cacheSexos && Date.now() - cacheSexos.en < TTL_SEXOS_MS) return cacheSexos.mapa;
-  const snap = await getDocs(collection(db, "usuarios"));
-  const mapa: Record<string, Sexo> = {};
-  snap.forEach((d) => {
-    const u = d.data() as Usuario;
-    if (u.uid) mapa[u.uid] = esSexo(u.sexo) ? u.sexo : SEXO_DEFAULT;
-  });
-  cacheSexos = { en: Date.now(), mapa };
-  return mapa;
 };

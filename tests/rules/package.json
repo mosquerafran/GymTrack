@@ -1,10 +1,10 @@
 {
   "name": "gym-tracker-rules-tests",
   "private": true,
-  "description": "Tests de firestore.rules y storage.rules contra el emulador (nunca contra producción)",
+  "description": "Tests de firestore.rules, storage.rules y las Cloud Functions de grupos contra el emulador (nunca contra producción)",
   "type": "module",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore,storage --project demo-gym-tracker \"node --test\""
+    "test": "firebase emulators:exec --only firestore,storage --project demo-gym-tracker \"node --test --test-concurrency=1 rules.test.js funciones.test.js\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",

@@ -161,11 +161,10 @@ Vocabulario (tipos, 15 músculos, atajos): `config/entrenos.ts`. Detalle: `conte
   `ADMIN_EMAIL` **dentro de `firestore.rules`**: si cambia, cambialo ahí también).
 - `asistencias`: se crean solo en un grupo del que sos miembro; al editar, dueño,
   grupo, usuario y fecha quedan fijos. Tipos y tamaños validados.
-- `grupos`: el admin del grupo edita todo; los demás solo se agregan o se sacan
-  **a sí mismos** de `miembros[]`.
-- ⚠️ La **lectura** sigue abierta a cualquier logueado (fase 2 en `ESTADO.md`).
-- **Tests:** `tests/rules` (emulador, necesita Java) corre en `verify.ps1`. Todo
-  cambio de rules lleva su caso de abuso y su caso de flujo real.
+- **Lectura aislada** (fase 2): entrenos y grupos solo de tus grupos; `usuarios` solo el propio.
+  Toda query de `asistencias` filtra por `grupoId` (o `userId`): si no, se rechaza ENTERA.
+- **Crear grupo y unirse con código: Cloud Functions** (`gestionGrupos.js`). Tests: `tests/rules`
+  (emulador + Java, en `verify.ps1`); todo cambio lleva caso de abuso y de flujo real.
 
 ---
 

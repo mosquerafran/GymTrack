@@ -11,7 +11,7 @@
 
 | Pieza | Estado | Cómo se sabe |
 |---|---|---|
-| **Hosting** | ✅ `ce634a2` (registro con cuerpo + stats por músculo), deployado el 2026-09-28 | GitHub Actions, run `36501859965`, *success* |
+| **Hosting** | ✅ `b174d8a` (tanda 2: pulido mobile), deployado el 2026-09-28 | GitHub Actions, run `36502998148`, *success* |
 | **Functions** | ⚠️ **sin registro** | Se deployan a mano y el repo no guarda el resultado |
 | **Firestore rules** | ✅ `ce634a2` (fase 1 + validación de `sexo` y `tipo`), deployadas el 2026-09-28 | `firebase deploy --only firestore:rules,storage` → *Deploy complete* |
 | **Índice `asistencias(grupoId, timestamp desc)`** | ⚠️ **sin registro** | Ídem. El muro tiene fallback, así que **funciona igual aunque falte** |
@@ -21,6 +21,14 @@ El 2026-09-28 se endurecieron las rules (worklog `2026-09-28/02`): primero el ho
 rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 
 ## 2. 🔴 Requiere acción
+
+00. **Deploy de la seguridad fase 2, EN ESTE ORDEN** (worklog `2026-09-28/05`):
+    1. `firebase deploy --only firestore:indexes` → esperar a que el índice `asistencias(grupoId, fecha)`
+       figure como *Habilitado* en la consola (Firestore → Índices).
+    2. `firebase deploy --only functions` (suben `crearGrupo` y `unirseAGrupo`).
+    3. push a `main` (frontend) → esperar Actions en verde.
+    4. `firebase deploy --only firestore:rules` (recién acá se cierra la lectura).
+    Después: en el celu, entrar, ver el muro/calendario/stats, y que alguien se una con código.
 
 0. **Smoke de la fase 1 de seguridad (deployada el 2026-09-28).** En el celu: la app carga el grupo,
    registrar + editar un entreno con foto, muro/ranking/calendario, aprobar a alguien en Aprobaciones
@@ -39,10 +47,7 @@ rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 
 ## 3. Pendientes (sin fecha)
 
-- ⬜ **Seguridad fase 2** (necesita `/deploy functions`): unirse a un grupo vía callable con
-  códigos únicos → recién ahí cerrar la **lectura** de `grupos`, `asistencias` y fotos por grupo;
-  filtro `grupoId` + índice `(grupoId, fecha)` en `cargarAsistenciasMes`; App Check; headers de
-  seguridad en hosting; `permissions:` y pin por SHA en `firebase-hosting-merge.yml`.
+- ⬜ **App Check** (bloquear scripts que no son la app): configurar reCAPTCHA en la consola primero.
 - ⬜ **PWA**: service worker/offline, ícono maskable real, y probar el login en la app instalada de iOS
   (`signInWithPopup` en standalone). Ver worklog `2026-09-28/04` → pendientes.
 - ⬜ Lista completa de mejoras de rendimiento y orden del repo: auditoría del 2026-09-28 (ver
@@ -65,6 +70,7 @@ la raíz del repo.
 
 | Fecha | Commit | Qué | Resultado |
 |---|---|---|---|
+| 2026-09-28 | `b174d8a` | Hosting (automático): tanda 2, pulido mobile | ✅ Actions `36502998148` |
 | 2026-09-28 | `ce634a2` | Firestore rules (manual): + `sexo` y `tipo` | ✅ *Deploy complete* |
 | 2026-09-28 | `ce634a2` | Hosting (automático): registro con cuerpo + stats por músculo | ✅ Actions `36501859965` |
 | 2026-09-28 | `5312c4f` | Firestore + Storage rules (manual, fase 1) | ✅ *Deploy complete* · smoke pendiente |

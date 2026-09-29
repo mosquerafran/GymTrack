@@ -28,7 +28,7 @@ export default function Admin({ user, grupoActivo, setView }: AdminProps): React
   const cargar = async () => {
     setEstado("cargando");
     try {
-      setMiembros(await cargarMiembrosGrupo(grupoActivo.id, grupoActivo.codigoInvitacion || ""));
+      setMiembros(await cargarMiembrosGrupo(grupoActivo.id));
       setEstado("listo");
     } catch (error) {
       console.error("Error al cargar miembros:", error);
@@ -50,7 +50,7 @@ export default function Admin({ user, grupoActivo, setView }: AdminProps): React
       return;
     }
     try {
-      await agregarMiembro(grupoActivo.id, miembros, email);
+      await agregarMiembro(grupoActivo.id, email);
       setNuevoEmail("");
       cargar();
     } catch (err) {
@@ -70,7 +70,7 @@ export default function Admin({ user, grupoActivo, setView }: AdminProps): React
     });
     if (!res.isConfirmed) return;
     try {
-      await eliminarMiembro(grupoActivo.id, miembros, email);
+      await eliminarMiembro(grupoActivo.id, email);
       cargar();
     } catch (err) {
       fallo(err);

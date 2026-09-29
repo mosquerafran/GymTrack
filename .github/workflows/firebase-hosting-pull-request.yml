@@ -23,7 +23,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
         working-directory: tests/rules
-      - name: Tests de rules
+      # Los tests de las Cloud Functions de grupos usan el firebase-admin del backend.
+      - name: Install backend
+        run: npm ci
+        working-directory: backend
+      - name: Tests de rules y functions
         run: npm test
         working-directory: tests/rules
 

@@ -48,13 +48,13 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
     if (!nombreNuevo.trim() || !user.email || enviando) return;
     setEnviando(true);
     try {
-      await crearGrupo(nombreNuevo, user.email);
+      await crearGrupo(nombreNuevo);
       setNombreNuevo("");
       setModo("lista");
       await cargar();
     } catch (err) {
       console.error(err);
-      Alerta.fire({ titleText: "No se pudo crear el grupo", text: "Revisá la conexión y probá de nuevo.", icon: "error", confirmButtonText: "Entendido" });
+      Alerta.fire({ titleText: "No se pudo crear el grupo", text: err instanceof Error ? err.message : "Revisá la conexión y probá de nuevo.", icon: "error", confirmButtonText: "Entendido" });
     }
     setEnviando(false);
   };
@@ -64,7 +64,7 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
     if (!codigoInput.trim() || !user.email || enviando) return;
     setEnviando(true);
     try {
-      await unirseConCodigo(codigoInput, user.email);
+      await unirseConCodigo(codigoInput);
       setCodigoInput("");
       setModo("lista");
       await cargar();
