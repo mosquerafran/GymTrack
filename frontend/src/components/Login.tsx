@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { iniciarSesionGoogle } from "../services/authService";
 import { Alerta } from "../config/alertas";
+import Logo from "./Logo";
 
 /** Logo de Google inline (antes venía de un CDN: otro dominio en la pantalla de entrada). */
 const LogoGoogle = () => (
@@ -41,9 +42,7 @@ export default function Login(): React.ReactElement {
     <main className="min-h-screen flex items-center justify-center p-4 pt-safe bg-background">
       <div className="glass-panel p-6 sm:p-10 max-w-md w-full text-center animate-slide-up space-y-8">
         <div>
-          <div className="w-20 h-20 bg-primary/15 rounded-2xl grid place-items-center mx-auto mb-6 border border-primary/30 rotate-3">
-            <span className="text-4xl" aria-hidden="true">🏋️</span>
-          </div>
+          <Logo className="w-32 h-auto mx-auto mb-6 text-textMain" titulo="Logo de Gym Tracker" />
           <h1 className="font-display text-[clamp(2.75rem,14vw,4.5rem)] leading-[0.9] uppercase break-words">
             Gym<span className="text-primary">Tracker</span>
           </h1>

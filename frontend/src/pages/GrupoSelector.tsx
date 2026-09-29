@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { User } from "firebase/auth";
 import { Users, Plus, KeyRound, LogOut, Sun, Moon, ShieldCheck, ChevronRight } from "lucide-react";
 import CodigoCopiable from "../components/CodigoCopiable";
+import Logo from "../components/Logo";
 import { cargarGruposDeUsuario, crearGrupo, unirseConCodigo } from "../services/gruposService";
 import { cerrarSesion } from "../services/authService";
 import { Alerta } from "../config/alertas";
@@ -87,7 +88,8 @@ export default function GrupoSelector({ user, onSelectGrupo, theme, toggleTheme 
 
   return (
     <div className="min-h-screen bg-background pt-safe">
-      <header className="flex items-center justify-end gap-1 px-3 py-2">
+      <header className="flex items-center gap-1 px-3 py-2">
+        <Logo className="w-11 h-auto text-textMain mr-auto ml-1" />
         <button
           type="button"
           onClick={toggleTheme}

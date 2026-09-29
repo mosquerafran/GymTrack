@@ -90,14 +90,14 @@
           {
             "type": "command",
             "if": "Bash(git push*)",
-            "command": "grep -q 'git[^\"]*push' || exit 0; powershell -NoProfile -ExecutionPolicy Bypass -File ./verify.ps1 > ./verify-hook.log 2>&1 && exit 0; printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"BLOQUEADO: verify.ps1 fallo. Pushear a main DEPLOYA el hosting a produccion (GitHub Actions). El detalle esta en verify-hook.log\"}}'",
+            "command": "grep -q 'git[^\"]*push' || exit 0; cd \"$CLAUDE_PROJECT_DIR\" && powershell -NoProfile -ExecutionPolicy Bypass -File ./verify.ps1 > ./verify-hook.log 2>&1 && exit 0; printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"BLOQUEADO: verify.ps1 fallo. Pushear a main DEPLOYA el hosting a produccion (GitHub Actions). El detalle esta en verify-hook.log\"}}'",
             "timeout": 400,
             "statusMessage": "Verificando con verify.ps1 antes de pushear (push a main = deploy)..."
           },
           {
             "type": "command",
             "if": "PowerShell(git push*)",
-            "command": "grep -q 'git[^\"]*push' || exit 0; powershell -NoProfile -ExecutionPolicy Bypass -File ./verify.ps1 > ./verify-hook.log 2>&1 && exit 0; printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"BLOQUEADO: verify.ps1 fallo. Pushear a main DEPLOYA el hosting a produccion (GitHub Actions). El detalle esta en verify-hook.log\"}}'",
+            "command": "grep -q 'git[^\"]*push' || exit 0; cd \"$CLAUDE_PROJECT_DIR\" && powershell -NoProfile -ExecutionPolicy Bypass -File ./verify.ps1 > ./verify-hook.log 2>&1 && exit 0; printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"BLOQUEADO: verify.ps1 fallo. Pushear a main DEPLOYA el hosting a produccion (GitHub Actions). El detalle esta en verify-hook.log\"}}'",
             "timeout": 400,
             "statusMessage": "Verificando con verify.ps1 antes de pushear (push a main = deploy)..."
           }
