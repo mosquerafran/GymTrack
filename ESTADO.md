@@ -43,6 +43,11 @@ rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 
 ## 3. Pendientes (sin fecha)
 
+- ⬜ **Sesión vencida = "No se pudieron cargar tus grupos"** (visto el 2026-09-28 en una pestaña nueva:
+  `permission-denied` al listar grupos; rules de prod idénticas al repo; tras volver a loguearse, la misma
+  query anda). La app saluda con el estado cacheado pero Firestore rechaza. Propuesta: ante
+  `permission-denied`, `getIdToken(true)` y reintentar; si sigue, pedir volver a entrar.
+
 
 - ⬜ **App Check**: descartado por ahora (bajo beneficio con la fase 2; si se activa mal deja a todos
   afuera). Retomar si la app sale del grupo de amigos.
