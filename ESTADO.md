@@ -11,9 +11,9 @@
 
 | Pieza | Estado | Cómo se sabe |
 |---|---|---|
-| **Hosting** | ✅ `ac7799b` (seguridad fase 2), deployado el 2026-09-28 | GitHub Actions, run `36504460641`, *success* |
+| **Hosting** | ✅ `a3fe920` (identidad Silverback), deployado el 2026-09-28 | GitHub Actions, run `36507607167`, *success* |
 | **Functions** | ✅ las 6 en **Node.js 22** (2nd Gen), deployadas el 2026-09-28 (`4bc4c46`), incluye `crearGrupo` y `unirseAGrupo` | `firebase deploy --only functions` → *Deploy complete* |
-| **Firestore rules** | ✅ **fase 2** (`4bc4c46`: lectura aislada por grupo), deployadas el 2026-09-28 | `firebase deploy --only firestore:rules,storage` → *Deploy complete* |
+| **Firestore rules** | ✅ `90b5c3b` (fase 2 + validación de tipo/músculos de categorías), deployadas el 2026-09-28 | `firebase deploy --only firestore:rules,storage` → *Deploy complete* |
 | **Índice `asistencias(grupoId, timestamp desc)`** | ⚠️ **sin registro** | Ídem. El muro tiene fallback, así que **funciona igual aunque falte** |
 | **Storage rules** | ✅ fase 1 (`5312c4f`), deployadas el 2026-09-28 | Ídem |
 
@@ -63,6 +63,10 @@ la raíz del repo.
 
 | Fecha | Commit | Qué | Resultado |
 |---|---|---|---|
+| 2026-09-28 | `90b5c3b` | Firestore rules: categorías con tipo/músculos | ✅ *Deploy complete* |
+| 2026-09-28 | `a3fe920` | Hosting (automático): identidad Silverback | ✅ Actions `36507607167` |
+| 2026-09-28 | `90b5c3b` | Hosting (automático): categorías plantilla, qué suma, varios por día | ✅ Actions `36506165018` |
+| 2026-09-28 | `0e5d0d2` | Hosting (automático): logo e íconos | ✅ Actions `36505255410` |
 | 2026-09-28 | `4bc4c46` | Firestore rules fase 2 (manual, en orden) | ✅ *Deploy complete* |
 | 2026-09-28 | `ac7799b` | Hosting (automático): frontend fase 2 | ✅ Actions `36504460641` |
 | 2026-09-28 | `4bc4c46` | Functions (manual): + crearGrupo, unirseAGrupo; todas a Node 22 | ✅ *Deploy complete* |
