@@ -12,7 +12,7 @@
 | Pieza | Estado | Cómo se sabe |
 |---|---|---|
 | **Hosting** | ✅ `b174d8a` (tanda 2: pulido mobile), deployado el 2026-09-28 | GitHub Actions, run `36502998148`, *success* |
-| **Functions** | ⚠️ **sin registro** | Se deployan a mano y el repo no guarda el resultado |
+| **Functions** | ✅ las 6 en **Node.js 22** (2nd Gen), deployadas el 2026-09-28 (`4bc4c46`), incluye `crearGrupo` y `unirseAGrupo` | `firebase deploy --only functions` → *Deploy complete* |
 | **Firestore rules** | ✅ `ce634a2` (fase 1 + validación de `sexo` y `tipo`), deployadas el 2026-09-28 | `firebase deploy --only firestore:rules,storage` → *Deploy complete* |
 | **Índice `asistencias(grupoId, timestamp desc)`** | ⚠️ **sin registro** | Ídem. El muro tiene fallback, así que **funciona igual aunque falte** |
 | **Storage rules** | ✅ fase 1 (`5312c4f`), deployadas el 2026-09-28 | Ídem |
@@ -25,7 +25,7 @@ rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 00. **Deploy de la seguridad fase 2, EN ESTE ORDEN** (worklog `2026-09-28/05`):
     1. ✅ índice subido (2026-09-28, junto con el incidente). Esperar a que el índice `asistencias(grupoId, fecha)`
        figure como *Habilitado* en la consola (Firestore → Índices).
-    2. `firebase deploy --only functions` (suben `crearGrupo` y `unirseAGrupo`).
+    2. ✅ functions deployadas (2026-09-28).
     3. push a `main` (frontend) → esperar Actions en verde.
     4. `firebase deploy --only firestore:rules` (recién acá se cierra la lectura).
     Después: en el celu, entrar, ver el muro/calendario/stats, y que alguien se una con código.
@@ -35,12 +35,7 @@ rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
    (antes estaba rota) y que alguien se una con código. Si algo falla: rollback con
    `git show d82760f:firestore.rules > firestore.rules` + `firebase deploy --only firestore:rules`.
 
-1. **Confirmar que las Cloud Functions corren en Node 22 — antes del 30/10/2026.** Ese día Google
-   decomisiona Node 20. `backend/package.json` pide Node 22 desde el 2026-07-06 (worklog `09`), pero
-   una function queda en el runtime con el que **se deployó**. El worklog dice que se deployaba "en
-   este mismo deploy"; no hay registro de que haya pasado.
-   - **Cómo verificarlo:** consola de Firebase → Functions → columna *Runtime*.
-   - **Si dice Node 20:** `/deploy functions`.
+1. ✅ **Functions en Node 22**: confirmado en el deploy del 2026-09-28 ("creating Node.js 22 (2nd Gen)").
 2. **Confirmar que el índice del muro está construido.** Consola de Firebase → Firestore → Índices,
    o `! firebase firestore:indexes` (solo lectura). Si falta, el muro sigue leyendo **todo** el grupo
    (el problema que la optimización del 2026-07-06 venía a resolver) y **nadie lo nota**.
@@ -70,6 +65,7 @@ la raíz del repo.
 
 | Fecha | Commit | Qué | Resultado |
 |---|---|---|---|
+| 2026-09-28 | `4bc4c46` | Functions (manual): + crearGrupo, unirseAGrupo; todas a Node 22 | ✅ *Deploy complete* |
 | 2026-09-28 | `ce634a2` | Firestore rules: **vuelta atrás** tras el incidente | ✅ prod = reglas de `ce634a2` |
 | 2026-09-28 | `4bc4c46` | Índices + **reglas fase 2 por error** (typo `firestore:indexe`) | ⚠️ revertido minutos después |
 | 2026-09-28 | `b174d8a` | Hosting (automático): tanda 2, pulido mobile | ✅ Actions `36502998148` |
