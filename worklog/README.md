@@ -62,3 +62,4 @@ Lo que quedó abierto o a tener en cuenta.
 - [03 — Registro con cuerpo y stats por músculo](2026-09-28/03-registro-con-cuerpo-y-stats-por-musculo.md) — tipo + músculos (hombre/mujer) + etiqueta, todo suma, Stats por músculo.
 - [04 — Tanda 2: pulido mobile](2026-09-28/04-pulido-mobile-navegacion.md) — barra con Registrar al centro, paneles, botón atrás, popups, estados.
 - [05 — Seguridad fase 2: aislamiento entre grupos](2026-09-28/05-seguridad-fase2-aislamiento.md) — crear/unirse por Cloud Functions, lectura solo de tus grupos.
+- [06 — Categorías plantilla y qué suma](2026-09-28/06-categorias-plantilla-que-suma.md) — músculos preseleccionados, suma por categoría, varios por día, días anteriores.

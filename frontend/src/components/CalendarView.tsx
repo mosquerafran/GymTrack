@@ -7,7 +7,7 @@ interface CalendarViewProps {
   /** Mes que se está mostrando. */
   mes: Date;
   /** Días con entrenos del usuario: { "YYYY-MM-DD": [...] }. */
-  entrenos: Record<string, string[]>;
+  entrenos: Record<string, unknown[]>;
   onMonthChange?: (date: Date) => void;
   /** Tocar un día abre su detalle (quién entrenó, editar lo propio). */
   onAbrirDia: (date: Date) => void;

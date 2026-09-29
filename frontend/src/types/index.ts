@@ -46,7 +46,7 @@ export interface Asistencia {
   etiqueta?: string;
   /** Modelo del cuerpo de quien lo registró (para el cuerpito del muro sin leer usuarios ajenos). */
   sexo?: Sexo;
-  /** Docs viejos: categoría (legacy `catId`). Los nuevos ya no la escriben. */
+  /** Categoría personal elegida al registrar (opcional). Docs muy viejos: `catId`. */
   categoriaId?: string;
   catId?: string;
   notas: string;
@@ -56,13 +56,20 @@ export interface Asistencia {
   likes?: string[];
 }
 
+/**
+ * Categoría personal = plantilla de entreno: al elegirla en el registro precarga tipo,
+ * músculos y nombre. Cada uno decide si la suya suma al ranking (`cuenta`).
+ */
 export interface Categoria {
   id?: string;
   userId: string;
   nombre: string;
-  /** Legacy: ya no se usa (desde 2026-09 todo entreno suma al ranking). */
+  /** ¿Los entrenos de esta categoría suman a días entrenados / ranking / racha? (default: sí) */
   cuenta?: boolean;
   activo: boolean;
+  /** Desde 2026-09. Si faltan (categorías viejas), se deducen del nombre (utils/entrenos). */
+  tipo?: TipoEntreno;
+  musculos?: Musculo[];
 }
 
 export interface Medalla {

@@ -24,6 +24,14 @@ import { formatDateLocal, inicioMesLocal, finMesLocal } from "../utils/date";
 
 export type AsistenciasMapa = Record<string, Record<string, any[]>>;
 
+/** Lo mínimo de un entreno para el calendario y la semana de Inicio. */
+export interface EntrenoDelDia {
+  fecha: string;
+  tipo?: string;
+  categoriaId?: string;
+  catId?: string;
+}
+
 interface GuardarAsistenciaParams {
   userId: string;
   userName: string;
@@ -31,8 +39,10 @@ interface GuardarAsistenciaParams {
   tipo: TipoEntreno;
   /** Solo si es gym (vacío en el resto). */
   musculos?: Musculo[];
-  /** Texto libre opcional ("Push pesado", "Minubi 🥵"). Reemplaza a las categorías. */
+  /** Texto libre opcional ("Push pesado", "Minubi 🥵"). */
   etiqueta?: string;
+  /** Categoría personal elegida (decide si suma al ranking). */
+  categoriaId?: string;
   /** Modelo del cuerpo de quien registra (el muro lo usa sin leer su doc de usuario). */
   sexo?: Sexo;
   notas?: string;
@@ -45,7 +55,7 @@ interface GuardarAsistenciaParams {
  * Guarda un entrenamiento en Firestore. Desde 2026-09 escribe tipo/musculos/etiqueta
  * y ya no categoriaId (los docs viejos se interpretan con utils/entrenos.ts).
  */
-export const guardarAsistencia = async ({ userId, userName, fecha, tipo, musculos = [], etiqueta = "", sexo, notas, grupoId, imagenUrl = null, rutina = [] }: GuardarAsistenciaParams): Promise<void> => {
+export const guardarAsistencia = async ({ userId, userName, fecha, tipo, musculos = [], etiqueta = "", categoriaId, sexo, notas, grupoId, imagenUrl = null, rutina = [] }: GuardarAsistenciaParams): Promise<void> => {
   const fechaStr = formatDateLocal(fecha);
 
   await addDoc(collection(db, "asistencias"), {
@@ -56,6 +66,7 @@ export const guardarAsistencia = async ({ userId, userName, fecha, tipo, musculo
     tipo,
     musculos: tipo === "gym" ? musculos : [],
     etiqueta: etiqueta.trim(),
+    ...(categoriaId ? { categoriaId } : {}),
     ...(sexo ? { sexo } : {}),
     notas: notas?.trim() || "",
     rutina,      // Array de ejercicios: [{nombre, series: [{reps, peso}]}]
@@ -111,9 +122,9 @@ export const cargarAsistenciasMes = async (grupoId: string, fechaActual: Date): 
 
 /**
  * Carga asistencias del mes solo del usuario (para el calendario personal).
- * @returns {Promise<object>} Mapa { "YYYY-MM-DD": [tipo o categoriaId] } (solo importa si hay algo)
+ * @returns Mapa { "YYYY-MM-DD": entrenos del día } (lo justo para calendario, semana y "suma")
  */
-export const cargarAsistenciasMesUsuario = async (grupoId: string, userName: string, fechaActual: Date): Promise<Record<string, string[]>> => {
+export const cargarAsistenciasMesUsuario = async (grupoId: string, userName: string, fechaActual: Date): Promise<Record<string, EntrenoDelDia[]>> => {
   const inicioStr = inicioMesLocal(fechaActual);
   const finStr = finMesLocal(fechaActual);
 
@@ -126,13 +137,11 @@ export const cargarAsistenciasMesUsuario = async (grupoId: string, userName: str
   );
 
   const snap = await getDocs(q);
-  const mapa: Record<string, string[]> = {};
+  const mapa: Record<string, EntrenoDelDia[]> = {};
 
   snap.forEach((document) => {
     const data = document.data() as Asistencia;
-    const fechaKey = data.fecha;
-    if (!mapa[fechaKey]) mapa[fechaKey] = [];
-    mapa[fechaKey].push(data.tipo || data.categoriaId || data.catId || "gym");
+    (mapa[data.fecha] ||= []).push({ fecha: data.fecha, tipo: data.tipo, categoriaId: data.categoriaId, catId: data.catId });
   });
 
   return mapa;

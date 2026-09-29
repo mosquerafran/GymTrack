@@ -5,9 +5,9 @@ import { cargarAsistenciasMes, eliminarAsistencia } from "../services/asistencia
 import { cargarMapaCategorias } from "../services/categoriasService";
 import { Alerta } from "../config/alertas";
 import { SEXO_DEFAULT } from "../config/entrenos";
-import { descripcionDe, etiquetaDe, musculosDe, NombresCategoria } from "../utils/entrenos";
+import { cuentaDe, descripcionDe, etiquetaDe, musculosDe, NombresCategoria } from "../utils/entrenos";
 import { formatDateLocal } from "../utils/date";
-import { Asistencia } from "../types";
+import { Asistencia, Categoria } from "../types";
 import { Cargando, ErrorCarga } from "./ui/Estados";
 
 const MiniCuerpo = lazy(() => import("./cuerpo/MiniCuerpo"));
@@ -27,6 +27,7 @@ interface DetalleDiaProps {
 export default function DetalleDia({ user, grupoId, fecha, onEditar, onRegistrar, refresco, onCambio }: DetalleDiaProps): React.ReactElement {
   const [porUsuario, setPorUsuario] = useState<Record<string, Asistencia[]>>({});
   const [nombres, setNombres] = useState<NombresCategoria>({});
+  const [categorias, setCategorias] = useState<Record<string, Categoria>>({});
   const [estado, setEstado] = useState<"cargando" | "listo" | "error">("cargando");
 
   const cargar = async () => {
@@ -35,6 +36,7 @@ export default function DetalleDia({ user, grupoId, fecha, onEditar, onRegistrar
       const [mes, mapa] = await Promise.all([cargarAsistenciasMes(grupoId, fecha), cargarMapaCategorias()]);
       setPorUsuario((mes[formatDateLocal(fecha)] || {}) as Record<string, Asistencia[]>);
       setNombres(Object.fromEntries(Object.entries(mapa).map(([id, c]) => [id, c.nombre])));
+      setCategorias(mapa);
       setEstado("listo");
     } catch (e) {
       console.error(e);
@@ -106,6 +108,9 @@ export default function DetalleDia({ user, grupoId, fecha, onEditar, onRegistrar
                       </span>
                     )}
                     <p className="font-heading text-base tracking-wide">{detalle}</p>
+                    {!cuentaDe(a, categorias) && (
+                      <p className="text-xs font-semibold text-textMuted uppercase tracking-wide">No suma al ranking</p>
+                    )}
                   </div>
                   {musculos.length > 0 && (
                     <Suspense fallback={null}>
@@ -144,9 +149,9 @@ export default function DetalleDia({ user, grupoId, fecha, onEditar, onRegistrar
         </section>
       ))}
 
-      {!yaRegistre && !futuro && (
-        <button type="button" className="btn-primary w-full" onClick={() => onRegistrar(fecha)}>
-          <Plus size={20} aria-hidden="true" /> Registrar este día
+      {!futuro && (
+        <button type="button" className={yaRegistre ? "btn-secondary w-full" : "btn-primary w-full"} onClick={() => onRegistrar(fecha)}>
+          <Plus size={20} aria-hidden="true" /> {yaRegistre ? "Agregar otro entreno" : "Registrar este día"}
         </button>
       )}
     </div>

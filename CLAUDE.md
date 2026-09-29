@@ -144,12 +144,12 @@ tiene miembros VIP que repara la función programada `repararMiembrosVip` (no el
 |------------------------|----------|--------------|
 | `usuarios`             | email    | `uid, email, displayName, photoURL, estado(aprobado/pendiente/rechazado), creadoEn, metaSemanal?, sexo?` |
 | `grupos`               | auto     | `nombre, adminEmail, miembros[] (emails), codigoInvitacion (GYM-XXXX), creadoEn` |
-| `categorias` (= etiquetas) | auto | `userId, nombre, activo(bool)` · `cuenta` es legacy, ya no se usa |
+| `categorias` (plantillas) | auto | `userId, nombre, tipo?, musculos[]?, cuenta(bool: ¿suma?), activo(bool)` |
 | `asistencias`          | auto     | `userId, userName, fecha(YYYY-MM-DD), timestamp, tipo, musculos[], etiqueta, notas, rutina[], imagenUrl, grupoId, likes[]` (viejos: `categoriaId`/`catId`) |
 | `usuariosPendientes`, `usuariosPermitidos` | — | **legacy**, solo lectura para migración |
 
 `rutina[]` = `[{ nombre, peso?, reps?, series? }]` (PRs del día).
-**Todo entreno suma** al ranking de "días entrenados" (sin importar tipo ni etiqueta).
+**Qué suma** a días/ranking/racha/meta lo decide la **categoría de cada uno** (`cuentaDe`); sin categoría, suma.
 Vocabulario (tipos, 15 músculos, atajos): `config/entrenos.ts`. Detalle: `context.md`.
 
 ---

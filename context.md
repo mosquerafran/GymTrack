@@ -37,8 +37,9 @@ guardar un entreno y en el Home.
    abre su detalle en un panel inferior. En el celu la navegación es una **barra inferior**
    (Inicio · Muro · **Registrar** al centro · Ranking · Ajustes); "atrás" del celu vuelve a la
    pantalla anterior o cierra el panel abierto (`hooks/useHistorial.ts`). (Worklog `2026-09-28/04`.)
-4. **Registrar entreno** (`TrainingSelector`): foto **obligatoria** (cámara o galería) →
-   **tipo** (gym / fútbol / running / otro) → si es gym, **músculos** tocando el cuerpo
+4. **Registrar entreno** (`TrainingSelector`): se puede cargar **cualquier día hasta hoy** (la fecha
+   de arriba se toca) y **varios entrenos por día**. Foto **obligatoria** (cámara o galería) →
+   **tu categoría** (opcional: precarga tipo, músculos y nombre) → **tipo** (gym / fútbol / running / otro) → si es gym, **músculos** tocando el cuerpo
    (frente y espalda, modelo hombre o mujer; atajos Push/Pull/Legs/Torso/Core; o lista)
    → **etiqueta** libre opcional (sugiere las del usuario) → PRs opcionales → mensaje.
    Comprime la foto, la sube a Storage y crea el doc en `asistencias`. (Worklog `2026-09-28/03`.)
@@ -52,22 +53,27 @@ guardar un entreno y en el Home.
 7. **Detalle de día** (`DetalleDia`, en un panel inferior): quién del grupo entrenó ese día,
    y **editar/borrar lo propio** (incluso días pasados). Si no registraste, "Registrar este día".
 8. **Ajustes** (`Settings`): modelo del cuerpo (hombre/mujer), meta semanal (1 a 7 días),
-   "Tus etiquetas" (las viejas categorías: crear, renombrar, ocultar; no se borran), cambiar de
+   "Tus categorías" (nombre, tipo, músculos preseleccionados y **si suma al ranking**; se ocultan,
+   no se borran), cambiar de
    grupo, admin del grupo / aprobaciones (si corresponde) y **cerrar sesión** (con confirmación).
 9. **Admin**: gestionar miembros del grupo. **Aprobaciones**: aprobar/rechazar
    usuarios globalmente (solo admin maestro).
 
 ## 4. Reglas de dominio
 
-- **"Día entrenado"**: **todo entreno suma** (desde 2026-09; antes decidía
-  `categorias.cuenta`). Se cuentan **días únicos**, no cantidad de entrenos.
+- **"Día entrenado"**: suma lo que la **categoría de cada usuario** diga (`categorias.cuenta`):
+  mi "Fútbol" puede no sumar y el de otro sí. Sin categoría, suma. Se decide **al leer**
+  (`utils/entrenos.ts → cuentaDe`): cambiar la categoría cambia también lo pasado. Se cuentan
+  **días únicos**: dos entrenos el mismo día = 1 día (si alguno suma). Músculos y "por tipo"
+  cuentan todo, sume o no. (Del 2026-09-28 a la mañana siguiente rigió "todo suma".)
 - **Tipo y músculos**: los entrenos nuevos traen `tipo` y `musculos[]`. Los viejos se
   interpretan al leer (`utils/entrenos.ts`, **sin migrar datos**): el tipo sale del nombre
   de la categoría ("Futbol" → fútbol, "Hikking" → otro, si no gym) y los músculos también
   ("Pierna-hombro" → piernas + hombros). Lo que no se reconoce ("Minubi 🥵") suma al
   ranking pero no al mapa de músculos.
-- **Etiquetas** (colección `categorias`): **por usuario**, texto libre opcional del
-  entreno. Se ocultan (`activo=false`), no se borran: los entrenos viejos muestran su nombre.
+- **Categorías** (colección `categorias`): **por usuario**, plantillas de entreno (tipo, músculos
+  preseleccionados, si suma). Se ocultan (`activo=false`), no se borran: los entrenos viejos
+  muestran su nombre y siguen sumando según ella. La **etiqueta** del entreno es texto libre aparte.
 - **Racha (`streak`)**: días consecutivos hasta hoy (o ayer) con al menos una
   asistencia. Se calcula en tiempo real con `onSnapshot` (`useStreak`).
 - **Medallas** (`gamificationService`): por volumen (1/10/50 entrenos) y por
@@ -97,8 +103,10 @@ likes        array    userIds que reaccionaron (feature mayormente inactiva en l
 ```
 userId  string   dueño
 nombre  string   ej. "Pecho-Espalda"
-cuenta  bool     LEGACY: ya no se usa (todo suma)
-activo  bool     ¿aparece como sugerencia? (false = oculta; no se borran)
+tipo    string   "gym" | "futbol" | "running" | "otro"  (desde 2026-09; viejas: se deduce del nombre)
+musculos array   preselección (solo gym; viejas: se deduce del nombre)
+cuenta  bool     ¿los entrenos de esta categoría suman al ranking? (default: sí)
+activo  bool     ¿aparece al registrar? (false = oculta; no se borran)
 ```
 
 ### `grupos`

@@ -8,6 +8,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { Categoria } from "../types";
+import { Musculo, TipoEntreno } from "../config/entrenos";
 
 /**
  * Cache en memoria de la colección de categorías.
@@ -55,13 +56,34 @@ export const cargarMapaCategorias = async (): Promise<Record<string, Categoria>>
   return mapa;
 };
 
-/** Crea una nueva categoría. */
-export const crearCategoria = async ({ userId, nombre, cuenta }: { userId: string; nombre: string; cuenta: boolean }): Promise<void> => {
+export interface DatosCategoria {
+  nombre: string;
+  tipo: TipoEntreno;
+  musculos: Musculo[];
+  /** ¿Suma a días entrenados / ranking / racha? */
+  cuenta: boolean;
+}
+
+/** Crea una categoría personal (plantilla de entreno). */
+export const crearCategoria = async (userId: string, datos: DatosCategoria): Promise<void> => {
   await addDoc(collection(db, "categorias"), {
     userId,
-    nombre: nombre.trim(),
-    cuenta,
+    nombre: datos.nombre.trim(),
+    tipo: datos.tipo,
+    musculos: datos.tipo === "gym" ? datos.musculos : [],
+    cuenta: datos.cuenta,
     activo: true,
+  });
+  invalidarCacheCategorias();
+};
+
+/** Actualiza nombre, tipo, músculos y si suma. */
+export const actualizarCategoria = async (catId: string, datos: DatosCategoria): Promise<void> => {
+  await updateDoc(doc(db, "categorias", catId), {
+    nombre: datos.nombre.trim(),
+    tipo: datos.tipo,
+    musculos: datos.tipo === "gym" ? datos.musculos : [],
+    cuenta: datos.cuenta,
   });
   invalidarCacheCategorias();
 };

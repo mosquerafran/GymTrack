@@ -7,9 +7,9 @@ import { subirFotoEntrenamiento } from "../services/storageService";
 import { chisteRandom } from "../config/constants";
 import { Alerta } from "../config/alertas";
 import { Musculo, TIPOS, TIPOS_ORDEN, TipoEntreno } from "../config/entrenos";
-import { etiquetaDe, musculosDe, tipoDe, NombresCategoria } from "../utils/entrenos";
+import { categoriaIdDe, etiquetaDe, musculosDe, plantillaDe, tipoDe, NombresCategoria } from "../utils/entrenos";
 import { useSexo } from "../hooks/useSexo";
-import { EjercicioRutina, Asistencia } from "../types";
+import { EjercicioRutina, Asistencia, Categoria } from "../types";
 
 // El cuerpo trae ~130 KB de paths SVG: se carga recién cuando se abre el registro.
 const SelectorMusculos = lazy(() => import("./cuerpo/SelectorMusculos"));
@@ -32,7 +32,8 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
   const [tipo, setTipo] = useState<TipoEntreno>("gym");
   const [musculos, setMusculos] = useState<Set<Musculo>>(new Set());
   const [etiqueta, setEtiqueta] = useState("");
-  const [sugerencias, setSugerencias] = useState<string[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [categoriaId, setCategoriaId] = useState(""); // "" = sin categoría (suma)
   const [notas, setNotas] = useState("");
   const [rutina, setRutina] = useState<EjercicioRutina[]>([]);
 
@@ -42,21 +43,23 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
   const inputCamara = useRef<HTMLInputElement>(null);
   const inputGaleria = useRef<HTMLInputElement>(null);
 
-  // Precarga: las etiquetas del usuario (sus categorías de siempre) como sugerencias, y
-  // si edita, los datos del entreno (los docs viejos se interpretan con utils/entrenos).
+  // Precarga: las categorías del usuario (plantillas: tipo + músculos + si suma), y si
+  // edita, los datos del entreno (los docs viejos se interpretan con utils/entrenos).
   useEffect(() => {
     let vivo = true;
     cargarCategoriasActivas(user.uid)
       .then((cats) => {
         if (!vivo) return;
-        setSugerencias(cats.map((c) => c.nombre));
+        setCategorias(cats);
         if (asistenciaAEditar) {
+          const id = categoriaIdDe(asistenciaAEditar);
+          if (cats.some((c) => c.id === id)) setCategoriaId(id);
           const nombres: NombresCategoria = Object.fromEntries(cats.map((c) => [c.id, c.nombre]));
           setTipo(tipoDe(asistenciaAEditar, nombres));
           setEtiqueta(etiquetaDe(asistenciaAEditar, nombres));
         }
       })
-      .catch((err) => console.error("Error cargando etiquetas:", err));
+      .catch((err) => console.error("Error cargando categorías:", err));
 
     if (asistenciaAEditar) {
       setTipo(tipoDe(asistenciaAEditar));
@@ -79,6 +82,21 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
     setFotoPreview(URL.createObjectURL(file));
     e.target.value = ""; // permite volver a elegir la misma foto
   };
+
+  /** Tocar una categoría precarga tipo, músculos y nombre (tocarla de nuevo la saca). */
+  const elegirCategoria = (cat: Categoria) => {
+    if (categoriaId === cat.id) {
+      setCategoriaId("");
+      return;
+    }
+    const { tipo: t, musculos: m } = plantillaDe(cat);
+    setCategoriaId(cat.id || "");
+    setTipo(t);
+    setMusculos(new Set(m));
+    setEtiqueta(cat.nombre);
+  };
+  const categoriaElegida = categorias.find((c) => c.id === categoriaId);
+  const suma = categoriaElegida ? categoriaElegida.cuenta !== false : true;
 
   const agregarEjercicio = () => setRutina([...rutina, { nombre: "" }]);
   const eliminarEjercicio = (i: number) => setRutina(rutina.filter((_, j) => j !== i));
@@ -108,6 +126,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
           tipo,
           musculos: musculosLista,
           etiqueta: etiqueta.trim(),
+          categoriaId,
           sexo,
           notas: notas.trim(),
           rutina: rutinaLimpia,
@@ -122,6 +141,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
           tipo,
           musculos: musculosLista,
           etiqueta,
+          categoriaId: categoriaId || undefined,
           sexo,
           notas,
           rutina: rutinaLimpia,
@@ -134,6 +154,7 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
         setRutina([]);
         setMusculos(new Set());
         setEtiqueta("");
+        setCategoriaId("");
         Alerta.fire({ titleText: "¡Épico! 💪", text: chisteRandom(), icon: "success", confirmButtonText: "Seguir rompiéndola" });
       }
       onCompletado?.();
@@ -196,6 +217,38 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
         <input ref={inputGaleria} type="file" accept="image/*" className="hidden" onChange={elegirFoto} />
       </section>
 
+      {/* Tus categorías: precargan todo */}
+      {categorias.length > 0 && (
+        <section aria-labelledby="ts-cats">
+          <div className="flex justify-between items-baseline mb-2">
+            <span id="ts-cats" className="eyebrow">Tu categoría</span>
+            <span className="font-mono text-xs text-textMuted">precarga tipo y músculos</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby="ts-cats">
+            {categorias.map((c) => {
+              const activa = c.id === categoriaId;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  aria-pressed={activa}
+                  onClick={() => elegirCategoria(c)}
+                  className={`min-h-[52px] px-3 py-2 rounded-2xl border-[1.5px] text-left transition-colors ${activa ? "border-primary bg-primary/10 text-primary" : "border-borderBase bg-background text-textMain"}`}
+                >
+                  <span className="block font-semibold truncate">{c.nombre}</span>
+                  {c.cuenta === false && <span className="block text-xs text-textMuted">No suma</span>}
+                </button>
+              );
+            })}
+          </div>
+          <p className={`mt-2 text-sm ${suma ? "text-textMuted" : "text-primary font-semibold"}`} aria-live="polite">
+            {categoriaElegida
+              ? suma ? "Este entreno suma al ranking." : `"${categoriaElegida.nombre}" no suma al ranking (lo elegiste en Ajustes).`
+              : "Sin categoría: suma al ranking."}
+          </p>
+        </section>
+      )}
+
       {/* Tipo */}
       <section aria-labelledby="ts-tipo">
         <span id="ts-tipo" className="eyebrow block mb-2">Tipo de entreno</span>
@@ -230,11 +283,11 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
         </Suspense>
       ) : (
         <p className="rounded-2xl border border-dashed border-borderBase bg-background p-4 text-sm text-textMuted">
-          <strong className="text-textMain">{TIPOS[tipo].emoji} {TIPOS[tipo].nombre}.</strong> Suma al ranking igual que el gym. Usá la etiqueta para contar qué fue.
+          <strong className="text-textMain">{TIPOS[tipo].emoji} {TIPOS[tipo].nombre}.</strong> No hace falta marcar músculos. Usá la etiqueta para contar qué fue.
         </p>
       )}
 
-      {/* Etiqueta libre con sugerencias */}
+      {/* Etiqueta libre (si elegiste categoría, arranca con su nombre) */}
       <section>
         <div className="flex justify-between items-baseline mb-2">
           <label htmlFor="ts-etiqueta" className="eyebrow">Etiqueta</label>
@@ -249,20 +302,6 @@ export default function TrainingSelector({ fecha, user, grupoId, asistenciaAEdit
           value={etiqueta}
           onChange={(e) => setEtiqueta(e.target.value)}
         />
-        {sugerencias.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
-            {sugerencias.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setEtiqueta(s)}
-                className={`min-h-[40px] px-3.5 rounded-full border text-sm font-semibold ${etiqueta === s ? "border-primary text-primary bg-primary/10" : "border-borderBase bg-background text-textMain"}`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
       </section>
 
       {/* PRs */}

@@ -145,6 +145,37 @@ export const diasPorMusculo = (
   return res;
 };
 
+// ── Qué suma al ranking ────────────────────────────────────────────────────────
+
+/** Lo que hace falta de una categoría para saber si suma y qué precarga. */
+export interface CategoriaLeida {
+  nombre?: string;
+  cuenta?: boolean;
+  tipo?: unknown;
+  musculos?: unknown;
+}
+
+/**
+ * ¿El entreno suma a días entrenados, ranking, racha y meta? Lo decide la categoría de cada
+ * usuario (su "Fútbol" puede no sumar y el de otro sí). Sin categoría, o si la categoría ya
+ * no existe: suma. Se calcula al leer: cambiar la categoría cambia también lo pasado.
+ */
+export const cuentaDe = (a: EntrenoLeido, categorias: Record<string, CategoriaLeida | undefined>): boolean => {
+  const id = categoriaIdDe(a);
+  if (!id) return true;
+  return categorias[id]?.cuenta !== false;
+};
+
+/** Tipo y músculos que precarga una categoría (las viejas: deducidos de su nombre). */
+export const plantillaDe = (c: CategoriaLeida): { tipo: TipoEntreno; musculos: Musculo[] } => {
+  const nombre = c.nombre || "";
+  const tipo = esTipoEntreno(c.tipo) ? c.tipo : tipoDe({ categoriaId: "x" }, { x: nombre });
+  const musculos = Array.isArray(c.musculos)
+    ? MUSCULOS.map((m) => m.id).filter((id) => (c.musculos as unknown[]).includes(id))
+    : tipo === "gym" ? musculosDeNombre(nombre) : [];
+  return { tipo, musculos: tipo === "gym" ? musculos : [] };
+};
+
 // ── Stats por músculo ──────────────────────────────────────────────────────────
 
 export const TREN_INFERIOR: Musculo[] = ["gluteos", "cuadriceps", "isquios", "aductores", "gemelos"];

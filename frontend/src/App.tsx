@@ -12,6 +12,7 @@ import Home from "./pages/Home";
 import Hoja from "./components/ui/Hoja";
 import { Spinner } from "./components/ui/Estados";
 import { Asistencia, Grupo } from "./types";
+import { formatDateLocal, parseFechaLocal } from "./utils/date";
 
 // Lazy Loading
 const Stats = lazy(() => import("./pages/Stats"));
@@ -154,11 +155,27 @@ export default function App(): React.ReactElement {
         onCerrar={() => setRegistro(null)}
         titulo={registro?.editar ? "Editar entreno" : "Registrar"}
         completa
-        accion={registro && (
+        accion={registro && (registro.editar ? (
           <span className="font-heading text-sm uppercase tracking-wide px-3 py-2 rounded-xl border border-borderBase bg-background whitespace-nowrap">
             {fechaCorta(registro.fecha)}
           </span>
-        )}
+        ) : (
+          // Tocar la fecha abre el calendario del celu: se puede cargar un día anterior (nunca a futuro).
+          <label className="relative font-heading text-sm uppercase tracking-wide min-h-tap flex items-center gap-1 px-3 rounded-xl border border-primary/50 text-primary bg-background whitespace-nowrap cursor-pointer">
+            {fechaCorta(registro.fecha)} ▾
+            <input
+              type="date"
+              aria-label="Fecha del entreno"
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              value={formatDateLocal(registro.fecha)}
+              max={formatDateLocal(new Date())}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v && v <= formatDateLocal(new Date())) setRegistro({ fecha: parseFechaLocal(v) });
+              }}
+            />
+          </label>
+        ))}
       >
         {registro && (
           <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>

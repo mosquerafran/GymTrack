@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { User } from "firebase/auth";
 import { db } from "../config/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { Grupo, Asistencia } from "../types";
+import { Grupo, Asistencia, Categoria } from "../types";
+import { cargarMapaCategorias } from "../services/categoriasService";
+import { cuentaDe } from "../utils/entrenos";
 
 /**
  * Hook que calcula la racha de días consecutivos de entrenamiento.
@@ -23,12 +25,17 @@ export function useStreak(user: User | null, grupoActivo: Grupo | null) {
       where("grupoId", "==", grupoActivo.id)
     );
 
-    const unsubscribe = onSnapshot(q, (snap) => {
+    let categorias: Record<string, Categoria> = {};
+    cargarMapaCategorias().then((m) => { categorias = m; }).catch(() => {});
+
+    const unsubscribe = onSnapshot(q, async (snap) => {
       try {
+        if (!Object.keys(categorias).length) categorias = await cargarMapaCategorias().catch(() => ({}));
         const fechasSet = new Set<string>();
         snap.forEach((document) => {
           const data = document.data() as Asistencia;
-          if (data.fecha) fechasSet.add(data.fecha);
+          // Solo lo que suma (la categoría de cada uno decide; sin categoría, suma).
+          if (data.fecha && cuentaDe(data, categorias)) fechasSet.add(data.fecha);
         });
 
         const fechas = Array.from(fechasSet).sort((a: string, b: string) => b.localeCompare(a));

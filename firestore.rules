@@ -98,12 +98,14 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // ── Categorías (pasan a ser "etiquetas" del entreno) ──────────────────────
+    // ── Categorías: plantillas personales (tipo, músculos, si suma al ranking) ──
     match /categorias/{catId} {
       function categoriaValida() {
         return textoOk("nombre", 40)
           && (!("cuenta" in camposTocados()) || request.resource.data.cuenta is bool)
-          && (!("activo" in camposTocados()) || request.resource.data.activo is bool);
+          && (!("activo" in camposTocados()) || request.resource.data.activo is bool)
+          && (!("tipo" in camposTocados()) || request.resource.data.tipo in ["gym", "futbol", "running", "otro"])
+          && listaOk("musculos", 20);
       }
 
       allow read: if logueado();

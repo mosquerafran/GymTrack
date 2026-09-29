@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { User } from "firebase/auth";
 import { Check, Plus } from "lucide-react";
 import { chisteRandom } from "../config/constants";
-import { cargarAsistenciasMesUsuario } from "../services/asistenciasService";
+import { cargarAsistenciasMesUsuario, EntrenoDelDia } from "../services/asistenciasService";
+import { cargarMapaCategorias } from "../services/categoriasService";
+import { cuentaDe } from "../utils/entrenos";
 import { obtenerMetaSemanal } from "../services/usuarioService";
 import { formatDateLocal, inicioSemanaLocal } from "../utils/date";
 import { META_SEMANAL_DEFAULT } from "../types";
@@ -22,8 +24,10 @@ const DIAS = ["L", "M", "M", "J", "V", "S", "D"];
 /** Inicio: registrar hoy (primero, sin scrollear), la semana contra la meta y el calendario. */
 export default function Home({ user, grupoId, onRegistrar, onAbrirDia, refresco }: HomeProps): React.ReactElement {
   const [mesVisible, setMesVisible] = useState<Date>(new Date());
-  const [entrenosMes, setEntrenosMes] = useState<Record<string, string[]>>({});
+  const [entrenosMes, setEntrenosMes] = useState<Record<string, EntrenoDelDia[]>>({});
+  // Días de la semana con algún entreno, y los que además SUMAN (según sus categorías).
   const [diasSemana, setDiasSemana] = useState<Set<string>>(new Set());
+  const [diasQueSuman, setDiasQueSuman] = useState<Set<string>>(new Set());
   const [meta, setMeta] = useState<number>(META_SEMANAL_DEFAULT);
   const [frase] = useState<string>(() => chisteRandom());
 
@@ -42,10 +46,20 @@ export default function Home({ user, grupoId, onRegistrar, onAbrirDia, refresco 
     try {
       const meses = [hoy];
       if (lunes.getMonth() !== hoy.getMonth()) meses.push(lunes);
-      const mapas = await Promise.all(meses.map((m) => cargarAsistenciasMesUsuario(grupoId, nombre, m)));
+      const [cats, ...mapas] = await Promise.all([
+        cargarMapaCategorias(),
+        ...meses.map((m) => cargarAsistenciasMesUsuario(grupoId, nombre, m)),
+      ]);
       const dias = new Set<string>();
-      for (const mapa of mapas) for (const [f, lista] of Object.entries(mapa)) if (lista.length) dias.add(f);
+      const suman = new Set<string>();
+      for (const mapa of mapas) {
+        for (const [f, lista] of Object.entries(mapa)) {
+          if (lista.length) dias.add(f);
+          if (lista.some((a) => cuentaDe(a, cats))) suman.add(f);
+        }
+      }
       setDiasSemana(dias);
+      setDiasQueSuman(suman);
     } catch (err) {
       console.error("Error cargando la semana:", err);
     }
@@ -70,7 +84,7 @@ export default function Home({ user, grupoId, onRegistrar, onAbrirDia, refresco 
   }, [user.email]);
 
   const hechoHoy = diasSemana.has(hoyStr);
-  const diasHechos = semana.filter((d) => diasSemana.has(d)).length;
+  const diasHechos = semana.filter((d) => diasQueSuman.has(d)).length;
   const fechaHoy = hoy.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
 
   return (
@@ -94,8 +108,13 @@ export default function Home({ user, grupoId, onRegistrar, onAbrirDia, refresco 
               </span>
               <span className="min-w-0">
                 <b className="block font-heading text-base uppercase tracking-wide">Hoy ya entrenaste</b>
-                <span className="text-sm text-textMuted">Tocá para ver o editar el registro.</span>
+                <span className="text-sm text-textMuted">Tocá para ver o editar lo de hoy.</span>
               </span>
+            </button>
+          ) : null}
+          {hechoHoy ? (
+            <button type="button" className="btn-secondary w-full" onClick={() => onRegistrar(hoy)}>
+              <Plus size={20} aria-hidden="true" /> Agregar otro entreno
             </button>
           ) : (
             <button type="button" className="btn-primary w-full min-h-[56px] text-lg" onClick={() => onRegistrar(hoy)}>
@@ -114,13 +133,14 @@ export default function Home({ user, grupoId, onRegistrar, onAbrirDia, refresco 
           <ol className="grid grid-cols-7 gap-1.5">
             {semana.map((d, i) => {
               const hecho = diasSemana.has(d);
+              const suma = diasQueSuman.has(d);
               const esHoy = d === hoyStr;
               return (
                 <li key={d} className={`flex flex-col items-center gap-1 font-mono text-xs ${esHoy ? "text-textMain font-bold" : "text-textMuted"}`}>
                   <span
                     className={`w-full max-w-[40px] aspect-square rounded-xl grid place-items-center
-                      ${hecho ? "bg-primary text-white" : esHoy ? "border-2 border-primary" : "border-[1.5px] border-dashed border-borderBase"}`}
-                    aria-label={`${DIAS[i]}: ${hecho ? "entrenaste" : "sin entreno"}`}
+                      ${suma ? "bg-primary text-white" : hecho ? "border-2 border-primary text-primary" : esHoy ? "border-2 border-primary" : "border-[1.5px] border-dashed border-borderBase"}`}
+                    aria-label={`${DIAS[i]}: ${suma ? "entrenaste" : hecho ? "entrenaste, no suma" : "sin entreno"}`}
                   >
                     {hecho && <Check size={16} strokeWidth={3} aria-hidden="true" />}
                   </span>

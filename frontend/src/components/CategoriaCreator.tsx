@@ -1,31 +1,41 @@
-import React, { useState, useEffect } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import { User } from "firebase/auth";
+import { Tag, Plus, EyeOff, Eye, ChevronDown, ChevronRight } from "lucide-react";
 import {
   cargarCategorias,
   crearCategoria,
-  renombrarCategoria,
+  actualizarCategoria,
   toggleActivoCategoria,
+  DatosCategoria,
 } from "../services/categoriasService";
-import { Tag, Plus, Edit2, Check, X, EyeOff, Eye, ChevronDown } from "lucide-react";
 import { Alerta } from "../config/alertas";
+import { Musculo, NOMBRE_MUSCULO, TIPOS, TIPOS_ORDEN } from "../config/entrenos";
+import { plantillaDe } from "../utils/entrenos";
+import { useSexo } from "../hooks/useSexo";
+import Hoja from "./ui/Hoja";
 import { Categoria } from "../types";
+
+const SelectorMusculos = lazy(() => import("./cuerpo/SelectorMusculos"));
 
 interface CategoriaCreatorProps {
   user: User;
 }
 
+const VACIA: DatosCategoria = { nombre: "", tipo: "gym", musculos: [], cuenta: true };
+
 /**
- * "Tus etiquetas": las viejas categorías, ahora sugerencias para la etiqueta del registro.
- * No se borran: se ocultan (activo=false). Así los entrenos viejos que las usan siguen
- * mostrando su nombre en el muro y en el detalle del día.
+ * "Tus categorías": plantillas personales de entreno. Cada una precarga tipo, músculos y
+ * nombre al registrar, y decide si SUMA al ranking (tu "Fútbol" puede no sumar y el de otro sí).
+ * No se borran: se ocultan (activo=false), así los entrenos viejos siguen mostrando su nombre.
  */
 export default function CategoriaCreator({ user }: CategoriaCreatorProps): React.ReactElement {
+  const sexo = useSexo(user.email);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [nombre, setNombre] = useState("");
   const [loading, setLoading] = useState(true);
-  const [editando, setEditando] = useState<string | null>(null);
-  const [editNombre, setEditNombre] = useState("");
   const [verOcultas, setVerOcultas] = useState(false);
+  // Edición: null = cerrado; id "" = nueva.
+  const [editando, setEditando] = useState<{ id: string; datos: DatosCategoria } | null>(null);
+  const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     if (user) cargar();
@@ -38,7 +48,7 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
       setCategorias(await cargarCategorias(user.uid));
     } catch (e) {
       console.error(e);
-      Alerta.fire({ titleText: "No se pudieron cargar tus etiquetas", icon: "error", confirmButtonText: "Entendido" });
+      Alerta.fire({ titleText: "No se pudieron cargar tus categorías", icon: "error", confirmButtonText: "Entendido" });
     }
     setLoading(false);
   };
@@ -48,29 +58,27 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
     Alerta.fire({ titleText: "No se pudo guardar", text: "Revisá la conexión y probá de nuevo.", icon: "error", confirmButtonText: "Entendido" });
   };
 
-  const crear = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const limpio = nombre.trim();
-    if (!limpio) return;
-    try {
-      await crearCategoria({ userId: user.uid, nombre: limpio, cuenta: true });
-      setNombre("");
-      cargar();
-    } catch (err) {
-      fallo(err);
-    }
+  const abrir = (cat?: Categoria) => {
+    if (!cat) return setEditando({ id: "", datos: { ...VACIA } });
+    const { tipo, musculos } = plantillaDe(cat);
+    setEditando({ id: cat.id || "", datos: { nombre: cat.nombre, tipo, musculos, cuenta: cat.cuenta !== false } });
   };
 
-  const guardarEdicion = async (e: React.FormEvent, id: string) => {
-    e.preventDefault();
-    if (!editNombre.trim()) return;
+  const cambiar = (parcial: Partial<DatosCategoria>) =>
+    setEditando((e) => (e ? { ...e, datos: { ...e.datos, ...parcial } } : e));
+
+  const guardar = async () => {
+    if (!editando || !editando.datos.nombre.trim() || guardando) return;
+    setGuardando(true);
     try {
-      await renombrarCategoria(id, editNombre);
+      if (editando.id) await actualizarCategoria(editando.id, editando.datos);
+      else await crearCategoria(user.uid, editando.datos);
       setEditando(null);
       cargar();
     } catch (err) {
       fallo(err);
     }
+    setGuardando(false);
   };
 
   const alternarOculta = async (cat: Categoria) => {
@@ -85,82 +93,61 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
   const visibles = categorias.filter((c) => c.activo !== false);
   const ocultas = categorias.filter((c) => c.activo === false);
 
+  const resumen = (cat: Categoria) => {
+    const { tipo, musculos } = plantillaDe(cat);
+    return tipo === "gym" && musculos.length
+      ? musculos.map((m) => NOMBRE_MUSCULO[m]).join(" · ")
+      : `${TIPOS[tipo].emoji} ${TIPOS[tipo].nombre}`;
+  };
+
   const fila = (cat: Categoria) => (
-    <li key={cat.id} className="flex items-center gap-1 min-h-[52px] border-t border-borderBase first:border-t-0">
-      {editando === cat.id ? (
-        <form className="flex-1 flex items-center gap-1" onSubmit={(e) => guardarEdicion(e, cat.id!)}>
-          <input
-            className="input-field !py-2 flex-1 min-w-0"
-            value={editNombre}
-            maxLength={40}
-            aria-label={`Nuevo nombre para ${cat.nombre}`}
-            onChange={(e) => setEditNombre(e.target.value)}
-            autoFocus
-          />
-          <button type="submit" className="btn-icon text-primary" aria-label="Guardar nombre"><Check size={20} /></button>
-          <button type="button" onClick={() => setEditando(null)} className="btn-icon text-textMuted" aria-label="Cancelar"><X size={20} /></button>
-        </form>
-      ) : (
-        <>
-          <span className={`flex-1 min-w-0 truncate font-semibold ${cat.activo === false ? "text-textMuted" : "text-textMain"}`}>{cat.nombre}</span>
-          {cat.activo !== false && (
-            <button
-              type="button"
-              onClick={() => { setEditando(cat.id || null); setEditNombre(cat.nombre); }}
-              className="btn-icon text-textMuted"
-              aria-label={`Renombrar ${cat.nombre}`}
-            >
-              <Edit2 size={18} />
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => alternarOculta(cat)}
-            className="btn-icon text-textMuted"
-            aria-label={cat.activo === false ? `Volver a mostrar ${cat.nombre}` : `Ocultar ${cat.nombre}`}
-          >
-            {cat.activo === false ? <Eye size={18} /> : <EyeOff size={18} />}
-          </button>
-        </>
-      )}
+    <li key={cat.id} className="flex items-center gap-1 border-t border-borderBase first:border-t-0">
+      <button
+        type="button"
+        onClick={() => (cat.activo === false ? alternarOculta(cat) : abrir(cat))}
+        className="flex-1 min-w-0 flex items-center gap-2 min-h-[60px] text-left"
+        aria-label={cat.activo === false ? `Volver a mostrar ${cat.nombre}` : `Editar ${cat.nombre}`}
+      >
+        <span className="flex-1 min-w-0">
+          <span className={`block font-semibold truncate ${cat.activo === false ? "text-textMuted" : ""}`}>{cat.nombre}</span>
+          <span className="block text-sm text-textMuted truncate">{resumen(cat)}</span>
+        </span>
+        {cat.activo !== false && (
+          <span className={`shrink-0 text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-lg ${cat.cuenta !== false ? "bg-primary/10 text-primary" : "bg-surfaceHighlight text-textMuted"}`}>
+            {cat.cuenta !== false ? "Suma" : "No suma"}
+          </span>
+        )}
+        {cat.activo === false ? <Eye size={18} className="text-textMuted shrink-0" aria-hidden="true" /> : <ChevronRight size={18} className="text-textMuted shrink-0" aria-hidden="true" />}
+      </button>
     </li>
   );
+
+  const d = editando?.datos;
 
   return (
     <div className="glass-panel p-5 sm:p-6 space-y-4">
       <div>
         <h3 className="font-heading text-lg uppercase tracking-wide text-textMain flex items-center gap-2">
-          <Tag size={20} className="text-accent" /> Tus etiquetas
+          <Tag size={20} className="text-accent" /> Tus categorías
         </h3>
         <p className="text-sm text-textMuted mt-1">
-          Aparecen como sugerencia al registrar. Ocultar una no cambia tus entrenos viejos.
+          Al registrar, elegís una y se cargan solos el tipo y los músculos. Vos decidís cuáles suman al ranking.
         </p>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-6">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+          <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-primary border-t-transparent" />
         </div>
       ) : visibles.length === 0 ? (
-        <p className="text-sm text-textMuted py-2">Todavía no tenés etiquetas. Creá una abajo.</p>
+        <p className="text-sm text-textMuted py-2">Todavía no tenés categorías. Creá la primera.</p>
       ) : (
         <ul>{visibles.map(fila)}</ul>
       )}
 
-      <form className="flex gap-2" onSubmit={crear}>
-        <input
-          className="input-field flex-1 min-w-0"
-          type="text"
-          maxLength={40}
-          placeholder="Nueva etiqueta (ej: Push pesado)"
-          aria-label="Nueva etiqueta"
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
-        />
-        <button type="submit" className="btn-accent !px-0 w-12 shrink-0" aria-label="Agregar etiqueta" disabled={!nombre.trim()}>
-          <Plus size={22} />
-        </button>
-      </form>
+      <button type="button" onClick={() => abrir()} className="btn-secondary w-full">
+        <Plus size={20} aria-hidden="true" /> Nueva categoría
+      </button>
 
       {ocultas.length > 0 && (
         <div>
@@ -170,12 +157,97 @@ export default function CategoriaCreator({ user }: CategoriaCreatorProps): React
             aria-expanded={verOcultas}
             className="w-full min-h-tap flex items-center justify-between text-sm font-semibold text-textMuted"
           >
-            Ocultas ({ocultas.length})
+            Ocultas ({ocultas.length}) · tocá una para volver a mostrarla
             <ChevronDown size={18} className={`transition-transform ${verOcultas ? "rotate-180" : ""}`} />
           </button>
           {verOcultas && <ul>{ocultas.map(fila)}</ul>}
         </div>
       )}
+
+      {/* Editor (panel desde abajo) */}
+      <Hoja
+        abierta={!!editando}
+        onCerrar={() => setEditando(null)}
+        titulo={editando?.id ? "Editar categoría" : "Nueva categoría"}
+        completa
+      >
+        {d && (
+          <div className="space-y-6">
+            <label className="block">
+              <span className="eyebrow block mb-2">Nombre</span>
+              <input
+                type="text"
+                className="input-field"
+                maxLength={40}
+                placeholder="Ej: Pecho-bíceps"
+                value={d.nombre}
+                onChange={(e) => cambiar({ nombre: e.target.value })}
+              />
+            </label>
+
+            <div>
+              <span className="eyebrow block mb-2">Tipo</span>
+              <div className="grid grid-cols-4 gap-2" role="group" aria-label="Tipo">
+                {TIPOS_ORDEN.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    aria-pressed={d.tipo === t}
+                    onClick={() => cambiar({ tipo: t })}
+                    className={`min-h-[60px] rounded-2xl border-[1.5px] flex flex-col items-center justify-center gap-0.5 font-heading text-[13px] uppercase tracking-wide ${d.tipo === t ? "border-primary bg-primary/10 text-primary" : "border-borderBase bg-background"}`}
+                  >
+                    <span className="text-xl leading-none" aria-hidden="true">{TIPOS[t].emoji}</span>
+                    {TIPOS[t].nombre}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {d.tipo === "gym" && (
+              <Suspense fallback={<div className="h-[360px] rounded-2xl bg-background animate-pulse" />}>
+                <SelectorMusculos
+                  sexo={sexo}
+                  seleccion={new Set(d.musculos)}
+                  onChange={(s: Set<Musculo>) => cambiar({ musculos: Array.from(s) })}
+                />
+              </Suspense>
+            )}
+
+            <label className="flex items-center justify-between gap-3 min-h-[56px] px-4 rounded-2xl border border-borderBase bg-background cursor-pointer">
+              <span>
+                <span className="block font-semibold">Suma al ranking</span>
+                <span className="block text-sm text-textMuted">Días entrenados, racha y meta semanal.</span>
+              </span>
+              <input
+                type="checkbox"
+                role="switch"
+                checked={d.cuenta}
+                onChange={(e) => cambiar({ cuenta: e.target.checked })}
+                className="w-6 h-6 accent-primary shrink-0"
+              />
+            </label>
+
+            <div className="sticky bottom-0 -mx-4 -mb-4 px-4 pt-3 pb-safe-3 bg-surface border-t border-borderBase space-y-2">
+              <button type="button" className="btn-primary w-full min-h-[52px]" onClick={guardar} disabled={!d.nombre.trim() || guardando}>
+                {guardando ? "Guardando…" : "Guardar categoría"}
+              </button>
+              {editando?.id && (
+                <button
+                  type="button"
+                  className="w-full min-h-tap flex items-center justify-center gap-2 text-sm font-semibold text-textMuted"
+                  onClick={() => {
+                    const cat = categorias.find((c) => c.id === editando.id);
+                    setEditando(null);
+                    if (cat) alternarOculta(cat);
+                  }}
+                >
+                  <EyeOff size={18} aria-hidden="true" /> Ocultar categoría
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </Hoja>
     </div>
   );
 }

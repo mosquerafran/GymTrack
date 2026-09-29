@@ -1,5 +1,7 @@
 import {
   conteoPorTipo,
+  cuentaDe,
+  plantillaDe,
   descripcionDe,
   diasEntrenados,
   diasPorMusculo,
@@ -155,5 +157,47 @@ describe("stats por músculo", () => {
 
   test("nivelDeCalor según umbrales", () => {
     expect([0, 1, 2, 3, 5, 6].map((d) => nivelDeCalor(d, [1, 3, 6]))).toEqual([0, 1, 1, 2, 2, 3]);
+  });
+});
+
+describe("qué suma al ranking (lo decide la categoría de cada uno)", () => {
+  const cats = {
+    futFran: { nombre: "Fútbol", cuenta: false },
+    futPedro: { nombre: "Fútbol", cuenta: true },
+    push: { nombre: "Push" }, // viejas sin el campo: suman
+  };
+
+  test("mi Fútbol no suma, el de Pedro sí; sin categoría o categoría borrada, suma", () => {
+    expect(cuentaDe({ categoriaId: "futFran" }, cats)).toBe(false);
+    expect(cuentaDe({ catId: "futFran" }, cats)).toBe(false); // docs viejos con catId
+    expect(cuentaDe({ categoriaId: "futPedro" }, cats)).toBe(true);
+    expect(cuentaDe({ categoriaId: "push" }, cats)).toBe(true);
+    expect(cuentaDe({ tipo: "gym" }, cats)).toBe(true);
+    expect(cuentaDe({ categoriaId: "borrada" }, cats)).toBe(true);
+  });
+
+  test("dos entrenos el mismo día: el día suma si alguno suma", () => {
+    const dia = [
+      { fecha: "2026-09-28", categoriaId: "futFran" },
+      { fecha: "2026-09-28", categoriaId: "push" },
+    ];
+    expect([...diasEntrenados(dia.filter((a) => cuentaDe(a, cats)))]).toEqual(["2026-09-28"]);
+    expect([...diasEntrenados(dia.slice(0, 1).filter((a) => cuentaDe(a, cats)))]).toEqual([]);
+  });
+});
+
+describe("plantillaDe (lo que precarga una categoría)", () => {
+  test("usa tipo y músculos guardados", () => {
+    expect(plantillaDe({ nombre: "X", tipo: "gym", musculos: ["biceps", "pecho", "cualquiera"] }))
+      .toEqual({ tipo: "gym", musculos: ["pecho", "biceps"] });
+  });
+
+  test("categorías viejas: los deduce del nombre", () => {
+    expect(plantillaDe({ nombre: "Pecho-biceps" })).toEqual({ tipo: "gym", musculos: ["pecho", "biceps"] });
+    expect(plantillaDe({ nombre: "Futbol" })).toEqual({ tipo: "futbol", musculos: [] });
+  });
+
+  test("si no es gym, sin músculos aunque tenga guardados", () => {
+    expect(plantillaDe({ nombre: "Fútbol", tipo: "futbol", musculos: ["cuadriceps"] })).toEqual({ tipo: "futbol", musculos: [] });
   });
 });

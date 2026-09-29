@@ -417,6 +417,24 @@ describe("categorias", () => {
     await assertSucceeds(deleteDoc(doc(db(BETO), "categorias/cat1")));
   });
 
+  test("crear y editar una categoría con tipo, músculos y si suma (Ajustes)", async () => {
+    await assertSucceeds(setDoc(doc(db(BETO), "categorias/c-nueva"), {
+      userId: BETO.uid, nombre: "Pecho-bíceps", tipo: "gym", musculos: ["pecho", "biceps"], cuenta: true, activo: true,
+    }));
+    await assertSucceeds(updateDoc(doc(db(BETO), "categorias/cat1"), {
+      nombre: "Fútbol", tipo: "futbol", musculos: [], cuenta: false,
+    }));
+  });
+
+  test("NO acepta un tipo inventado ni una lista de músculos gigante", async () => {
+    await assertFails(updateDoc(doc(db(BETO), "categorias/cat1"), { tipo: "hackeo" }));
+    await assertFails(updateDoc(doc(db(BETO), "categorias/cat1"), { musculos: Array.from({ length: 21 }, () => "pecho") }));
+  });
+
+  test("registrar un entreno con categoría (categoriaId) funciona", async () => {
+    await assertSucceeds(setDoc(doc(db(BETO), "asistencias/con-cat"), nuevaAsistencia(BETO, { categoriaId: "cat1", tipo: "gym" })));
+  });
+
   test("togglear una categoría legacy con nombre largo funciona", async () => {
     await assertSucceeds(updateDoc(doc(db(BETO), "categorias/cat-larga"), { activo: false }));
   });

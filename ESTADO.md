@@ -39,6 +39,10 @@ rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 
 ## 3. Pendientes (sin fecha)
 
+- ⬜ **Pasada de diseño** (pedida 2026-09-28): paleta **blanco y negro sobria** al estilo del logo,
+  logo en toda la app, tablas y gráficos con la **estética geométrica** del gorila, y **nombre nuevo**
+  para la app. Arrancar por maqueta (y opciones de nombre).
+
 - ⬜ **App Check** (bloquear scripts que no son la app): configurar reCAPTCHA en la consola primero.
 - ⬜ **PWA**: service worker/offline, ícono maskable real, y probar el login en la app instalada de iOS
   (`signInWithPopup` en standalone). Ver worklog `2026-09-28/04` → pendientes.

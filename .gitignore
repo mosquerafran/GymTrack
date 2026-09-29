@@ -32,5 +32,6 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
-# Hoja de marca de King Concretos (fuente del logo, con datos de contacto): solo local
-docs/logo/
+# Hoja de marca de King Concretos (fuente del logo, con datos de contacto): solo local.
+# Lo derivado (gorila.svg, iconos/, proceso/) sí se versiona.
+docs/logo/image.png

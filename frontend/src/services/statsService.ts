@@ -5,6 +5,7 @@ import { Asistencia } from "../types";
 import { Musculo, TipoEntreno } from "../config/entrenos";
 import {
   conteoPorTipo,
+  cuentaDe,
   diasEntrenados,
   diasPorMusculo,
   diasPorTren,
@@ -128,15 +129,16 @@ export const calcularStats = async (
   const diasPosibles = Math.max(1, diasTranscurridos(inicioPeriodo, hoy));
   const pct = (dias: number) => Math.min(100, Math.round((dias / diasPosibles) * 100));
 
-  // 2. Días entrenados: TODO entreno suma (desde 2026-09 ya no se mira categorias.cuenta).
-  //    Los docs viejos (catId, categorías borradas) también cuentan: utils/entrenos.ts.
+  // 2. Días entrenados: suma lo que la categoría de cada uno dice (su "Fútbol" puede no sumar);
+  //    sin categoría, suma (utils/entrenos.ts → cuentaDe). Músculos y tipos cuentan TODO.
   const nombres: NombresCategoria = Object.fromEntries(
     Object.entries(mapaCategorias).map(([id, c]) => [id, c.nombre])
   );
   const datos = (docs: QueryDocumentSnapshot<DocumentData>[]) => docs.map((d) => d.data() as Asistencia);
 
   const misDatosPeriodo = datos(misAsisFiltradas);
-  const diasPeriodo = diasEntrenados(misDatosPeriodo);
+  const suma = (a: Asistencia) => cuentaDe(a, mapaCategorias);
+  const diasPeriodo = diasEntrenados(misDatosPeriodo.filter(suma));
 
   // 3. Ranking (agrupado por userName, como siempre: context.md §9.4)
   const porUsuario: Record<string, Asistencia[]> = {};
@@ -146,14 +148,14 @@ export const calcularStats = async (
   }
   const ranking: RankingUser[] = Object.entries(porUsuario)
     .map(([nombre, lista]) => {
-      const dias = diasEntrenados(lista).size;
+      const dias = diasEntrenados(lista.filter(suma)).size;
       return { nombre, dias, porcentaje: pct(dias), porTipo: conteoPorTipo(lista, nombres) };
     })
     .sort((a, b) => b.dias - a.dias);
 
   // 4. Rachas, semana, heatmaps: sobre TODO el historial del usuario (no el período).
   const misDatosTodos = datos(misAsistencias);
-  const diasCuentaTodos = diasEntrenados(misDatosTodos);
+  const diasCuentaTodos = diasEntrenados(misDatosTodos.filter(suma));
 
   const { actual: rachaActual, record: rachaRecord } = calcularRachas(diasCuentaTodos);
 
