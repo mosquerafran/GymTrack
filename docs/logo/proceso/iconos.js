@@ -4,7 +4,6 @@ const fs = require("fs");
 const { svgPathBbox } = require("svg-path-bbox");
 
 const PUB = "E:/Proyectos-Trabajos/gym-tracker/frontend/public/";
-const SRC = "E:/Proyectos-Trabajos/gym-tracker/frontend/src/assets/";
 const OUT = "../logo/";
 const CARBON = "#0b0b0b"; // fondo oscuro "Fragua" (theme_color del manifest)
 const HUESO = "#f2f2ef";  // hueso (texto en oscuro)
@@ -16,10 +15,7 @@ const w = x1 - x0, h = y1 - y0;
 const vb = `${x0.toFixed(1)} ${y0.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`;
 console.log("bbox", vb, "ratio", (w / h).toFixed(3));
 
-// 1) SVG del gorila solo (para la app: toma el color del texto con currentColor)
-const gorilaSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" fill="currentColor" fill-rule="evenodd"><path d="${d}"/></svg>\n`;
-fs.mkdirSync(SRC, { recursive: true });
-fs.writeFileSync(SRC + "gorila.svg", gorilaSvg);
+// (El gorila para la app vive en frontend/src/components/Logo.tsx; el vector, en docs/logo/gorila.svg.)
 
 // 2) Ícono cuadrado: gorila centrado ocupando `escala` del lado, sobre carbón.
 const icono = (lado, escala, redondeo) => {
