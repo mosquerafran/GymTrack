@@ -3,46 +3,47 @@
 @tailwind utilities;
 
 /*
-  ── Identidad "Hierro Forjado" (rústico + moderno) ─────────────────────────────
-  Paleta cálida: charcoal / concreto + naranja óxido (hierro al rojo) + bronce +
-  hueso/tiza. Tipografía de póster (Anton) + condensada (Oswald) + mono industrial
-  (Space Mono). Paneles mate (sin vidrio), bordes finos y un grano sutil.
+  ── Identidad "Silverback" (2026-09) ────────────────────────────────────────────────
+  Sale del logo (el gorila facetado de King Concretos, con permiso): blanco y negro
+  sobrio + el rojo de la marca (#E30A26) SOLO en lo que importa (registrar, racha,
+  el primero). Tipografía Poppins pesada (la de la marca) + Space Mono para etiquetas.
+  Sello geométrico: esquinas cortadas a 45°, barras con punta en ángulo, hexágonos
+  y rombos (utilidades .chanfle, .hex, .rombo, .punta más abajo).
+  Claro = "Hormigón" (papel gris + tinta). Oscuro = "Fragua" (negro + hueso).
 */
 
 @layer base {
   :root {
-    /* Modo claro — "papel / concreto" */
-    --color-background: 233 228 218;        /* concreto cálido */
-    --color-surface: 245 241 233;           /* papel */
-    --color-surface-highlight: 223 216 203;
-    --color-primary: 192 64 22;             /* óxido profundo */
-    --color-primary-hover: 168 54 18;
-    --color-accent: 169 129 47;             /* bronce */
-    --color-text-main: 36 30 24;            /* tinta */
-    --color-text-muted: 107 95 82;          /* piedra */
-    --color-border: rgba(36, 30, 24, 0.12);
-    --shadow-premium: 0 12px 30px -12px rgba(50, 35, 20, 0.25), 0 4px 10px -6px rgba(50, 35, 20, 0.15);
+    --color-background: 237 237 234;        /* papel gris */
+    --color-surface: 255 255 255;
+    --color-surface-highlight: 226 226 222; /* hormigón */
+    --color-primary: 227 10 38;             /* rojo de marca #E30A26 */
+    --color-primary-hover: 192 8 31;
+    --color-accent: 58 58 55;               /* grafito (antes bronce) */
+    --color-text-main: 14 14 14;            /* tinta */
+    --color-text-muted: 92 92 88;
+    --color-border: rgba(14, 14, 14, 0.14);
+    --shadow-premium: 0 10px 24px -14px rgba(0, 0, 0, 0.35);
     /* Figura del cuerpo (components/cuerpo) */
-    --color-cuerpo: 214 206 191;
-    --color-musculo: 190 180 162;
-    --color-cuerpo-contorno: rgba(107, 95, 82, 0.55);
+    --color-cuerpo: 214 214 210;
+    --color-musculo: 186 186 181;
+    --color-cuerpo-contorno: rgba(14, 14, 14, 0.35);
   }
 
   .dark {
-    /* Modo oscuro — "fragua / hierro" */
-    --color-background: 26 22 18;           /* charcoal cálido */
-    --color-surface: 36 30 25;              /* grafito cálido */
-    --color-surface-highlight: 50 42 34;
-    --color-primary: 230 92 42;             /* naranja molten */
-    --color-primary-hover: 242 130 84;
-    --color-accent: 201 160 74;             /* bronce claro */
-    --color-text-main: 237 230 216;         /* hueso / tiza */
-    --color-text-muted: 168 154 136;        /* piedra cálida */
-    --color-border: rgba(237, 230, 216, 0.10);
-    --shadow-premium: 0 18px 40px -16px rgba(0, 0, 0, 0.55), 0 6px 14px -8px rgba(0, 0, 0, 0.5);
-    --color-cuerpo: 58 49 40;
-    --color-musculo: 84 72 60;
-    --color-cuerpo-contorno: rgba(168, 154, 136, 0.45);
+    --color-background: 11 11 11;           /* fragua */
+    --color-surface: 22 22 22;
+    --color-surface-highlight: 38 38 38;
+    --color-primary: 240 33 58;             /* el rojo, un punto más claro sobre negro */
+    --color-primary-hover: 255 66 87;
+    --color-accent: 200 200 195;
+    --color-text-main: 242 242 239;         /* hueso */
+    --color-text-muted: 154 154 149;
+    --color-border: rgba(242, 242, 239, 0.12);
+    --shadow-premium: 0 14px 30px -16px rgba(0, 0, 0, 0.8);
+    --color-cuerpo: 44 44 44;
+    --color-musculo: 70 70 70;
+    --color-cuerpo-contorno: rgba(242, 242, 239, 0.3);
   }
 
   body {
@@ -53,26 +54,14 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Grano sutil sobre toda la app: textura "rústica" sin pesar. */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    pointer-events: none;
-    opacity: 0.05;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  }
-
-  /* Títulos condensados (póster de gimnasio). */
+  /* Títulos: Poppins pesada, apretada (como el logotipo de la marca). */
   h1, h2, h3 {
     @apply font-heading tracking-tight;
   }
 
   ::selection {
     background-color: rgb(var(--color-primary));
-    color: rgb(var(--color-text-main));
+    color: #fff;
   }
 
   a:focus-visible,
@@ -83,7 +72,6 @@
   [tabindex]:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px rgb(var(--color-background)), 0 0 0 4px rgb(var(--color-primary));
-    border-radius: 0.75rem;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -97,23 +85,28 @@
 }
 
 @layer components {
-  /* Panel mate (sin blur): superficie sólida, borde fino y una arista de luz arriba. */
+  /* Panel facetado: plano, sin sombra, con la esquina de arriba a la derecha cortada a 45°
+     (la faceta del gorila). El corte se lee por el contraste panel/fondo. */
   .glass-panel {
-    @apply bg-surface border border-borderBase shadow-premium rounded-2xl transition-all duration-300;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--shadow-premium);
+    @apply bg-surface transition-colors duration-300;
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
   }
 
-  /* CTA principal: "botón estampado" con arista inferior (relieve). */
+  /* CTA principal: rojo de marca, plano, con dos esquinas cortadas. */
   .btn-primary {
-    @apply bg-primary hover:bg-primaryHover text-white font-heading uppercase tracking-wide px-6 py-3 min-h-tap rounded-xl border-b-4 border-black/25 transition-all duration-200 active:translate-y-0.5 active:border-b-2 flex items-center justify-center gap-2;
+    @apply bg-primary hover:bg-primaryHover text-white font-heading font-extrabold uppercase tracking-wide px-6 py-3 min-h-tap transition-colors duration-200 active:scale-[0.98] flex items-center justify-center gap-2;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
   }
 
+  /* Alternativa fuerte: tinta sobre papel (hueso sobre negro en oscuro). */
   .btn-accent {
-    @apply bg-accent hover:brightness-110 text-[rgb(36,30,24)] font-heading uppercase tracking-wide px-6 py-3 min-h-tap rounded-xl border-b-4 border-black/25 transition-all duration-200 active:translate-y-0.5 active:border-b-2 flex items-center justify-center gap-2;
+    @apply bg-textMain text-background font-heading font-extrabold uppercase tracking-wide px-6 py-3 min-h-tap transition-transform duration-200 active:scale-[0.98] flex items-center justify-center gap-2;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
   }
 
+  /* Secundario: contorno de tinta, esquinas rectas (un recorte le comería el borde). */
   .btn-secondary {
-    @apply bg-surfaceHighlight hover:brightness-105 text-textMain px-6 py-3 min-h-tap rounded-xl font-bold transition-all duration-200 active:translate-y-0.5 flex items-center justify-center gap-2 border border-borderBase;
+    @apply bg-transparent text-textMain px-6 py-3 min-h-tap font-bold transition-colors duration-200 active:scale-[0.98] flex items-center justify-center gap-2 border-2 border-textMain;
   }
 
   .btn-icon {
@@ -121,13 +114,32 @@
   }
 
   .input-field {
-    @apply w-full bg-surfaceHighlight/60 border border-borderBase rounded-xl px-4 py-3.5 text-base text-textMain placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/60 transition-all;
+    @apply w-full bg-background border-2 border-borderBase rounded-none px-4 py-3.5 text-base text-textMain placeholder-textMuted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/60 transition-all;
   }
 
   /* Etiqueta técnica en monoespaciada (sello industrial). */
   .eyebrow {
     @apply font-mono uppercase text-xs tracking-[0.18em] text-textMuted;
   }
+
+  /* ── Geometría del gorila ── */
+  /* Esquina cortada arriba a la derecha (chica / mediana / grande). */
+  .chanfle { clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%); }
+  .chanfle-2 { clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%); }
+  /* Losa: dos esquinas opuestas cortadas (bloques protagonistas, "Hoy"). */
+  .losa { clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px)); }
+  /* Hexágono (avatares). */
+  .hex { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); }
+  /* Rombo (días de la semana, botón Registrar). */
+  .rombo { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  /* Barra con la punta en ángulo (gráficos de magnitud). */
+  .punta { clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+  /* Escalón del podio (hombros cortados). */
+  .escalon { clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%, 0 10px); }
+
+  /* Pesos de la marca: Poppins pesada en títulos (los font-bold/black de cada lugar mandan). */
+  .font-heading { font-weight: 700; }
+  .font-display { font-weight: 900; letter-spacing: -0.02em; }
 
   /* Números tipo marcador: condensada tabular alineada. */
   .scoreboard {
@@ -221,9 +233,9 @@
     transition: fill 0.15s;
   }
   .cuerpo .cuerpo-m.on { fill: rgb(var(--color-primary)); }
-  .cuerpo .cuerpo-m.i1 { fill: rgb(var(--color-primary) / 0.35); }
-  .cuerpo .cuerpo-m.i2 { fill: rgb(var(--color-primary) / 0.65); }
-  .cuerpo .cuerpo-m.i3 { fill: rgb(var(--color-primary)); }
+  .cuerpo .cuerpo-m.i1 { fill: rgb(var(--color-text-main) / 0.3); }
+  .cuerpo .cuerpo-m.i2 { fill: rgb(var(--color-text-main) / 0.6); }
+  .cuerpo .cuerpo-m.i3 { fill: rgb(var(--color-text-main)); }
   .cuerpo .cuerpo-m.sel { stroke: rgb(var(--color-text-main)); stroke-width: 6; }
   .cuerpo.tocable .cuerpo-m { cursor: pointer; }
   .cuerpo.tocable .cuerpo-m:focus { outline: none; }

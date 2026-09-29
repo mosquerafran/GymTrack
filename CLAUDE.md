@@ -14,7 +14,7 @@ comentarios y textos de UI en español rioplatense para mantener consistencia.
 
 ## 1. Qué es
 
-**Gym Tracker** es una PWA para que un grupo de amigos registre sus
+**Gym Tracker** (de cara al usuario: **Silverback**) es una PWA para que un grupo de amigos registre sus
 entrenamientos, compita en un ranking y se mantenga la constancia. Cada usuario
 sube una foto de evidencia + tipo y músculos del entreno + PRs opcionales, y la
 app arma un calendario personal, un muro de actividad grupal y estadísticas.

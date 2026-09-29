@@ -1,6 +1,6 @@
 {
-  "short_name": "Gym Tracker",
-  "name": "Gym Tracker",
+  "short_name": "Silverback",
+  "name": "Silverback",
   "description": "Registrá tus entrenos y competí con tu grupo",
   "lang": "es-AR",
   "icons": [
@@ -31,6 +31,6 @@
   "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#1a1612",
-  "background_color": "#1a1612"
+  "theme_color": "#0b0b0b",
+  "background_color": "#0b0b0b"
 }

@@ -104,10 +104,10 @@ export default function StatsMusculos({ sexo, porMusculo, umbral, ultimaVez, tre
         </div>
         <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs text-textMuted">
           <span>Días:</span>
-          <i className="inline-block w-[22px] h-2.5 rounded-sm" style={{ background: "rgb(var(--color-musculo))" }} />0
-          <i className="inline-block w-[22px] h-2.5 rounded-sm bg-primary/[0.35]" />{umbral[0]}{umbral[1] - 1 > umbral[0] ? `–${umbral[1] - 1}` : ""}
-          <i className="inline-block w-[22px] h-2.5 rounded-sm bg-primary/[0.65]" />{umbral[1]}{umbral[2] - 1 > umbral[1] ? `–${umbral[2] - 1}` : ""}
-          <i className="inline-block w-[22px] h-2.5 rounded-sm bg-primary" />{umbral[2]}+
+          <i className="inline-block w-[22px] h-2.5" style={{ background: "rgb(var(--color-musculo))" }} />0
+          <i className="inline-block w-[22px] h-2.5 bg-textMain/[0.3]" />{umbral[0]}{umbral[1] - 1 > umbral[0] ? `–${umbral[1] - 1}` : ""}
+          <i className="inline-block w-[22px] h-2.5 bg-textMain/[0.6]" />{umbral[1]}{umbral[2] - 1 > umbral[1] ? `–${umbral[2] - 1}` : ""}
+          <i className="inline-block w-[22px] h-2.5 bg-textMain" />{umbral[2]}+
         </div>
         <div className="min-h-tap flex flex-wrap items-center gap-x-2.5 gap-y-0.5 px-3 py-2 rounded-xl bg-background text-sm text-textMain" aria-live="polite">
           {detalle}
@@ -121,8 +121,8 @@ export default function StatsMusculos({ sexo, porMusculo, umbral, ultimaVez, tre
           {visibles.map((o) => (
             <li key={o.id} className="grid grid-cols-[104px_minmax(0,1fr)_28px] items-center gap-2 min-h-[28px] text-sm">
               <span className={`truncate ${o.dias ? "text-textMain" : "text-textMuted"}`}>{NOMBRE_MUSCULO[o.id]}</span>
-              <span className="h-3 rounded bg-surfaceHighlight overflow-hidden" aria-hidden="true">
-                <span className="block h-full bg-primary rounded-r" style={{ width: `${(o.dias / max) * 100}%` }} />
+              <span className="h-4 bg-surfaceHighlight overflow-hidden" aria-hidden="true">
+                <span className="block h-full bg-textMain punta" style={{ width: `${(o.dias / max) * 100}%` }} />
               </span>
               <span className={`text-right scoreboard font-bold ${o.dias ? "text-textMain" : "text-textMuted"}`}>{o.dias}</span>
             </li>
@@ -145,7 +145,7 @@ export default function StatsMusculos({ sexo, porMusculo, umbral, ultimaVez, tre
           <Titulo id="sm-olvidados" texto="Músculos olvidados" detalle={`${OLVIDADO_DESDE_DIAS} días o más`} />
           <ul className="flex flex-wrap gap-2">
             {olvidados.map((o) => (
-              <li key={o.id} className="inline-flex items-baseline gap-1.5 border-[1.5px] border-dashed border-primary rounded-full px-3 py-1.5 text-sm font-semibold">
+              <li key={o.id} className="inline-flex items-baseline gap-1.5 border-2 border-dashed border-textMain px-3 py-1.5 text-sm font-semibold">
                 {NOMBRE_MUSCULO[o.id]}
                 <span className="font-mono text-xs text-textMuted font-normal">{o.hace === null ? "nunca" : plural(o.hace, "día", "días")}</span>
               </li>
@@ -165,8 +165,8 @@ export default function StatsMusculos({ sexo, porMusculo, umbral, ultimaVez, tre
         {[{ n: "Tren superior", v: tren.superior }, { n: "Tren inferior", v: tren.inferior }].map((t) => (
           <div key={t.n} className="grid grid-cols-[110px_minmax(0,1fr)_56px] items-center gap-2 text-sm">
             <span>{t.n}</span>
-            <span className="h-4 rounded bg-surfaceHighlight overflow-hidden" aria-hidden="true">
-              <span className="block h-full bg-primary rounded-r" style={{ width: `${(t.v / maxTren) * 100}%` }} />
+            <span className="h-5 bg-surfaceHighlight overflow-hidden" aria-hidden="true">
+              <span className="block h-full bg-textMain punta" style={{ width: `${(t.v / maxTren) * 100}%` }} />
             </span>
             <span className="text-right scoreboard font-bold">{t.v} d</span>
           </div>
@@ -188,7 +188,7 @@ export default function StatsMusculos({ sexo, porMusculo, umbral, ultimaVez, tre
             {lideres.map((l) => {
               const soyYo = !!miNombre && l.nombre === miNombre;
               return (
-                <li key={l.zona} className="bg-background border border-borderBase rounded-2xl px-3 py-2.5 min-w-0">
+                <li key={l.zona} className="bg-background chanfle-2 px-3 py-2.5 min-w-0">
                   <span className="flex items-center gap-1 font-mono text-xs uppercase tracking-wide text-textMuted">
                     <Crown size={12} className="text-accent" aria-hidden="true" /> {l.zona}
                   </span>

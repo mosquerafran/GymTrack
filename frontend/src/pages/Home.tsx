@@ -9,6 +9,7 @@ import { obtenerMetaSemanal } from "../services/usuarioService";
 import { formatDateLocal, inicioSemanaLocal } from "../utils/date";
 import { META_SEMANAL_DEFAULT } from "../types";
 import CalendarView from "../components/CalendarView";
+import Logo from "../components/Logo";
 
 interface HomeProps {
   user: User;
@@ -96,32 +97,33 @@ export default function Home({ user, grupoId, onRegistrar, onAbrirDia, refresco 
         </div>
 
         {/* Hoy */}
-        <section className="glass-panel p-4 space-y-3" aria-label="Hoy">
+        <section className="losa relative overflow-hidden bg-textMain text-background p-4 space-y-3" aria-label="Hoy">
+          <Logo className="absolute -right-10 -bottom-8 w-56 h-auto opacity-[0.12] pointer-events-none" titulo="" />
           {hechoHoy ? (
             <button
               type="button"
               onClick={() => onAbrirDia(hoy)}
-              className="w-full flex items-center gap-3 p-3 rounded-2xl bg-primary/10 text-left"
+              className="relative w-full flex items-center gap-3 p-3 bg-background/10 text-left chanfle"
             >
-              <span className="w-11 h-11 rounded-full bg-primary text-white grid place-items-center shrink-0" aria-hidden="true">
+              <span className="w-11 h-11 rombo bg-primary text-white grid place-items-center shrink-0" aria-hidden="true">
                 <Check size={24} strokeWidth={3} />
               </span>
               <span className="min-w-0">
                 <b className="block font-heading text-base uppercase tracking-wide">Hoy ya entrenaste</b>
-                <span className="text-sm text-textMuted">Tocá para ver o editar lo de hoy.</span>
+                <span className="text-sm opacity-75">Tocá para ver o editar lo de hoy.</span>
               </span>
             </button>
           ) : null}
           {hechoHoy ? (
-            <button type="button" className="btn-secondary w-full" onClick={() => onRegistrar(hoy)}>
+            <button type="button" className="relative w-full min-h-tap flex items-center justify-center gap-2 font-bold border-2 border-background/60" onClick={() => onRegistrar(hoy)}>
               <Plus size={20} aria-hidden="true" /> Agregar otro entreno
             </button>
           ) : (
-            <button type="button" className="btn-primary w-full min-h-[56px] text-lg" onClick={() => onRegistrar(hoy)}>
+            <button type="button" className="relative btn-primary w-full min-h-[56px] text-lg" onClick={() => onRegistrar(hoy)}>
               <Plus size={24} aria-hidden="true" /> Registrar entreno
             </button>
           )}
-          <p className="text-sm italic text-textMuted border-l-[3px] border-accent pl-3">"{frase}"</p>
+          <p className="relative text-sm opacity-80 border-l-[3px] border-primary pl-3">"{frase}"</p>
         </section>
 
         {/* Semana */}
@@ -138,8 +140,8 @@ export default function Home({ user, grupoId, onRegistrar, onAbrirDia, refresco 
               return (
                 <li key={d} className={`flex flex-col items-center gap-1 font-mono text-xs ${esHoy ? "text-textMain font-bold" : "text-textMuted"}`}>
                   <span
-                    className={`w-full max-w-[40px] aspect-square rounded-xl grid place-items-center
-                      ${suma ? "bg-primary text-white" : hecho ? "border-2 border-primary text-primary" : esHoy ? "border-2 border-primary" : "border-[1.5px] border-dashed border-borderBase"}`}
+                    className={`w-full max-w-[40px] aspect-square rombo grid place-items-center
+                      ${suma ? "bg-textMain text-background" : hecho ? "bg-textMain/25 text-textMain" : esHoy ? "bg-primary/25" : "bg-surfaceHighlight"}`}
                     aria-label={`${DIAS[i]}: ${suma ? "entrenaste" : hecho ? "entrenaste, no suma" : "sin entreno"}`}
                   >
                     {hecho && <Check size={16} strokeWidth={3} aria-hidden="true" />}
@@ -149,8 +151,8 @@ export default function Home({ user, grupoId, onRegistrar, onAbrirDia, refresco 
               );
             })}
           </ol>
-          <div className="h-2 rounded-full bg-surfaceHighlight overflow-hidden" aria-hidden="true">
-            <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(100, (diasHechos / meta) * 100)}%` }} />
+          <div className="h-3 bg-surfaceHighlight overflow-hidden punta" aria-hidden="true">
+            <div className="h-full bg-textMain punta transition-all" style={{ width: `${Math.min(100, (diasHechos / meta) * 100)}%` }} />
           </div>
         </section>
       </div>

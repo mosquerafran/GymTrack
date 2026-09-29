@@ -63,3 +63,4 @@ Lo que quedó abierto o a tener en cuenta.
 - [04 — Tanda 2: pulido mobile](2026-09-28/04-pulido-mobile-navegacion.md) — barra con Registrar al centro, paneles, botón atrás, popups, estados.
 - [05 — Seguridad fase 2: aislamiento entre grupos](2026-09-28/05-seguridad-fase2-aislamiento.md) — crear/unirse por Cloud Functions, lectura solo de tus grupos.
 - [06 — Categorías plantilla y qué suma](2026-09-28/06-categorias-plantilla-que-suma.md) — músculos preseleccionados, suma por categoría, varios por día, días anteriores.
+- [07 — Identidad Silverback](2026-09-28/07-identidad-silverback.md) — nombre, paleta blanco y negro + rojo, Poppins, geometría del gorila.

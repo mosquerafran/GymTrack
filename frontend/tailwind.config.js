@@ -21,14 +21,22 @@ module.exports = {
         'premium': 'var(--shadow-premium)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
-        display: ['Anton', 'Oswald', 'Impact', 'sans-serif'], // póster / impacto
-        heading: ['Oswald', 'Inter', 'system-ui', 'sans-serif'], // títulos / números
+        sans: ['Poppins', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: ['Poppins', 'Arial Black', 'sans-serif'], // títulos grandes (con font-black)
+        heading: ['Poppins', 'system-ui', 'sans-serif'], // títulos / números (con font-extrabold)
         mono: ['"Space Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'], // etiquetas
       },
       spacing: {
         'safe-b': 'env(safe-area-inset-bottom)',
         'safe-t': 'env(safe-area-inset-top)',
+      },
+      // Identidad Manada: esquinas secas (lo facetado lo ponen .chanfle/.hex/.rombo en index.css).
+      borderRadius: {
+        md: '2px',
+        lg: '2px',
+        xl: '3px',
+        '2xl': '4px',
+        '3xl': '4px',
       },
       minHeight: {
         'tap': '44px',

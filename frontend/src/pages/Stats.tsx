@@ -3,7 +3,7 @@ import { User } from "firebase/auth";
 import { calcularStats, StatsData, PeriodoStats } from "../services/statsService";
 import { obtenerMetaSemanal } from "../services/usuarioService";
 import { META_SEMANAL_DEFAULT } from "../types";
-import { Crown, Trophy, Target, RotateCw } from "lucide-react";
+import { Trophy, Target, RotateCw } from "lucide-react";
 import YearHeatmap from "../components/YearHeatmap";
 import Podio from "../components/Podio";
 import { TIPOS } from "../config/entrenos";
@@ -156,8 +156,8 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
             días entrenados<br />{rangoTexto(periodo)}
           </div>
         </div>
-        <div className="h-2.5 w-full bg-surfaceHighlight rounded-full overflow-hidden" aria-hidden="true">
-          <div className="h-full bg-primary rounded-full transition-all duration-700" style={{ width: `${data.porcentaje}%` }} />
+        <div className="h-3.5 w-full bg-surfaceHighlight punta overflow-hidden" aria-hidden="true">
+          <div className="h-full bg-textMain punta transition-all duration-700" style={{ width: `${data.porcentaje}%` }} />
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-background border border-borderBase rounded-2xl p-3 text-center">
@@ -209,34 +209,36 @@ export default function Stats({ user, grupoId }: StatsProps): React.ReactElement
       <section className={tarjeta} aria-labelledby="st-ranking">
         {titulo("st-ranking", "Ranking del grupo", rangoTexto(periodo))}
         <Podio ranking={data.ranking} miNombre={miNombre} />
-        <ol>
-          {data.ranking.map((usr, idx) => {
-            const soyYo = usr.nombre === miNombre;
-            return (
-              <li key={usr.nombre} className="py-3 border-t border-borderBase first:border-t-0 space-y-1.5">
-                <div className="flex items-center gap-2.5">
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center scoreboard text-sm font-bold shrink-0 ${idx === 0 ? "bg-primary text-white" : "bg-surfaceHighlight text-textMain"}`}>
-                    {idx === 0 ? <Crown size={14} aria-label="Primero" /> : idx + 1}
-                  </span>
-                  <span className={`flex-1 min-w-0 truncate font-bold ${soyYo ? "text-primary" : "text-textMain"}`}>
-                    {usr.nombre}{soyYo && " (vos)"}
-                  </span>
-                  <span className="scoreboard text-xl font-bold shrink-0">
-                    {usr.dias} <span className="font-sans text-sm font-normal text-textMuted">días · {usr.porcentaje}%</span>
-                  </span>
-                </div>
-                <div className="h-1.5 w-full bg-surfaceHighlight rounded-full overflow-hidden" aria-hidden="true">
-                  <div className={`h-full rounded-full ${idx === 0 ? "bg-primary" : "bg-textMuted/50"}`} style={{ width: `${usr.porcentaje}%` }} />
-                </div>
-                <p className="text-sm text-textMuted">
-                  {usr.porTipo.map(({ tipo, cantidad }) => `${TIPOS[tipo].nombre} ${cantidad}`).join(" · ")}
-                </p>
-              </li>
-            );
-          })}
-        </ol>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="font-mono text-xs uppercase tracking-wider text-textMuted text-left">
+              <th scope="col" className="pb-2 border-b-2 border-textMain w-8">#</th>
+              <th scope="col" className="pb-2 border-b-2 border-textMain">Nombre</th>
+              <th scope="col" className="pb-2 border-b-2 border-textMain text-right">Días</th>
+              <th scope="col" className="pb-2 border-b-2 border-textMain text-right w-12">%</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.ranking.map((usr, idx) => {
+              const soyYo = usr.nombre === miNombre;
+              return (
+                <tr key={usr.nombre} className={`border-b border-borderBase ${soyYo ? "text-primary" : ""}`}>
+                  <td className="py-2.5 font-display text-base">{idx + 1}</td>
+                  <td className="py-2.5 pr-2">
+                    <span className="block font-bold truncate max-w-[40vw] sm:max-w-none">{usr.nombre}{soyYo && " (vos)"}</span>
+                    <span className="block text-xs text-textMuted">
+                      {usr.porTipo.map(({ tipo, cantidad }) => `${TIPOS[tipo].nombre} ${cantidad}`).join(" · ")}
+                    </span>
+                  </td>
+                  <td className="py-2.5 text-right scoreboard font-extrabold text-lg">{usr.dias}</td>
+                  <td className="py-2.5 text-right scoreboard font-bold">{usr.porcentaje}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
         {data.ranking.length === 0 && <p className="text-sm text-textMuted py-4 text-center">Nadie entrenó en el período.</p>}
-        <p className="text-sm text-textMuted">Todo entreno suma: gym, fútbol, running u otro. Un día cuenta una sola vez.</p>
+        <p className="text-sm text-textMuted">Suma lo que cada uno eligió en sus categorías. Un día cuenta una sola vez.</p>
       </section>
 
       {/* Tus entrenos por tipo */}

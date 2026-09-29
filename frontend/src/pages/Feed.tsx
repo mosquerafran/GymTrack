@@ -87,10 +87,8 @@ export default function Feed({ grupoId, refresco = 0 }: FeedProps): React.ReactE
                 {/* Header: Usuario, Fecha y Cat */}
                 <div className="p-4 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-primary/50 to-orange-600/50 p-0.5 shadow-lg">
-                      <div className="w-full h-full rounded-full bg-surface flex items-center justify-center font-black text-textMain border-2 border-surface text-base">
-                        {post.userName?.charAt(0).toUpperCase()}
-                      </div>
+                    <div className="w-11 h-12 hex bg-textMain text-background grid place-items-center font-display text-lg shrink-0" aria-hidden="true">
+                      {post.userName?.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <p className="font-black text-textMain text-base leading-none truncate">{post.userName}</p>
@@ -100,7 +98,7 @@ export default function Feed({ grupoId, refresco = 0 }: FeedProps): React.ReactE
                     </div>
                   </div>
                   {etiquetaDe(post, nombres) && (
-                    <span className="text-xs font-bold px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 uppercase tracking-wide max-w-[45%] truncate shrink-0">
+                    <span className="font-mono text-xs font-bold px-2.5 py-1.5 border-2 border-textMain uppercase tracking-wide max-w-[45%] truncate shrink-0">
                       {etiquetaDe(post, nombres)}
                     </span>
                   )}

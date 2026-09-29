@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 type Theme = "dark" | "light";
 
 // Mismos colores que --color-background de index.css (barra del navegador / status bar).
-const COLOR_BARRA: Record<Theme, string> = { dark: "#1a1612", light: "#e9e4da" };
+const COLOR_BARRA: Record<Theme, string> = { dark: "#0b0b0b", light: "#ededea" };
 
 /**
  * Hook para gestionar el tema dark/light.

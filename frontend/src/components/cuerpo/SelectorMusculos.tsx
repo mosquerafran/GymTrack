@@ -64,7 +64,7 @@ export default function SelectorMusculos({ sexo, seleccion, onChange, onAtajo }:
             key={a.nombre}
             type="button"
             onClick={() => aplicarAtajo(a.nombre, a.musculos)}
-            className="min-h-[40px] px-3.5 rounded-full border border-borderBase bg-background text-sm font-semibold active:scale-95 transition-transform"
+            className="min-h-[40px] px-3.5 border-2 border-textMain bg-background text-sm font-bold active:scale-95 transition-transform"
           >
             {a.nombre}
           </button>
@@ -73,7 +73,7 @@ export default function SelectorMusculos({ sexo, seleccion, onChange, onAtajo }:
           <button
             type="button"
             onClick={() => onChange(new Set())}
-            className="min-h-[40px] px-3.5 rounded-full border border-borderBase text-sm font-semibold text-textMuted"
+            className="min-h-[40px] px-3.5 border-2 border-borderBase text-sm font-semibold text-textMuted"
           >
             Limpiar
           </button>

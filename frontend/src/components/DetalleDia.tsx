@@ -89,7 +89,7 @@ export default function DetalleDia({ user, grupoId, fecha, onEditar, onRegistrar
       {usuarios.map(([nombre, items]) => (
         <section key={nombre} className="space-y-2">
           <h3 className="flex items-center gap-2.5 font-bold">
-            <span className="w-9 h-9 rounded-full bg-accent text-surface grid place-items-center font-heading shrink-0" aria-hidden="true">
+            <span className="w-9 h-10 hex bg-textMain text-background grid place-items-center font-display shrink-0" aria-hidden="true">
               {nombre.charAt(0).toUpperCase()}
             </span>
             <span className="truncate">{nombre}{items.some(esMio) && " (vos)"}</span>

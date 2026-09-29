@@ -3,6 +3,8 @@ import { User } from "firebase/auth";
 import { Home, BarChart2, Settings, Sun, Moon, ArrowLeftRight, Flame, Plus, LucideIcon } from "lucide-react";
 import { useStreak } from "../hooks/useStreak";
 import { Grupo } from "../types";
+import Logo from "./Logo";
+import { NOMBRE_APP } from "../config/marca";
 
 interface NavbarProps {
   view: string;
@@ -38,7 +40,7 @@ export default function Navbar({ view, irA, onRegistrar, user, theme, toggleThem
         onClick={() => irA(p.view)}
         aria-current={activa ? "page" : undefined}
         className={`flex flex-col items-center justify-center gap-0.5 min-h-[52px] rounded-xl text-xs font-semibold transition-colors
-          ${activa ? "text-primary" : "text-textMuted active:bg-surfaceHighlight/60"}`}
+          ${activa ? "text-textMain" : "text-textMuted active:bg-surfaceHighlight/60"}`}
       >
         <p.icon size={24} strokeWidth={activa ? 2.4 : 2} aria-hidden="true" />
         {p.label}
@@ -49,12 +51,13 @@ export default function Navbar({ view, irA, onRegistrar, user, theme, toggleThem
   return (
     <>
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-surface/95 backdrop-blur-sm border-b border-borderBase pt-safe mb-4 md:mb-6">
+      <header className="sticky top-0 z-50 bg-surface border-b-2 border-textMain pt-safe mb-4 md:mb-6">
         <div className="flex items-center gap-2 px-3 md:px-4 py-2">
+          <Logo className="w-10 h-auto text-textMain shrink-0" titulo={NOMBRE_APP} />
           <button
             type="button"
             onClick={onCambiarGrupo}
-            className="flex items-center gap-2 min-h-tap min-w-0 flex-1 md:flex-none px-3 rounded-xl border border-borderBase bg-background font-heading text-sm uppercase tracking-wide"
+            className="flex items-center gap-2 min-h-tap min-w-0 flex-1 md:flex-none px-3 border-2 border-textMain bg-background font-heading font-bold text-sm uppercase tracking-wide"
             aria-label={`Cambiar de grupo. Grupo actual: ${grupoActivo?.nombre || "sin grupo"}`}
           >
             <ArrowLeftRight size={18} className="text-accent shrink-0" aria-hidden="true" />
@@ -69,7 +72,7 @@ export default function Navbar({ view, irA, onRegistrar, user, theme, toggleThem
                 type="button"
                 onClick={() => irA(p.view)}
                 aria-current={view === p.view ? "page" : undefined}
-                className={`flex items-center gap-2 min-h-tap px-3 rounded-xl font-semibold transition-colors ${view === p.view ? "bg-primary/10 text-primary" : "text-textMuted hover:text-textMain hover:bg-surfaceHighlight"}`}
+                className={`flex items-center gap-2 min-h-tap px-3 font-semibold transition-colors border-b-[3px] ${view === p.view ? "border-textMain text-textMain" : "border-transparent text-textMuted hover:text-textMain"}`}
               >
                 <p.icon size={20} aria-hidden="true" /> {p.label}
               </button>
@@ -82,7 +85,7 @@ export default function Navbar({ view, irA, onRegistrar, user, theme, toggleThem
           <div className="flex items-center gap-1 ml-auto shrink-0">
             {streak > 0 && (
               <div
-                className="flex items-center gap-1 min-h-tap px-2.5 rounded-xl bg-primary/10 text-primary"
+                className="flex items-center gap-1 min-h-tap px-2.5 bg-primary text-white chanfle"
                 title={`Racha de ${streak} días seguidos`}
                 aria-label={`Racha de ${streak} días seguidos`}
               >
@@ -104,7 +107,7 @@ export default function Navbar({ view, irA, onRegistrar, user, theme, toggleThem
 
       {/* Celu: barra inferior con el botón central de Registrar */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t border-borderBase pb-safe"
+        className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-surface border-t-2 border-textMain pb-safe"
         aria-label="Navegación principal"
       >
         <div className="grid grid-cols-5 items-end px-1.5 pt-1.5 pb-1">
@@ -116,7 +119,7 @@ export default function Navbar({ view, irA, onRegistrar, user, theme, toggleThem
             className="flex flex-col items-center gap-0.5 text-xs font-semibold text-textMain"
             aria-label="Registrar entreno"
           >
-            <span className="-mt-7 w-[58px] h-[58px] rounded-2xl bg-primary text-white grid place-items-center border-4 border-surface shadow-lg shadow-primary/40 active:scale-95 transition-transform">
+            <span className="-mt-8 w-[62px] h-[62px] rombo bg-primary text-white grid place-items-center active:scale-95 transition-transform">
               <Plus size={30} strokeWidth={2.6} aria-hidden="true" />
             </span>
             Registrar

@@ -130,7 +130,7 @@ export default function Admin({ user, grupoActivo, setView }: AdminProps): React
           <ul>
             {miembros.map((m) => (
               <li key={m} className="flex items-center gap-3 min-h-[56px] border-t border-borderBase first:border-t-0">
-                <span className="w-9 h-9 rounded-full bg-primary/15 text-primary grid place-items-center font-bold shrink-0" aria-hidden="true">
+                <span className="w-9 h-10 hex bg-textMain text-background grid place-items-center font-display shrink-0" aria-hidden="true">
                   {m.charAt(0).toUpperCase()}
                 </span>
                 <span className="flex-1 min-w-0">

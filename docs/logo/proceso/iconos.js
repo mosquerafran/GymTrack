@@ -6,8 +6,8 @@ const { svgPathBbox } = require("svg-path-bbox");
 const PUB = "E:/Proyectos-Trabajos/gym-tracker/frontend/public/";
 const SRC = "E:/Proyectos-Trabajos/gym-tracker/frontend/src/assets/";
 const OUT = "../logo/";
-const CARBON = "#1a1612"; // --color-background oscuro (theme_color del manifest)
-const HUESO = "#ede6d8";  // --color-text-main oscuro
+const CARBON = "#0b0b0b"; // fondo oscuro "Fragua" (theme_color del manifest)
+const HUESO = "#f2f2ef";  // hueso (texto en oscuro)
 
 const crudo = fs.readFileSync(OUT + "gorila-negro2.svg", "utf8");
 const d = [...crudo.matchAll(/ d="([^"]+)"/g)].map((m) => m[1]).join(" ");

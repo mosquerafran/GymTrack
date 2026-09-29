@@ -11,6 +11,10 @@ App para que un grupo de amigos registre entrenamientos con **foto de evidencia*
 compita en un **ranking de constancia** y se motive con rachas, medallas y un
 **muro de actividad** estilo red social.
 
+**Nombre de cara al usuario: Silverback** (desde 2026-09-28; el repo sigue llamándose
+gym-tracker). Identidad: el gorila facetado de King Concretos (con permiso), blanco y negro
+sobrio + rojo de marca, Poppins. Nombre en `frontend/src/config/marca.ts` (+ `public/`).
+
 ## 2. Usuarios
 
 - **Grupo principal:** "Gym ave Miller 2026", 4 amigos (miembros VIP), en Argentina.
