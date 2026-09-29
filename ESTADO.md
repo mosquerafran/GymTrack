@@ -11,7 +11,8 @@
 
 | Pieza | Estado | Cómo se sabe |
 |---|---|---|
-| **Hosting** | ✅ `a3fe920` (identidad Silverback), deployado el 2026-09-28 | GitHub Actions, run `36507607167`, *success* |
+| **Hosting** | ✅ `06eb430` (PWA + sin emojis), deployado el 2026-09-28 | GitHub Actions, *success* |
+| **Sitios** | `gym-tracker-1aaba.web.app` (el de siempre) y **`silverback-gym.web.app`** (creado el 2026-09-28; `silverback` estaba tomado). Mismo build: `firebase.json` tiene los dos | `firebase hosting:sites:create silverback-gym` |
 | **Functions** | ✅ las 6 en **Node.js 22** (2nd Gen), deployadas el 2026-09-28 (`4bc4c46`), incluye `crearGrupo` y `unirseAGrupo` | `firebase deploy --only functions` → *Deploy complete* |
 | **Firestore rules** | ✅ `90b5c3b` (fase 2 + validación de tipo/músculos de categorías), deployadas el 2026-09-28 | `firebase deploy --only firestore:rules,storage` → *Deploy complete* |
 | **Índice `asistencias(grupoId, timestamp desc)`** | ⚠️ **sin registro** | Ídem. El muro tiene fallback, así que **funciona igual aunque falte** |
@@ -21,6 +22,10 @@ El 2026-09-28 se endurecieron las rules (worklog `2026-09-28/02`): primero el ho
 rules, en ese orden. ⏳ **Smoke en el celu pendiente** (ver §2).
 
 ## 2. 🔴 Requiere acción
+
+000. **Autorizar `silverback-gym.web.app` en Firebase Auth** (Authentication → Configuración →
+    Dominios autorizados → Agregar dominio). Sin eso, el login con Google falla en la dirección nueva
+    (la vieja anda igual). Después: entrar por la nueva, loguearse e instalar la app desde ahí.
 
 00. **Smoke de la seguridad fase 2** (deployada completa el 2026-09-28): en el celu, muro, calendario,
     detalle del día y Stats cargan; Ajustes → Administrar grupo muestra los miembros; alguien se une
@@ -64,6 +69,7 @@ la raíz del repo.
 
 | Fecha | Commit | Qué | Resultado |
 |---|---|---|---|
+| 2026-09-28 | `06eb430` | Hosting (automático): PWA, revisión visual, sin emojis (el primer intento `d9dab0b` falló en `npm ci`: lock de npm 11) | ✅ Actions |
 | 2026-09-28 | `90b5c3b` | Firestore rules: categorías con tipo/músculos | ✅ *Deploy complete* |
 | 2026-09-28 | `a3fe920` | Hosting (automático): identidad Silverback | ✅ Actions `36507607167` |
 | 2026-09-28 | `90b5c3b` | Hosting (automático): categorías plantilla, qué suma, varios por día | ✅ Actions `36506165018` |

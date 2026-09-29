@@ -19,7 +19,7 @@ entrenamientos, compita en un ranking y se mantenga la constancia. Cada usuario
 sube una foto de evidencia + tipo y músculos del entreno + PRs opcionales, y la
 app arma un calendario personal, un muro de actividad grupal y estadísticas.
 
-- **Producción:** https://gym-tracker-1aaba.web.app
+- **Producción:** https://silverback-gym.web.app (y la vieja https://gym-tracker-1aaba.web.app: mismo build, dos sitios en `firebase.json`)
 - **Proyecto Firebase:** `gym-tracker-1aaba`
 - **Idioma de datos y UI:** español · detalle de producto, usuarios y datos: **`context.md`**
 
