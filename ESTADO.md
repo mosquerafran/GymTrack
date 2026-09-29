@@ -71,7 +71,7 @@ la raíz del repo.
 | Fecha | Commit | Qué | Resultado |
 |---|---|---|---|
 | 2026-09-28 | `ce634a2` | Firestore rules: **vuelta atrás** tras el incidente | ✅ prod = reglas de `ce634a2` |
-| 2026-09-28 | `12b214b` | Índices + **reglas fase 2 por error** (typo `firestore:indexe`) | ⚠️ revertido minutos después |
+| 2026-09-28 | `4bc4c46` | Índices + **reglas fase 2 por error** (typo `firestore:indexe`) | ⚠️ revertido minutos después |
 | 2026-09-28 | `b174d8a` | Hosting (automático): tanda 2, pulido mobile | ✅ Actions `36502998148` |
 | 2026-09-28 | `ce634a2` | Firestore rules (manual): + `sexo` y `tipo` | ✅ *Deploy complete* |
 | 2026-09-28 | `ce634a2` | Hosting (automático): registro con cuerpo + stats por músculo | ✅ Actions `36501859965` |
